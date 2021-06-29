@@ -29,13 +29,12 @@ class MyApp extends StatelessWidget {
           title: new Text(Constants.APP_TITLE_NAME),
           actions: [
             new IconButton(
-                onPressed: () async {
+                onPressed: () {
+                  adbController.text=Constants.adbPath;
+                  print(Constants.adbPath);
                   //执行函数
-                  //showSettingDialog(context);
-
+                  showSettingDialog(context);
                   //showPickerDialog(context);
-
-                  showPickerDialog(context);
                 },
                 icon: new Icon(Icons.settings))
           ],
@@ -97,9 +96,6 @@ class LeftPanel extends StatefulWidget {
   }
 }
 
-TextEditingController _textEditingController =
-    new TextEditingController(text: text);
-
 GlobalKey<LeftPanelState> globalKey = GlobalKey();
 
 class LeftPanelState extends State<LeftPanel> {
@@ -113,10 +109,6 @@ class LeftPanelState extends State<LeftPanel> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    FileUtils.readSetting().then((value) {
-      Map<String, dynamic> map = jsonDecode(value);
-      Constants.adbPath = map['adb'];
-    });
 
     InitUtils.initDesktop();
   }
@@ -301,10 +293,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
   }
 }
 
-final TextEditingController _controller =
-    new TextEditingController(text: Constants.adbPath);
-
-//SettingModel settingModel=new SettingModel("");
+final TextEditingController adbController =
+    new TextEditingController(text: "111");
 
 showSettingDialog(BuildContext context) {
   showDialog(
@@ -328,7 +318,7 @@ showSettingDialog(BuildContext context) {
                   child: Text('确定'),
                   onPressed: () {
                     //settingModel.adb = _controller.text;
-                    _settings['adb'] = _controller.text;
+                    _settings['adb'] = adbController.text;
                     FileUtils.writeSetting(_settings);
                     Navigator.of(context).pop();
                   },
@@ -348,7 +338,7 @@ showSettingDialog(BuildContext context) {
                               children: [
                                 new Expanded(
                                     child: TextField(
-                                  controller: _controller,
+                                  controller: adbController,
                                   decoration: InputDecoration(
                                     // labelText: '表单label',
                                     // labelStyle: TextStyle(
@@ -454,7 +444,7 @@ showPickerDialog(BuildContext context) async {
 
   final typeGroup = XTypeGroup(
     label: 'images',
-    extensions: ['exe'],
+    extensions: ['apk'],
   );
   final files = await FileSelectorPlatform.instance
       .openFiles(acceptedTypeGroups: [typeGroup]);

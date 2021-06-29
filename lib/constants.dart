@@ -11,6 +11,8 @@ class Constants {
 
   static String desktopPath = ""; //桌面路径
 
+  static String userPath=""; //用户路径
+
   static const String SCREEN_SHOOT_NAME = "screen";
 
   //安卓的adb命令行

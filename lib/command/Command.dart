@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
+import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 class AndroidCommand {
   Future<ProcessResult> execCommand(List<String> arguments,
@@ -30,7 +31,7 @@ class AndroidCommand {
     switch (arguments) {
       case Constants.ADB_CONNECT_DEVICES:
         if (data.contains("List of devices attached")) {
-          List<String> devices = data.split("\r\n");
+          List<String> devices = data.split(PlatformUtils.getLineBreak());
           List<String> currentDevices = [];
           devices.forEach((element) {
             if (element.isNotEmpty && element != "List of devices attached") {

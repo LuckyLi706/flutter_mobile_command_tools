@@ -5,7 +5,7 @@ import 'package:flutter_mobile_command_tools/model/SettingModel.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileUtils {
-  static Future<String> get _localPath async {
+  static Future<String> get localPath async {
     try {
       final _path = await getTemporaryDirectory();
       print(_path);
@@ -16,7 +16,7 @@ class FileUtils {
   }
 
   static Future<File> _localFile(String file) async {
-    final path = await _localPath;
+    final path = await localPath;
     return File('$path/' + file);
   }
 
@@ -24,10 +24,8 @@ class FileUtils {
     try {
       final file = await _localFile("SETTING");
       String contents = file.readAsStringSync();
-      //jsonDecode(contents);
       return contents;
     } catch (e) {
-      print(e.toString());
       return "";
     }
   }
