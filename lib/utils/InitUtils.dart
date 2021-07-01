@@ -7,16 +7,19 @@ import '../constants.dart';
 import 'FileUtils.dart';
 
 class InitUtils {
-  //获取桌面路径
-  static void initDesktop() async {
+  static void init() async {
     await _initSetting();
+    _initDesktop();
+  }
 
+  //获取桌面路径
+  static void _initDesktop() async {
     if (Platform.isWindows) {
       Process.run(r"echo %USERPROFILE%", [], runInShell: true).then((value) {
         if (value.stdout != "") {
           Constants.userPath =
               value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
-          Constants.desktopPath = Constants.userPath + r"/Desktop";
+          Constants.desktopPath = Constants.userPath + r"\Desktop";
           _initAdbPath();
         } else {
           Constants.desktopPath = Directory.current.path;

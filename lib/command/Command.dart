@@ -2,25 +2,50 @@ import 'dart:io';
 
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
+import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 class AndroidCommand {
-  Future<ProcessResult> execCommand(List<String> arguments,
+  Future<String> checkFirst(List<String> arguments,
       {String executable = "", String? workingDirectory}) async {
     if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
         Constants.currentDevice.isEmpty) {
       throw "请先获取设备";
-    } else if (arguments[0] != Constants.ADB_CONNECT_DEVICES) {
-      arguments = ["-s", Constants.currentDevice]..addAll(arguments);
-      print(arguments);
     }
     if (executable == "") {
-      return await Process.run(Constants.adbPath, arguments,
-          workingDirectory: workingDirectory);
-    } else {
-      return await Process.run(executable, arguments,
-          workingDirectory: workingDirectory);
+      executable = Constants.adbPath;
     }
+    if (!await FileUtils.isExistFile(executable)) {
+      throw executable + "该路径不存在";
+    }
+    return executable;
+  }
+
+  Future<ProcessResult> execCommand(List<String> arguments,
+      {String executable = "",
+      String? workingDirectory,
+      bool runInShell = false}) async {
+    if (arguments[0] != Constants.ADB_CONNECT_DEVICES) {
+      arguments = ["-s", Constants.currentDevice]..addAll(arguments);
+    }
+    executable = await checkFirst(arguments,
+        executable: executable, workingDirectory: workingDirectory);
+    print(executable);
+    print(arguments);
+    print(workingDirectory);
+    return await Process.run(executable, arguments,
+        workingDirectory: workingDirectory, runInShell: runInShell);
+  }
+
+  Future<ProcessResult> execCommandSync(List<String> arguments,
+      {String executable = "", String? workingDirectory}) async {
+    if (arguments[0] != Constants.ADB_CONNECT_DEVICES) {
+      arguments = ["-s", Constants.currentDevice]..addAll(arguments);
+    }
+    executable = await checkFirst(arguments,
+        executable: executable, workingDirectory: workingDirectory);
+    return Process.runSync(executable, arguments,
+        workingDirectory: workingDirectory);
   }
 
   CommandResult dealWithData(String arguments, ProcessResult processResult) {
@@ -63,10 +88,57 @@ class AndroidCommand {
           }
         }
         break;
-      case Constants.ADB_PULL_SCREEN_SHOT:
-        return getProcessResult(false, data);
+      case Constants.ADB_IP:
+        String ip = data.split(":")[1].split(" ")[0];
+        return getProcessResult(false, ip);
+      case Constants.ADB_WIRELESS_CONNECT:
+        if (data.contains("already")) {
+          //表示已经连接上了
+          return getProcessResult(true, data);
+        } else {
+          return getProcessResult(
+              false, data.replaceAll("connected to ", "").trim()); //移除换行符号
+        }
+      case Constants.ADB_WIRELESS_DISCONNECT:
+        return getProcessResult(
+            false, data.replaceAll("disconnected ", "").trim());
+      case Constants.ADB_PULL_CRASH:
+        if (data.isEmpty) {
+          return getProcessResult(true, "无crash日志");
+        } else {
+          List<String> crashList = data.split(PlatformUtils.getLineBreak());
+          List<String> times = [];
+          crashList.forEach((element) {
+            if (element.contains("data_app_crash")) {
+              times.add(element.split("data_app_crash")[0].trim());
+            }
+          });
+          if (times.length > 0) {
+            return getProcessResult(false, times);
+          }
+          return getProcessResult(true, "无app crash日志");
+        }
+      case Constants.ADB_SEARCH_ALL_FILE_PATH:
+        if (data.isEmpty) {
+          return getProcessResult(true, "该目录无文件或者当前就是文件");
+        } else {
+          if (data.contains("No such file or directory")) {
+            return getProcessResult(true, data);
+          }
+          List<String> crashList = data.split(PlatformUtils.getLineBreak());
+          List<String> times = [];
+          crashList.forEach((element) {
+            if (!element.startsWith("/") && element.isNotEmpty) {
+              times.add(element.trim());
+            }
+          });
+          if (times.length > 0) {
+            return getProcessResult(false, times);
+          }
+          return getProcessResult(true, "该目录无文件或者当前就是文件");
+        }
     }
-    return getProcessResult(false, "");
+    return getProcessResult(false, data);
   }
 
   CommandResult getProcessResult(bool error, dynamic result) {

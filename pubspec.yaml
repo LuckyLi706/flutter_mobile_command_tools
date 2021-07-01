@@ -30,8 +30,9 @@ dependencies:
   cupertino_icons: ^1.0.2
   path_provider: ^2.0.2
   file_selector: ^0.8.2
+  file_selector_windows: ^0.0.2
   file_selector_macos: ^0.0.3
-
+  file_selector_linux: ^0.0.2
 
 dev_dependencies:
   flutter_test:
