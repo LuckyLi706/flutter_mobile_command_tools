@@ -30,9 +30,8 @@ class AndroidCommand {
     }
     executable = await checkFirst(arguments,
         executable: executable, workingDirectory: workingDirectory);
-    print(executable);
-    print(arguments);
-    print(workingDirectory);
+    print(
+        "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
     return await Process.run(executable, arguments,
         workingDirectory: workingDirectory, runInShell: runInShell);
   }

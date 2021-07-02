@@ -4,11 +4,14 @@ import 'dart:io';
 import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobile_command_tools/command/Command.dart';
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
+
+import 'model/SimOperation.dart';
 
 var _width = 0.0;
 var _height = 0.0;
@@ -18,20 +21,29 @@ late CommandResult result; //命令的结果
 List<DropdownMenuItem<String>> connectDeviceDdmi = []; //获取设备下拉框的列表
 List<String> currentAllDevice = []; //当前所有连接的设备
 List<DropdownMenuItem<String>> wireLessDeviceDdmi = []; //下拉框的列表
+List<DropdownMenuItem<String>> simOpDdmi = []; //下拉框的列表
 
 List<DropdownMenuItem<String>> pullDdmi = []; //下拉框的列表
 final AndroidCommand command = new AndroidCommand(); //命令信息
 
 late String currentWirelessDevice; //当前需要连接的无线设备
+String currentSimOp = ""; //当前的模拟操作
 String currentPullPath = ""; //当前pull文件的路径
 String currentPullFile = ""; //当前pull文件的路径
 
+List<SimOperation> _simOpList = []; //所有的模拟操作集合
+
 void main() {
-  InitUtils.init();
-  _initAllWireLessDevice();
-  runApp(new MaterialApp(
-    home: MyApp(),
-  ));
+  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+    InitUtils.init();
+    _initAllWireLessDevice();
+    _initSimOp();
+    runApp(new MaterialApp(
+      home: MyApp(),
+    ));
+  } else {
+    print("不支持当前平台");
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -45,13 +57,19 @@ class MyApp extends StatelessWidget {
             new IconButton(
                 onPressed: () async {
                   adbController.text = Constants.adbPath;
-                  print(Constants.adbPath);
                   //执行函数
-                  //showSettingDialog(context);
-                  // String? path=await _selectFile(context,extensions: ["png"]);
-                  // print(path);
+                  showSettingDialog(context);
                 },
-                icon: new Icon(Icons.settings))
+                icon: new Icon(Icons.settings)),
+            new IconButton(
+                onPressed: () async{
+                  ///没法获取assets的路径，考虑拷贝到当前目录下
+                  ///https://www.uedbox.com/post/65090/ 参考这个
+                  var loadString = await rootBundle.loadString('assets/apksigner.json');
+                  print(loadString);
+                  _logTextController.clear();
+                },
+                icon: new Icon(Icons.delete))
           ],
         ),
         body: new Container(
@@ -179,6 +197,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
   FocusNode _pullFocus = FocusNode(); //得到焦点
   bool? _checkWireless = false; //无线连接的复选框
   bool? _checkPush = false; //推送的复选框
+  bool? _checkRepeat = false; //是否重复执行
+  bool? _checkAllDevice = false;
 
   void updateConnectDevice(List<String> resultList) {
     setState(() {
@@ -232,7 +252,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
               SizedBox(
                 height: 10,
               ),
-              new Row(children: [new Text("基本操作：")]),
+              new Row(children: [
+                new Text(
+                  "基本操作：",
+                  style: _tipTextStyle(),
+                )
+              ]),
               new Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -414,7 +439,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
               SizedBox(
                 height: 10,
               ),
-              new Row(children: [new Text("连接和断开：")]),
+              new Row(children: [new Text("连接和断开：", style: _tipTextStyle())]),
               new Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -642,7 +667,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   SizedBox(
                     height: 10,
                   ),
-                  new Text("推送和拉取："),
+                  new Text("推送和拉取：", style: _tipTextStyle()),
                 ],
               ),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -835,7 +860,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     focusNode: _pullFocus,
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
-                      //labelText: "文件路径",
+                      hintText: "文件路径",
                       // border: OutlineInputBorder(
                       //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
                     ),
@@ -870,15 +895,159 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   ),
                 ],
               ),
+              new Row(
+                children: [
+                  SizedBox(
+                    height: 10,
+                  ),
+                  new Text("模拟操作：", style: _tipTextStyle()),
+                ],
+              ),
+              new Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(
+                      child: Center(
+                          child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                        DropdownButton<String?>(
+                          value: currentSimOp,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              if (newValue != null) {
+                                currentSimOp = newValue;
+                              }
+                            });
+                          },
+                          items: simOpDdmi,
+                        )
+                      ]))),
+                  Expanded(
+                      child: TextButton(
+                    onPressed: () {
+                      showSimOpDialog(context, currentSimOp);
+                    },
+                    child: new Text("添加"),
+                  )),
+                  SizedBox(
+                    width: 5,
+                  ),
+                ],
+              ),
+              new Row(
+                children: [
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: _checkRepeat,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              setState(() {
+                                _checkRepeat = isCheck;
+                              });
+                            }),
+                        new Text("是否循环")
+                      ])),
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: _checkAllDevice,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              setState(() {
+                                _checkAllDevice = isCheck;
+                              });
+                            }),
+                        new Text("所有设备")
+                      ])),
+                ],
+              ),
+              new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Expanded(
+                      child: TextButton(
+                    onPressed: () {
+                      if (_simOpList.length == 0) {
+                        _showLog("请先添加模拟操作");
+                        return;
+                      }
+                      if (currentAllDevice.length == 0) {
+                        _showLog("当前无设备连接,请先获取设备");
+                        return;
+                      }
+                      _startSimOperation(_checkAllDevice, _checkRepeat);
+                    },
+                    child: Text("执行命令"),
+                  )),
+                  Expanded(
+                      child: TextButton(
+                    onPressed: () {
+                      _stopSimOperation();
+                    },
+                    child: Text("停止命令"),
+                  )),
+                  Expanded(
+                      child: TextButton(
+                    onPressed: () {
+                      _simOpList.clear();
+                    },
+                    child: Text("清空列表"),
+                  )),
+                  SizedBox(
+                    width: 5,
+                  ),
+                ],
+              ),
+              new Row(
+                children: [
+                  SizedBox(
+                    height: 10,
+                  ),
+                  new Text("其他操作：", style: _tipTextStyle()),
+                ],
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  TextButton(
+                      onPressed: () async {
+                        String? apkPath =
+                            await _selectFile(context, extensions: ["apk"]);
+                        if (Constants.apksignerPath.isEmpty) {
+                          _showLog("apksigner签名文件目录为空");
+                          return;
+                        }
+                      },
+                      child: Text("apk签名"))
+                ],
+              )
             ]));
   }
 }
 
 final TextEditingController adbController = new TextEditingController();
+final TextEditingController apkSignerController = new TextEditingController();
+
 final TextEditingController wireLessController = new TextEditingController();
 final TextEditingController pushController = new TextEditingController();
 final TextEditingController pullController = new TextEditingController();
-bool isPullCrash = false;
+final TextEditingController simOpController = new TextEditingController();
+
+bool isPullCrash = false; //当前需要拉取普通文件还是crash文件
 
 showSettingDialog(BuildContext context) {
   showDialog(
@@ -903,6 +1072,7 @@ showSettingDialog(BuildContext context) {
                   onPressed: () {
                     //settingModel.adb = _controller.text;
                     _settings['adb'] = adbController.text;
+                    _settings['apksigner'] = apkSignerController.text;
                     FileUtils.writeSetting(_settings);
                     Navigator.of(context).pop();
                   },
@@ -919,18 +1089,23 @@ showSettingDialog(BuildContext context) {
                           children: [
                             new Row(
                               mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
+                                new TextButton(
+                                    onPressed: () async {
+                                      String? path = await _selectFile(context);
+                                      if (path == null) {
+                                        _showLog("未选择adb文件");
+                                      } else {
+                                        adbController.text = path;
+                                      }
+                                    },
+                                    child: new Text("adb")),
                                 new Expanded(
                                     child: TextField(
                                   controller: adbController,
                                   decoration: InputDecoration(
-                                    // labelText: '表单label',
-                                    // labelStyle: TextStyle(
-                                    //   color: Colors.pink,
-                                    //   fontSize: 12,
-                                    // ),
-                                    helperText: 'adb目录',
-                                    hintText: 'adb目录...',
+                                    labelText: 'adb',
                                     border: OutlineInputBorder(
                                       borderSide: BorderSide(
                                         color: Colors.pink,
@@ -944,18 +1119,21 @@ showSettingDialog(BuildContext context) {
                             new Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // new Text("adb目录"),
-                                // SizedBox(width: 10),
+                                new TextButton(
+                                    onPressed: () async {
+                                      String? path = await _selectFile(context);
+                                      if (path == null) {
+                                        _showLog("未选择apksigner文件");
+                                      } else {
+                                        apkSignerController.text = path;
+                                      }
+                                    },
+                                    child: new Text("apksigner")),
                                 new Expanded(
                                     child: TextField(
+                                  controller: apkSignerController,
                                   decoration: InputDecoration(
-                                    // labelText: '表单label',
-                                    // labelStyle: TextStyle(
-                                    //   color: Colors.pink,
-                                    //   fontSize: 12,
-                                    // ),
-                                    helperText: '',
-                                    hintText: 'Placeholder...',
+                                    labelText: 'apksigner',
                                     border: OutlineInputBorder(
                                       borderSide: BorderSide(
                                         color: Colors.pink,
@@ -997,6 +1175,117 @@ showSettingDialog(BuildContext context) {
           ),
         );
       });
+}
+
+showSimOpDialog(BuildContext context, String operation) {
+  showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        // return new Scaffold(
+        //   appBar: new AppBar(
+        //     title: new Text(Constants.APP_TITLE_NAME),
+        //   ),
+        //   body:
+        return UnconstrainedBox(
+          //在Dialog的外层添加一层UnconstrainedBox
+          //constrainedAxis: Axis.vertical,
+          child: SizedBox(
+            //再用SizeBox指定宽度new Dialog(
+            child: new AlertDialog(
+              scrollable: true,
+              actions: [
+                TextButton(
+                  child: Text('确定'),
+                  onPressed: () {
+                    //settingModel.adb = _controller.text;
+                    SimOperation? simOp = _isCheckSimOpValue(currentSimOp);
+                    if (simOp != null) {
+                      _simOpList.add(simOp);
+                    }
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+              title: new Text(operation, style: new TextStyle(fontSize: 20)),
+              content: new Center(
+                  child: new Container(
+                      //color: Color.fromARGB(255, 250, 255, 0),
+                      width: 0.3 * _width,
+                      height: 0.1 * _height,
+                      child: new SingleChildScrollView(
+                        child: new Column(
+                          children: [
+                            new Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                new Expanded(
+                                    child: TextField(
+                                  controller: simOpController,
+                                  decoration: InputDecoration(
+                                    hintText: _getSimOpTips(operation),
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Colors.pink,
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ))),
+            ),
+          ),
+        );
+      });
+}
+
+bool _opRepeat = false;
+
+void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
+  List<SimOperation> listOps = []..addAll(_simOpList);
+
+  _opRepeat = checkRepeat == true;
+  List<String> listDevices = [];
+  if (checkAllDevice == true) {
+    listDevices..addAll(currentAllDevice);
+  } else {
+    listDevices.add(Constants.currentDevice);
+  }
+
+  listDevices.forEach((element) {
+    _runCommand(listOps, element);
+  });
+  //});
+}
+
+_runCommand(List<SimOperation> listOps, String device) {
+  List<Future> futureList = [];
+  listOps.forEach((element) {
+    futureList.add(Future.delayed(Duration(seconds: element.duration), () {
+      List<String> arguments = ["-s", device]
+        ..addAll(_getSimOpCommand(element));
+      _showLog("执行指令：arguments:$arguments");
+      Process.run(Constants.adbPath, arguments).then((value) {
+        _showLog("执行结束：" + value.stdout + value.stderr);
+      }).catchError((e) {
+        _showLog("执行出错：");
+      });
+    }));
+  });
+
+  Future.wait(futureList).then((value) {
+    if (_opRepeat) {
+      _runCommand(listOps, device);
+    }
+  });
+}
+
+void _stopSimOperation() {
+  _opRepeat = false;
 }
 
 /// 展示选择文件的弹窗
@@ -1057,6 +1346,107 @@ _initAllWireLessDevice() {
   return wireLessDeviceDdmi;
 }
 
+///初始化所有模拟操作
+_initSimOp() {
+  Constants.ALL_SIM_OPERATION.forEach((element) {
+    simOpDdmi.add(new DropdownMenuItem(
+        child: new Text(
+          element,
+          style: _dropDownTextStyle(),
+        ),
+        value: element));
+  });
+  currentSimOp = Constants.ALL_SIM_OPERATION[0];
+  return simOpDdmi;
+}
+
+String _getSimOpTips(String operationName) {
+  int index = Constants.ALL_SIM_OPERATION.indexOf(operationName);
+  switch (index) {
+    case 0:
+      return "data(值),s(秒)";
+    case 1:
+      return "x1(像素),y1(像素),x2(像素),y2(像素),s(秒)";
+    case 2:
+      return "x(像素),y(像素),s(秒)";
+    case 3:
+      return "s(秒)";
+    default:
+      return "";
+  }
+}
+
+List<String> _getSimOpCommand(SimOperation simOperation) {
+  int index = Constants.ALL_SIM_OPERATION.indexOf(simOperation.name);
+  switch (index) {
+    case 0:
+      return Constants.ADB_SIM_INPUT.split(" ")..add(simOperation.data);
+    case 1:
+      return Constants.ADB_SIM_SWIPE.split(" ")
+        ..add(simOperation.x1)
+        ..add(simOperation.y1)
+        ..add(simOperation.x2)
+        ..add(simOperation.y2);
+    case 2:
+      return Constants.ADB_SIM_TAP.split(" ")
+        ..add(simOperation.x1)
+        ..add(simOperation.y1);
+    case 3:
+      return Constants.ADB_SIM_BACK.split(" ");
+    default:
+      return [];
+  }
+}
+
+SimOperation? _isCheckSimOpValue(String operationName) {
+  SimOperation simOperation = SimOperation();
+  int index = Constants.ALL_SIM_OPERATION.indexOf(operationName);
+  List results = simOpController.text.split(",");
+  try {
+    switch (index) {
+      case 0:
+        if (results.length == 2) {
+          simOperation.data = results[0];
+          simOperation.name = operationName;
+          simOperation.duration = int.parse(results[1]);
+          return simOperation;
+        }
+        break;
+      case 1:
+        if (results.length == 5) {
+          simOperation.name = operationName;
+          simOperation.x1 = results[0];
+          simOperation.y1 = results[1];
+          simOperation.x2 = results[2];
+          simOperation.y2 = results[3];
+          simOperation.duration = int.parse(results[4]);
+          return simOperation;
+        }
+        break;
+      case 2:
+        if (results.length == 3) {
+          simOperation.name = operationName;
+          simOperation.x1 = results[0];
+          simOperation.y1 = results[1];
+          simOperation.duration = int.parse(results[2]);
+          return simOperation;
+        }
+        break;
+      case 3:
+        if (results.length == 1) {
+          simOperation.name = operationName;
+          simOperation.duration = int.parse(results[0]);
+          return simOperation;
+        }
+    }
+  } catch (e) {
+    _showLog("$operationName解析格式错误,添加失败," + e.toString());
+    return null;
+  }
+  _showLog("$operationName数据格式错误,添加失败");
+  return null;
+}
+
 String _getDeviceIp(String device) {
   List<String> deviceName = [
     "真机",
@@ -1097,4 +1487,12 @@ String _getDeviceIp(String device) {
 
 TextStyle _dropDownTextStyle() {
   return TextStyle(fontSize: 12, color: Colors.blue);
+}
+
+TextStyle _tipTextStyle() {
+  return TextStyle(
+      fontSize: 20,
+      color: Colors.red,
+      //decoration: TextDecoration.underline,
+      fontWeight: FontWeight.bold);
 }

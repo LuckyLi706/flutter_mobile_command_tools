@@ -57,5 +57,6 @@ class InitUtils {
     String value = await FileUtils.readSetting();
     Map<String, dynamic> map = jsonDecode(value);
     Constants.adbPath = map['adb'];
+    Constants.apksignerPath = map['apksigner'];
   }
 }

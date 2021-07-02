@@ -27,12 +27,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
+  //set current frame center
+  int scrWidth, scrHeight, xShaft, yShaft,mWidth,mHeight;
+
+  scrWidth = GetSystemMetrics(SM_CXSCREEN);
+  scrHeight = GetSystemMetrics(SM_CYSCREEN);
+
+  //set current frame size 2/3 screen
+  mWidth = scrWidth / 3 * 2;
+  mHeight = scrHeight / 3 * 2;
+
+  //center x y
+  xShaft = (scrWidth - mWidth) / 2;
+  yShaft = (scrHeight - mHeight) / 2;
+
   FlutterWindow window(&run_loop, project);
-  Win32Window::Point origin(10, 10);
-  Win32Window::Size size(1280, 720);
-  if (!window.CreateAndShow(L"flutter_mobile_command_tools", origin, size)) {
+  Win32Window::Point origin(xShaft, yShaft);
+  Win32Window::Size size(mWidth, mHeight);
+  if (!window.CreateAndShow(L"", origin, size)) {
     return EXIT_FAILURE;
   }
+
   window.SetQuitOnClose(true);
 
   run_loop.Run();

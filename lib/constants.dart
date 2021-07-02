@@ -6,6 +6,7 @@ class Constants {
   static const String APP_TITLE_NAME = "MobileTools";
 
   static String adbPath = "";
+  static String apksignerPath = "";
 
   static String currentDevice = ""; //当前的设备
 
@@ -40,4 +41,12 @@ class Constants {
   static const String ADB_PULL_CRASH_FILE = "shell dumpsys dropbox";
   static const String ADB_SEARCH_ALL_FILE_PATH = "shell ls";
   static const String ADB_PULL_FILE = "pull";
+  static const String ADB_SIM_SWIPE = "shell input swipe"; //滑动
+  static const String ADB_SIM_TAP = "shell input tap"; //点击
+  static const String ADB_SIM_INPUT = "shell input text"; //输入
+  static const String ADB_SIM_BACK = "shell input keyevent 4"; //后退
+  static const String ADB_APK_SIGNER =
+      "sign --ks jks_path --ks-key-alias myalias --ks-pass pass: mypass -key-pass pass: mykeypass -out newapkpath outapkpath";
+
+  static const List<String> ALL_SIM_OPERATION = ["输入", "滑动", "点击", "后退"];
 }
