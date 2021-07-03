@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 import '../constants.dart';
@@ -10,6 +11,7 @@ class InitUtils {
   static void init() async {
     await _initSetting();
     _initDesktop();
+    _initApkSigner();
   }
 
   //获取桌面路径
@@ -55,8 +57,35 @@ class InitUtils {
 
   static _initSetting() async {
     String value = await FileUtils.readSetting();
-    Map<String, dynamic> map = jsonDecode(value);
-    Constants.adbPath = map['adb'];
-    Constants.apksignerPath = map['apksigner'];
+    if (value.isNotEmpty) {
+      Map<String, dynamic> map = jsonDecode(value);
+      Constants.adbPath = map['adb'];
+      Constants.apksignerPath = map['apksigner'];
+    }
+  }
+
+  ///初始化签名文件
+  static _initApkSigner() async {
+    Constants.signerPath =
+        await FileUtils.localFile("apksigner.json", subDir: "apksigner");
+    String signer = await FileUtils.readFile(Constants.signerPath);
+    if (signer.isEmpty) {
+      signer = await rootBundle.loadString('assets/apksigner.json');
+      FileUtils.writeFile(signer, Constants.signerPath);
+    }
+
+    Constants.jksPath =
+        await FileUtils.localFile("apk.jks", subDir: "apksigner");
+    if (!await FileUtils.isExistFile(Constants.jksPath.path)) {
+      var buffer = await rootBundle.load('assets/apk.jks');
+      FileUtils.writeBytesFile(buffer, Constants.jksPath);
+    }
+
+    Constants.signerJarPath =
+        await FileUtils.localFile("apksigner.jar", subDir: "apksigner");
+    if (!await FileUtils.isExistFile(Constants.signerJarPath.path)) {
+      var buffer = await rootBundle.load('assets/apksigner.jar');
+      FileUtils.writeBytesFile(buffer, Constants.signerJarPath);
+    }
   }
 }

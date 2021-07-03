@@ -16,6 +16,7 @@ import 'model/SimOperation.dart';
 var _width = 0.0;
 var _height = 0.0;
 var _settings = {};
+var _apksigner = {};
 String _showLogText = ""; //展示日志的信息
 late CommandResult result; //命令的结果
 List<DropdownMenuItem<String>> connectDeviceDdmi = []; //获取设备下拉框的列表
@@ -62,11 +63,9 @@ class MyApp extends StatelessWidget {
                 },
                 icon: new Icon(Icons.settings)),
             new IconButton(
-                onPressed: () async{
+                onPressed: () async {
                   ///没法获取assets的路径，考虑拷贝到当前目录下
                   ///https://www.uedbox.com/post/65090/ 参考这个
-                  var loadString = await rootBundle.loadString('assets/apksigner.json');
-                  print(loadString);
                   _logTextController.clear();
                 },
                 icon: new Icon(Icons.delete))
@@ -331,11 +330,48 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () {
                           command
+                              .execCommand(
+                                  Constants.ADB_CURRENT_ACTIVITY.split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_CURRENT_ACTIVITY, value);
+                            _showLog(result.mResult);
+                          }).catchError((e) {
+                            _showLog(e.toString());
+                          });
+                        },
+                        child: new Text("当前activity"))),
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          if (_packageController.text.isEmpty) {
+                            _showLog("请先获取包名");
+                            return;
+                          }
+                          command
+                              .execCommand(Constants.ADB_CLEAR_DATA.split(" ")
+                                ..add(_packageController.text))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_CLEAR_DATA, value);
+                            _showLog(result.mResult);
+                          }).catchError((e) {
+                            _showLog(e.toString());
+                          });
+                        },
+                        child: new Text("清除数据")))
+              ]),
+              new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          command
                               .execCommand(Constants.ADB_SCREEN_SHOT.split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_SCREEN_SHOT, value);
                             if (!result.mError) {
+                              _showLog("截屏成功");
                               command
                                   .execCommand(
                                       Constants.ADB_PULL_SCREEN_SHOT.split(" "),
@@ -345,6 +381,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                     Constants.ADB_PULL_SCREEN_SHOT, value);
                                 _showLog(result.mResult);
                               });
+                            } else {
+                              _showLog(result.mResult);
                             }
                           }).catchError((e) {
                             _showLog(e.toString());
@@ -352,8 +390,36 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         },
                         child: new Text("截屏"))),
                 Expanded(
-                    child:
-                        new TextButton(onPressed: () {}, child: new Text("录屏")))
+                    child: new TextButton(
+                        onPressed: () async {
+                          String times = await showScreenRecordDialog(context);
+                          command
+                              .execCommand(Constants.ADB_SCREEN_RECORD
+                                  .replaceAll("times", times)
+                                  .split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_SCREEN_RECORD, value);
+                            if (!result.mError) {
+                              _showLog("录屏结束");
+                              command
+                                  .execCommand(
+                                      Constants.ADB_PULL_SCREEN_RECORD
+                                          .split(" "),
+                                      workingDirectory: Constants.desktopPath)
+                                  .then((value) {
+                                result = command.dealWithData(
+                                    Constants.ADB_PULL_SCREEN_RECORD, value);
+                                _showLog(result.mResult);
+                              });
+                            } else {
+                              _showLog(result.mResult);
+                            }
+                          }).catchError((e) {
+                            _showLog(e.toString());
+                          });
+                        },
+                        child: new Text("录屏")))
               ]),
               new Row(
                 // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1023,16 +1089,91 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  TextButton(
-                      onPressed: () async {
-                        String? apkPath =
-                            await _selectFile(context, extensions: ["apk"]);
-                        if (Constants.apksignerPath.isEmpty) {
-                          _showLog("apksigner签名文件目录为空");
-                          return;
+                  Expanded(
+                      child: TextButton(
+                          onPressed: () async {
+                            String? apkPath =
+                                await _selectFile(context, extensions: ["apk"]);
+                            if (!await FileUtils.isExistFile(
+                                Constants.signerPath.path)) {
+                              _showLog("apksigner签名文件不存在");
+                              return;
+                            } else {
+                              if (_apksigner.length == 0) {
+                                String value = await FileUtils.readFile(
+                                    Constants.signerPath);
+                                if (value.isNotEmpty) {
+                                  Map<String, dynamic> map = jsonDecode(value);
+                                  _apksigner = map;
+                                }
+                              }
+                              String commandStr = Constants.APK_SIGNER
+                                  .replaceAll(
+                                      "apksign", Constants.signerJarPath.path)
+                                  .replaceAll(
+                                      "jks_path", Constants.jksPath.path)
+                                  .replaceAll("myalias", _apksigner['alias'])
+                                  .replaceAll("mypass", _apksigner["ks_pass"])
+                                  .replaceAll(
+                                      "mykeypass", _apksigner["key_pass"])
+                                  .replaceAll("outapk", "signer.apk")
+                                  .replaceAll("inputapk",
+                                      apkPath == null ? "" : apkPath);
+                              print(commandStr);
+                              Process.run(commandStr, [],
+                                      runInShell: true,
+                                      workingDirectory: Constants.desktopPath)
+                                  .then((value) {
+                                if (value.stderr.toString().isEmpty) {
+                                  _showLog("签名成功");
+                                }else{
+                                  _showLog(value.stderr.toString());
+                                }
+                              }).catchError((e) {
+                                _showLog(e.toString());
+                              });
+                            }
+                          },
+                          child: Text("v2签名"))),
+                  new Expanded(
+                      child: TextButton(
+                    onPressed: () async {
+                      String? apkPath =
+                          await _selectFile(context, extensions: ["apk"]);
+                      if (!await FileUtils.isExistFile(
+                          Constants.signerPath.path)) {
+                        _showLog("apksigner签名文件不存在");
+                        return;
+                      } else {
+                        if (_apksigner.length == 0) {
+                          String value =
+                              await FileUtils.readFile(Constants.signerPath);
+                          if (value.isNotEmpty) {
+                            Map<String, dynamic> map = jsonDecode(value);
+                            _apksigner = map;
+                          }
                         }
-                      },
-                      child: Text("apk签名"))
+                        String commandStr = Constants.VERIFY_APK_SIGNER
+                            .replaceAll("apksign", Constants.signerJarPath.path)
+                            .replaceAll(
+                                "inputapk", apkPath == null ? "" : apkPath);
+                        print(commandStr);
+                        Process.run(commandStr, [],
+                                runInShell: true,
+                                workingDirectory: Constants.desktopPath)
+                            .then((value) {
+                          if (value.stderr.toString().isEmpty) {
+                            _showLog(value.stdout);
+                          } else {
+                            _showLog(value.stderr);
+                          }
+                        }).catchError((e) {
+                          _showLog(e.toString());
+                        });
+                      }
+                    },
+                    child: new Text("校验签名"),
+                  ))
                 ],
               )
             ]));
@@ -1046,6 +1187,8 @@ final TextEditingController wireLessController = new TextEditingController();
 final TextEditingController pushController = new TextEditingController();
 final TextEditingController pullController = new TextEditingController();
 final TextEditingController simOpController = new TextEditingController();
+final TextEditingController screenRecordController =
+    new TextEditingController();
 
 bool isPullCrash = false; //当前需要拉取普通文件还是crash文件
 
@@ -1072,7 +1215,7 @@ showSettingDialog(BuildContext context) {
                   onPressed: () {
                     //settingModel.adb = _controller.text;
                     _settings['adb'] = adbController.text;
-                    _settings['apksigner'] = apkSignerController.text;
+                    Constants.adbPath = adbController.text;
                     FileUtils.writeSetting(_settings);
                     Navigator.of(context).pop();
                   },
@@ -1115,59 +1258,59 @@ showSettingDialog(BuildContext context) {
                                 )),
                               ],
                             ),
-                            SizedBox(height: 10),
-                            new Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                new TextButton(
-                                    onPressed: () async {
-                                      String? path = await _selectFile(context);
-                                      if (path == null) {
-                                        _showLog("未选择apksigner文件");
-                                      } else {
-                                        apkSignerController.text = path;
-                                      }
-                                    },
-                                    child: new Text("apksigner")),
-                                new Expanded(
-                                    child: TextField(
-                                  controller: apkSignerController,
-                                  decoration: InputDecoration(
-                                    labelText: 'apksigner',
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
-                                      ),
-                                    ),
-                                  ),
-                                )),
-                              ],
-                            ),
-                            SizedBox(height: 10),
-                            new Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // new Text("adb目录"),
-                                // SizedBox(width: 10),
-                                new Expanded(
-                                    child: TextField(
-                                  decoration: InputDecoration(
-                                    // labelText: '表单label',
-                                    // labelStyle: TextStyle(
-                                    //   color: Colors.pink,
-                                    //   fontSize: 12,
-                                    // ),
-                                    helperText: 'helperText',
-                                    hintText: 'Placeholder...',
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
-                                      ),
-                                    ),
-                                  ),
-                                )),
-                              ],
-                            ),
+                            // SizedBox(height: 10),
+                            // new Row(
+                            //   mainAxisAlignment: MainAxisAlignment.center,
+                            //   children: [
+                            //     new TextButton(
+                            //         onPressed: () async {
+                            //           String? path = await _selectFile(context);
+                            //           if (path == null) {
+                            //             _showLog("未选择apksigner文件");
+                            //           } else {
+                            //             apkSignerController.text = path;
+                            //           }
+                            //         },
+                            //         child: new Text("apksigner")),
+                            //     new Expanded(
+                            //         child: TextField(
+                            //       controller: apkSignerController,
+                            //       decoration: InputDecoration(
+                            //         labelText: 'apksigner',
+                            //         border: OutlineInputBorder(
+                            //           borderSide: BorderSide(
+                            //             color: Colors.pink,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     )),
+                            //   ],
+                            // ),
+                            // SizedBox(height: 10),
+                            // new Row(
+                            //   mainAxisAlignment: MainAxisAlignment.center,
+                            //   children: [
+                            //     // new Text("adb目录"),
+                            //     // SizedBox(width: 10),
+                            //     new Expanded(
+                            //         child: TextField(
+                            //       decoration: InputDecoration(
+                            //         // labelText: '表单label',
+                            //         // labelStyle: TextStyle(
+                            //         //   color: Colors.pink,
+                            //         //   fontSize: 12,
+                            //         // ),
+                            //         helperText: 'helperText',
+                            //         hintText: 'Placeholder...',
+                            //         border: OutlineInputBorder(
+                            //           borderSide: BorderSide(
+                            //             color: Colors.pink,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     )),
+                            //   ],
+                            // ),
                           ],
                         ),
                       ))),
@@ -1178,15 +1321,11 @@ showSettingDialog(BuildContext context) {
 }
 
 showSimOpDialog(BuildContext context, String operation) {
+  simOpController.clear();
   showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        // return new Scaffold(
-        //   appBar: new AppBar(
-        //     title: new Text(Constants.APP_TITLE_NAME),
-        //   ),
-        //   body:
         return UnconstrainedBox(
           //在Dialog的外层添加一层UnconstrainedBox
           //constrainedAxis: Axis.vertical,
@@ -1241,6 +1380,75 @@ showSimOpDialog(BuildContext context, String operation) {
           ),
         );
       });
+}
+
+Future<String> showScreenRecordDialog(BuildContext context) async {
+  var times = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        // return new Scaffold(
+        //   appBar: new AppBar(
+        //     title: new Text(Constants.APP_TITLE_NAME),
+        //   ),
+        //   body:
+        return UnconstrainedBox(
+          //在Dialog的外层添加一层UnconstrainedBox
+          //constrainedAxis: Axis.vertical,
+          child: SizedBox(
+            //再用SizeBox指定宽度new Dialog(
+            child: new AlertDialog(
+              scrollable: true,
+              actions: [
+                TextButton(
+                  child: Text('确定'),
+                  onPressed: () {
+                    if (screenRecordController.text.isEmpty) {
+                      _showLog("时间不能设置为空");
+                      return;
+                    }
+                    Navigator.of(context).pop(screenRecordController.text);
+                  },
+                )
+              ],
+              title: new Text("录屏设置", style: new TextStyle(fontSize: 20)),
+              content: new Center(
+                  child: new Container(
+                      //color: Color.fromARGB(255, 250, 255, 0),
+                      width: 0.3 * _width,
+                      height: 0.1 * _height,
+                      child: new SingleChildScrollView(
+                        child: new Column(
+                          children: [
+                            new Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                new Expanded(
+                                    child: TextField(
+                                  controller: screenRecordController,
+                                  inputFormatters: [
+                                    WhitelistingTextInputFormatter.digitsOnly
+                                  ],
+                                  decoration: InputDecoration(
+                                    hintText: "录屏时间(s)",
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Colors.pink,
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ))),
+            ),
+          ),
+        );
+      });
+  return times;
 }
 
 bool _opRepeat = false;
@@ -1491,7 +1699,7 @@ TextStyle _dropDownTextStyle() {
 
 TextStyle _tipTextStyle() {
   return TextStyle(
-      fontSize: 20,
+      fontSize: 18,
       color: Colors.red,
       //decoration: TextDecoration.underline,
       fontWeight: FontWeight.bold);

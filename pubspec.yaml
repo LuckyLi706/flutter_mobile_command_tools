@@ -51,6 +51,8 @@ flutter:
   assets:
     - assets/apksigner.json
     - assets/apk.jks
+    - assets/apksigner.jar
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:

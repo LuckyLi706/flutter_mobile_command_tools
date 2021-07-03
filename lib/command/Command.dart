@@ -75,15 +75,28 @@ class AndroidCommand {
           //处理9.0版本手机顶级activity信息过滤改为mResumedActivity
           if (values[i].contains("mFocusedActivity") ||
               values[i].contains("mResumedActivity")) {
-            print(values[i]);
             int a = values[i].indexOf("u0");
             int b = values[i].indexOf('/');
             String packageName = values[i].substring(a + 3, b);
-            print(packageName);
             return getProcessResult(false, packageName);
           }
           if (values[i].contains("error:")) {
-            return getProcessResult(false, values[i]);
+            return getProcessResult(true, values[i]);
+          }
+        }
+        return getProcessResult(true, "无信息");
+      case Constants.ADB_CURRENT_ACTIVITY:
+        List<String> values = data.split('\n');
+        for (int i = 0; i < values.length; i++) {
+          //处理9.0版本手机顶级activity信息过滤改为mResumedActivity
+          if (values[i].contains("mFocusedActivity") ||
+              values[i].contains("mResumedActivity")) {
+            List<String> listActivity = values[i].split(" ");
+            return getProcessResult(
+                false, listActivity[listActivity.length - 2].trim());
+          }
+          if (values[i].contains("error:")) {
+            return getProcessResult(true, values[i]);
           }
         }
         break;
