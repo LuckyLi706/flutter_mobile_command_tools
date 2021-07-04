@@ -15,6 +15,7 @@ class FileUtils {
     switch (dir) {
       case CURRENT_DIR:
         _path = Directory.current;
+        print(_path);
         break;
       case DOWNLOAD_DIR:
         _path = await getDownloadsDirectory();

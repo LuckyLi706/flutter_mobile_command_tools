@@ -10,6 +10,7 @@ import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 import 'model/SimOperation.dart';
 
@@ -64,8 +65,7 @@ class MyApp extends StatelessWidget {
                 icon: new Icon(Icons.settings)),
             new IconButton(
                 onPressed: () async {
-                  ///没法获取assets的路径，考虑拷贝到当前目录下
-                  ///https://www.uedbox.com/post/65090/ 参考这个
+                  _showLogText = "";
                   _logTextController.clear();
                 },
                 icon: new Icon(Icons.delete))
@@ -174,7 +174,7 @@ class RightPanelState extends State<RightPanel>
         physics: NeverScrollableScrollPhysics(),
         children: [
           AndroidRightPanel(),
-          Center(child: Text('自行车')),
+          Center(child: Text('敬请期待')),
         ],
         controller: tabController,
       ),
@@ -283,6 +283,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: new Text("获取设备"))),
                   Expanded(
                       child: DropdownButton<String>(
+                    isExpanded: true,
                     value: Constants.currentDevice,
                     onChanged: (String? newValue) {
                       setState(() {
@@ -673,6 +674,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_WIRELESS_DISCONNECT, value);
+                              if (result.mError) {
+                                _showLog(result.mResult);
+                                return;
+                              }
                               currentAllDevice.remove(result.mResult);
                               updateConnectDevice(currentAllDevice);
                             }).catchError((e) {
@@ -940,22 +945,19 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   SizedBox(
                     width: 5,
                   ),
-                  Wrap(children: [
-                    DropdownButton<String?>(
-                      value: currentPullFile,
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          if (newValue != null) {
-                            currentPullFile = newValue;
-                            // if (!isPullCrash) {
-                            //   //pullController.text=
-                            // }
-                          }
-                        });
-                      },
-                      items: pullDdmi,
-                    )
-                  ]),
+                  Expanded(
+                      child: DropdownButton<String?>(
+                    isExpanded: true,
+                    value: currentPullFile,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        if (newValue != null) {
+                          currentPullFile = newValue;
+                        }
+                      });
+                    },
+                    items: pullDdmi,
+                  )),
                   SizedBox(
                     width: 5,
                   ),
@@ -1119,14 +1121,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   .replaceAll("outapk", "signer.apk")
                                   .replaceAll("inputapk",
                                       apkPath == null ? "" : apkPath);
-                              print(commandStr);
-                              Process.run(commandStr, [],
+                              PlatformUtils.runCommand(commandStr,
                                       runInShell: true,
-                                      workingDirectory: Constants.desktopPath)
+                                      workDirectory: Constants.desktopPath)
                                   .then((value) {
                                 if (value.stderr.toString().isEmpty) {
                                   _showLog("签名成功");
-                                }else{
+                                } else {
                                   _showLog(value.stderr.toString());
                                 }
                               }).catchError((e) {
@@ -1158,9 +1159,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             .replaceAll(
                                 "inputapk", apkPath == null ? "" : apkPath);
                         print(commandStr);
-                        Process.run(commandStr, [],
+                        PlatformUtils.runCommand(commandStr,
                                 runInShell: true,
-                                workingDirectory: Constants.desktopPath)
+                                workDirectory: Constants.desktopPath)
                             .then((value) {
                           if (value.stderr.toString().isEmpty) {
                             _showLog(value.stdout);
@@ -1533,7 +1534,7 @@ _initAllWireLessDevice() {
   List<String> deviceName = [
     "真机",
     "逍遥模拟器",
-    "网易MuMu模拟器",
+    "MuMu模拟器",
     "蓝叠模拟器",
     "天天模拟器",
     "51模拟器",
@@ -1659,7 +1660,7 @@ String _getDeviceIp(String device) {
   List<String> deviceName = [
     "真机",
     "逍遥模拟器",
-    "网易MuMu模拟器",
+    "MuMu模拟器",
     "蓝叠模拟器",
     "天天模拟器",
     "51模拟器",
