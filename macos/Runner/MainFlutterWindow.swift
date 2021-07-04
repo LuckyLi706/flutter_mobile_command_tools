@@ -18,9 +18,7 @@ class MainFlutterWindow: NSWindow {
     windowFrame.size.width=windowWidth
     windowFrame.origin.x=pointX
     windowFrame.origin.y=pointY
-    print(windowFrame.origin)
     self.contentViewController = flutterViewController
-    print(NSScreen.screens[0].visibleFrame.size)
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
