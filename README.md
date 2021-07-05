@@ -35,11 +35,35 @@
 暂时未做（计划使用libmobileinstaller的相关指令）
 
 ## 编译
-所有平台应用都改成了占当前屏幕的2/3，居中显示。
+所有平台应用都改成了占当前屏幕的2/3，采用居中显示，linux没有居中，GTK没搞过。
 + windows
-需要安装Visual Studio,选择c++依赖。
-flutter build windows 进行编译。在build/windows/runner 会生成Visual Studio的解决方案工程。可以导入进行开发。
-exe在build/windows/runner/Release/*.exe
+
+  ```
+  安装Visual Studio,c++桌面包。
+  flutter build windows  //进行编译。
+  在build/windows/runner 会生成Visual Studio的解决方案工程，可以导入进行开发。
+  生成的exe在build/windows/runner/Release/*.exe
+  ```
+
++ linux
+
+  ```
+  //linux需要安装以下依赖
+  sudo apt-get update
+  sudo apt install clang
+  sudo apt install cmake
+  sudo apt install ninja-build
+  sudo apt install libgtk-3-dev
+  
+  
+  file INSTALL cannot copy file  //出现这个问题
+  flutter clean  //执行这个然后重启AndroidStudio
+  
+  flutter build linux //生成release包,文件在build/linux/release/bundle下面
+  
+  ```
+
+  
 
 ## 截图展示
 + windows（1920*1080）
