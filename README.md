@@ -60,9 +60,19 @@
   flutter clean  //执行这个然后重启AndroidStudio
   
   flutter build linux //生成release包,文件在build/linux/release/bundle下面
-  
+
   ```
 
++ macos
+
+  ```
+  安装Xcode，然后在编译的时候遇到很多小问题。然后百度解决了，其中一个
+  [tool_crash] Invalid argument(s): Cannot find executable for /Users/imac/Documents/FlutterSDK/flutter/bin/cache/artifacts
+  解决方案：https://github.com/flutter/flutter/issues/85107
+
+  flutter build macos //生成release包,文件在build/macos/Build/Products/Release/下面
+  将mac目录下的文件倒入xcode可进行开发
+  ```
   
 
 ## 截图展示
@@ -71,3 +81,6 @@
 
 + linux (1920*1080)
 ![screenshots/linux.png](screenshots/linux.png)
+
++ macos (1440*960)
+![screenshots/macos.png](screenshots/macos.png)
