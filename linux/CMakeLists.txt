@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 
-set(BINARY_NAME "flutter_mobile_command_tools")
+set(BINARY_NAME "MobileTool")
 set(APPLICATION_ID "com.example.flutter_mobile_command_tools")
 
 cmake_policy(SET CMP0063 NEW)

@@ -43,5 +43,7 @@ exe在build/windows/runner/Release/*.exe
 
 ## 截图展示
 + windows（1920*1080）
-
 ![screenshots/windows.png](screenshots/windows.png)
+
++ linux (1920*1080)
+![screenshots/linux.png](screenshots/linux.png)

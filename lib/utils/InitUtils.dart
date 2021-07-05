@@ -17,33 +17,44 @@ class InitUtils {
   //获取桌面路径
   static void _initDesktop() async {
     if (Platform.isWindows) {
-      Process.run(r"echo %USERPROFILE%", [], runInShell: true).then((value) {
+      Process.run(r"echo %USERPROFILE%", [], runInShell: true)
+          .then((value) async {
         if (value.stdout != "") {
           Constants.userPath =
               value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
           Constants.desktopPath = Constants.userPath + r"\Desktop";
+          if (!await FileUtils.isExistFolder(Constants.userPath)) {
+            Constants.desktopPath = Directory.current.path;
+          }
           _initAdbPath();
         } else {
           Constants.desktopPath = Directory.current.path;
         }
       });
     } else if (Platform.isMacOS) {
-      Process.run(r"id", ["-un"], runInShell: true).then((value) {
+      Process.run(r"id", ["-un"], runInShell: true).then((value) async {
         if (value.stdout != "") {
           Constants.userPath = "/Users/" +
               value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
           Constants.desktopPath = Constants.userPath + r"/Desktop";
+          if (!await FileUtils.isExistFolder(Constants.userPath)) {
+            String? path = await FileUtils.localPath(dir: FileUtils.TEMP_DIR);
+            Constants.desktopPath = path == null ? "" : path;
+          }
           _initAdbPath();
         } else {
           Constants.desktopPath = Directory.current.path;
         }
       });
     } else if (Platform.isLinux) {
-      Process.run(r"id", ["-un"], runInShell: true).then((value) {
+      Process.run(r"id", ["-un"], runInShell: true).then((value) async{
         if (value.stdout != "") {
           Constants.userPath = "/home/" +
               value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
           Constants.desktopPath = Constants.userPath + r"/Desktop";
+          if (!await FileUtils.isExistFolder(Constants.userPath)) {
+            Constants.desktopPath = Directory.current.path;
+          }
           _initAdbPath();
         } else {
           Constants.desktopPath = Directory.current.path;
@@ -64,8 +75,7 @@ class InitUtils {
           Constants.userPath + r"/Library/Android/sdk/platform-tools/adb";
     } else if (Platform.isLinux) {
       Constants.adbPath =
-          Constants.userPath +
-          r"/Android/Sdk/platform-tools/adb";
+          Constants.userPath + r"/Android/Sdk/platform-tools/adb";
     }
     print(Constants.adbPath);
   }
