@@ -3,7 +3,7 @@ import 'dart:core';
 import 'dart:io';
 
 class Constants {
-  static const String APP_TITLE_NAME = "MobileTools";
+  static const String APP_TITLE_NAME = "MobileTools_v1.0";
 
   static String adbPath = "";
   static String apksignerPath = "";

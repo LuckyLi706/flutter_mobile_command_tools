@@ -75,7 +75,6 @@ class InitUtils {
     if (value.isNotEmpty) {
       Map<String, dynamic> map = jsonDecode(value);
       Constants.adbPath = map['adb'];
-      Constants.apksignerPath = map['apksigner'];
     }
   }
 

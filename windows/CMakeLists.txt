@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(flutter_mobile_command_tools LANGUAGES CXX)
 
-set(BINARY_NAME "flutter_mobile_command_tools")
+# 修改文件名称
+set(BINARY_NAME "MobileTool")
 
 cmake_policy(SET CMP0063 NEW)
 

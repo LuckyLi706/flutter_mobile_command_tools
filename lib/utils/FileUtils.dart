@@ -30,10 +30,16 @@ class FileUtils {
   }
 
   static Future<File> localFile(String file, {String subDir = ""}) async {
-    String? path = await localPath();
+    String? path =
+        Platform.isMacOS ? await localPath(dir: TEMP_DIR) : await localPath();
+    print(path);
     if (path != null) {
       if (subDir.isNotEmpty) {
-        path = path + "/" + subDir;
+        if (path != "/") {
+          path = path + "/" + subDir;
+        } else {
+          path = path + subDir;
+        }
         bool isExist = await isExistFolder(path);
         if (!isExist) {
           Directory(path).create();

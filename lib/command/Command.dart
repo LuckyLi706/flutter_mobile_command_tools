@@ -25,7 +25,9 @@ class AndroidCommand {
       {String executable = "",
       String? workingDirectory,
       bool runInShell = false}) async {
-    if (arguments[0] != Constants.ADB_CONNECT_DEVICES) {
+    if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
+        arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
+        arguments[0] != Constants.ADB_WIRELESS_CONNECT) {
       arguments = ["-s", Constants.currentDevice]..addAll(arguments);
     }
     executable = await checkFirst(arguments,
@@ -67,8 +69,9 @@ class AndroidCommand {
           } else {
             return getProcessResult(true, "无设备连接");
           }
+        } else {
+          return getProcessResult(true, data);
         }
-        break;
       case Constants.ADB_GET_PACKAGE:
         List<String> values = data.split('\n');
         for (int i = 0; i < values.length; i++) {
@@ -104,7 +107,7 @@ class AndroidCommand {
         String ip = data.split(":")[1].split(" ")[0];
         return getProcessResult(false, ip);
       case Constants.ADB_WIRELESS_CONNECT:
-        if (data.contains("already")) {
+        if (data.contains("already") || data.contains("failed")) {
           //表示已经连接上了
           return getProcessResult(true, data);
         } else {
@@ -112,6 +115,9 @@ class AndroidCommand {
               false, data.replaceAll("connected to ", "").trim()); //移除换行符号
         }
       case Constants.ADB_WIRELESS_DISCONNECT:
+        if (data.contains("error")) {
+          return getProcessResult(true, data);
+        }
         return getProcessResult(
             false, data.replaceAll("disconnected ", "").trim());
       case Constants.ADB_PULL_CRASH:
