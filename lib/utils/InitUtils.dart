@@ -38,6 +38,17 @@ class InitUtils {
           Constants.desktopPath = Directory.current.path;
         }
       });
+    } else if (Platform.isLinux) {
+      Process.run(r"id", ["-un"], runInShell: true).then((value) {
+        if (value.stdout != "") {
+          Constants.userPath = "/home/" +
+              value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
+          Constants.desktopPath = Constants.userPath + r"/Desktop";
+          _initAdbPath();
+        } else {
+          Constants.desktopPath = Directory.current.path;
+        }
+      });
     }
   }
 
@@ -51,6 +62,10 @@ class InitUtils {
     } else if (Platform.isMacOS) {
       Constants.adbPath =
           Constants.userPath + r"/Library/Android/sdk/platform-tools/adb";
+    } else if (Platform.isLinux) {
+      Constants.adbPath =
+          Constants.userPath +
+          r"/Android/Sdk/platform-tools/adb";
     }
     print(Constants.adbPath);
   }

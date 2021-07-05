@@ -1,5 +1,4 @@
 #include "my_application.h"
-
 #include <flutter_linux/flutter_linux.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
@@ -30,6 +29,13 @@ static void my_application_activate(GApplication* application) {
   gboolean use_header_bar = TRUE;
 #ifdef GDK_WINDOWING_X11
   GdkScreen *screen = gtk_window_get_screen(window);
+  GdkDisplay *display =gdk_display_get_default();
+  GdkMonitor *monitor =gdk_display_get_primary_monitor(display);
+  GdkRectangle geo;
+  gdk_monitor_get_geometry(monitor, &geo);  //get current display
+  int x = geo.width;  //current display width
+  int y = geo.height; //current display height
+
   if (GDK_IS_X11_SCREEN(screen)) {
      const gchar* wm_name = gdk_x11_screen_get_window_manager_name(screen);
      if (g_strcmp0(wm_name, "GNOME Shell") != 0) {
@@ -48,7 +54,7 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_title(window, "flutter_mobile_command_tools");
   }
 
-  gtk_window_set_default_size(window, 1280, 720);
+  gtk_window_set_default_size(window, x/3*2, y/3*2);
   gtk_widget_show(GTK_WIDGET(window));
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
