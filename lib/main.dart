@@ -117,6 +117,7 @@ class LeftPanel extends StatefulWidget {
 }
 
 TextEditingController _logTextController = new TextEditingController();
+FocusNode leftPanelFocus = FocusNode();
 
 class LeftPanelState extends State<LeftPanel> {
   @override
@@ -126,8 +127,10 @@ class LeftPanelState extends State<LeftPanel> {
       keyboardType: TextInputType.multiline,
       maxLines: null,
       //不限制行数
-      enabled: false,
+      enabled: true,
       autofocus: false,
+      focusNode: leftPanelFocus,
+      enableInteractiveSelection: true,
       decoration: InputDecoration(
         labelText: "日志信息",
         border: OutlineInputBorder(
@@ -1513,6 +1516,7 @@ Future<String?> _selectFile(BuildContext context,
 }
 
 void _showLog(String msg) {
+  leftPanelFocus.unfocus();
   if (msg.isEmpty) {
     return;
   }

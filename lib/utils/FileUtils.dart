@@ -32,7 +32,6 @@ class FileUtils {
   static Future<File> localFile(String file, {String subDir = ""}) async {
     String? path =
         Platform.isMacOS ? await localPath(dir: TEMP_DIR) : await localPath();
-    print(path);
     if (path != null) {
       if (subDir.isNotEmpty) {
         if (path != "/") {
