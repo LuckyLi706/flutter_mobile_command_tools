@@ -1,5 +1,7 @@
 # MobileTool
-最近没事学习了一波flutter，移动端没想到写啥。就写了一个桌面端应用。也是之前项目的一个衍生。之前用c#写过一个使用adb操作Android手机的windows应用，主要就是为了简化操作。现在把这个功能转移到所有桌面应用来，并且修复之前的一些遗留的BUG
+最近没事学习了一波flutter，移动端没想到写啥。就写了一个桌面端应用。也是之前项目的一个衍生。之前用c#写过一个使用adb操作Android手机的windows应用，主要就是为了简化操作。现在把这个功能转移到所有桌面应用来，并且修复之前的一些遗留的BUG。
+
+如果有其他adb功能需要添加的可以提。
 
 ## 功能
 ### Android
@@ -30,7 +32,7 @@
 + 模拟操作的执行命令
 目前模拟操作集成了输入、滑动、点击、后退。根据选择的不同来执行模拟操作。
 + v2签名
-使用apksigner的签名。windows的签名文件放在apksigner文件夹下面，macos放在/Users/用户名/Library/Caches/apksigner下面，可以进行替换，保证文件名一样。
+使用apksigner的签名。windows的签名文件放在apksigner文件夹下面，macos放在/Users/用户名/Library/Caches/apksigner下面，可以进行替换，保证文件名一样。apksigner.json为签名的key以及密码。替换记得修改。
 ### IOS
 暂时未做（计划使用libmobileinstaller的相关指令）
 
@@ -69,7 +71,7 @@
   安装Xcode，然后在编译的时候遇到很多小问题。然后百度解决了，其中一个
   [tool_crash] Invalid argument(s): Cannot find executable for /Users/imac/Documents/FlutterSDK/flutter/bin/cache/artifacts
   解决方案：https://github.com/flutter/flutter/issues/85107
-
+  
   flutter build macos //生成release包,文件在build/macos/Build/Products/Release/下面
   将mac目录下的文件倒入xcode可进行开发
   ```

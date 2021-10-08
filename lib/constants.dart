@@ -41,6 +41,8 @@ class Constants {
   static const String ADB_UNINSTALL_APK = "uninstall";
   static const String ADB_REBOOT = "reboot";
   static const String ADB_REBOOT_BOOTLOADER = "reboot bootloader";
+  static const String ADB_REBOOT_RECOVERY = "reboot recovery";
+
   static const String ADB_IP = "shell ifconfig | grep 192.168";
   static const String ADB_FORWARD_PORT = "tcpip 5555";
   static const String ADB_WIRELESS_CONNECT = "connect";

@@ -488,7 +488,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               _showLog(e.toString());
                             });
                           },
-                          child: new Text("重启"))),
+                          child: new Text("重启手机"))),
                   Expanded(
                       child: new TextButton(
                           onPressed: () {
@@ -504,6 +504,43 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             });
                           },
                           child: new Text("重启到fastboot"))),
+                ],
+              ),
+              new Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            command
+                                .execCommand(
+                                Constants.ADB_REBOOT_RECOVERY.split("\n"))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_REBOOT_RECOVERY, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("重启到recovery"))),
+                 // Expanded(
+                      // child: new TextButton(
+                      //     onPressed: () {
+                      //       command
+                      //           .execCommand(
+                      //           Constants.ADB_REBOOT_BOOTLOADER.split("\n"))
+                      //           .then((value) {
+                      //         result = command.dealWithData(
+                      //             Constants.ADB_REBOOT_BOOTLOADER, value);
+                      //         _showLog(result.mResult);
+                      //       }).catchError((e) {
+                      //         _showLog(e.toString());
+                      //       });
+                      //     },
+                      //     child: new Text("重启到fastboot"))),
+                  //)
                 ],
               ),
               SizedBox(
