@@ -8,10 +8,11 @@ import '../constants.dart';
 import 'FileUtils.dart';
 
 class InitUtils {
-  static void init() async {
+  static Future init() async {
     await _initSetting();
     _initDesktop();
     _initApkSigner();
+    _initInnerAdb();
   }
 
   //获取桌面路径
@@ -47,7 +48,7 @@ class InitUtils {
         }
       });
     } else if (Platform.isLinux) {
-      Process.run(r"id", ["-un"], runInShell: true).then((value) async{
+      Process.run(r"id", ["-un"], runInShell: true).then((value) async {
         if (value.stdout != "") {
           Constants.userPath = "/home/" +
               value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
@@ -84,7 +85,15 @@ class InitUtils {
     String value = await FileUtils.readSetting();
     if (value.isNotEmpty) {
       Map<String, dynamic> map = jsonDecode(value);
-      Constants.adbPath = map['adb'];
+      if (map['adb'] != null) {
+        Constants.adbPath = map['adb'];
+      }
+      if (map['isRoot'] != null) {
+        Constants.isRoot = map['isRoot'];
+      }
+      if (map['isInnerAdb'] != null) {
+        Constants.isInnerAdb = map['isInnerAdb'];
+      }
     }
   }
 
@@ -111,5 +120,17 @@ class InitUtils {
       var buffer = await rootBundle.load('assets/apksigner.jar');
       FileUtils.writeBytesFile(buffer, Constants.signerJarPath);
     }
+  }
+
+  //初始化内部的adb
+  static _initInnerAdb() async {
+    Directory directoryAdb = Directory(
+        '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}/adb');
+    var path = directoryAdb.path + ".zip";
+    if (!await directoryAdb.exists()) {
+      var buffer = await rootBundle.load('assets/windows/adb.zip');
+      await FileUtils.writeBytesFile(buffer, File(path));
+    }
+    FileUtils.unZipFiles(directoryAdb.path, path);
   }
 }

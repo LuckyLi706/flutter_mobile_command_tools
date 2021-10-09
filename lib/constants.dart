@@ -5,6 +5,9 @@ import 'dart:io';
 class Constants {
   static const String APP_TITLE_NAME = "MobileTools_v1.0";
 
+  static bool isRoot = false; //是否开启root
+  static bool isInnerAdb = false; //是否使用内部的adb
+
   static String adbPath = "";
   static String apksignerPath = "";
 
@@ -38,10 +41,24 @@ class Constants {
   static const String ADB_PULL_SCREEN_RECORD =
       "pull /sdcard/" + Constants.SCREEN_RECORD_NAME;
   static const String ADB_INSTALL_APK = "install";
-  static const String ADB_UNINSTALL_APK = "uninstall";
+  static const String ADB_UNINSTALL_APK =
+      "shell  pm uninstall --user 0 package";
+  static const String ADB_APK_PATH = "shell pm path package";
   static const String ADB_REBOOT = "reboot";
   static const String ADB_REBOOT_BOOTLOADER = "reboot bootloader";
   static const String ADB_REBOOT_RECOVERY = "reboot recovery";
+
+  static const String WIFI_MAC_ADDRESS =
+      "shell cat /sys/class/net/wlan0/address";
+  static const String BLUE_MAC_ADDRESS =
+      "shell settings get secure bluetooth_address";
+  static const String IP_ADDRESS = "shell ifconfig | grep Mask";
+  static const String WINDOW_INFO =
+      "shell  dumpsys window displays | grep init";
+  static const String CPU_INFO = "shell cat /proc/cpuinfo";
+  static const String BATTERY_INFO = "shell dumpsys battery";
+  static const String MEMORY_INFO = "shell cat /proc/meminfo";
+  static const String PHONE_INFO = "shell cat /system/build.prop";
 
   static const String ADB_IP = "shell ifconfig | grep 192.168";
   static const String ADB_FORWARD_PORT = "tcpip 5555";
@@ -67,4 +84,40 @@ class Constants {
   static late File signerPath;
   static late File jksPath;
   static late File signerJarPath;
+
+  static String getPhoneInfo(int index) {
+    switch (index) {
+      case 0:
+        return isRoot
+            ? _shellRoot(Constants.BLUE_MAC_ADDRESS)
+            : Constants.BLUE_MAC_ADDRESS;
+      case 1:
+        return isRoot
+            ? _shellRoot(Constants.WIFI_MAC_ADDRESS)
+            : Constants.WIFI_MAC_ADDRESS;
+      case 2:
+        return isRoot ? _shellRoot(Constants.IP_ADDRESS) : Constants.IP_ADDRESS;
+      case 3:
+        return isRoot
+            ? _shellRoot(Constants.WINDOW_INFO)
+            : Constants.WINDOW_INFO;
+      case 4:
+        return isRoot ? _shellRoot(Constants.CPU_INFO) : Constants.CPU_INFO;
+      case 5:
+        return isRoot
+            ? _shellRoot(Constants.BATTERY_INFO)
+            : Constants.BATTERY_INFO;
+      case 6:
+        return isRoot
+            ? _shellRoot(Constants.MEMORY_INFO)
+            : Constants.MEMORY_INFO;
+      case 7:
+        return isRoot ? _shellRoot(Constants.PHONE_INFO) : Constants.PHONE_INFO;
+    }
+    return "";
+  }
+
+  static String _shellRoot(String command) {
+    return command.replaceAll("shell", "shell su -c"); //有些命令需要使用-t su -c
+  }
 }

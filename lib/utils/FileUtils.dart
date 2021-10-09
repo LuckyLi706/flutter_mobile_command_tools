@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileUtils {
@@ -85,5 +86,38 @@ class FileUtils {
     Directory folder = new Directory(folderPath);
     return await folder.exists();
     //return isExist;
+  }
+
+  /// @storageDir 存储的目录
+  /// @zipFilePath 解压的文件路径
+  static unZipFiles(String storageDir, String zipFilePath) async {
+    print("压缩文件路径zipFilePath = $zipFilePath");
+    // 从磁盘读取Zip文件。
+    List<int> bytes = File(zipFilePath).readAsBytesSync();
+    // 解码Zip文件
+    Archive archive = ZipDecoder().decodeBytes(bytes);
+    // 将Zip存档的内容解压缩到磁盘。
+    for (ArchiveFile file in archive) {
+      if (file.isFile) {
+        List<int> tempData = file.content;
+        File f = File(storageDir + "/" + file.name)
+          ..createSync(recursive: true)
+          ..writeAsBytesSync(tempData);
+        print("解压后的文件路径 = ${f.path}");
+      } else {
+        Directory(storageDir + "/" + file.name)..create(recursive: true);
+      }
+    }
+    print("解压成功");
+  }
+
+  static Future<String> getInnerAdbPath() async {
+    String adbName = "adb";
+    if (Platform.isWindows) {
+      adbName = "adb.exe";
+    }
+    Directory directoryAdb = Directory(
+        '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}/adb');
+    return directoryAdb.path + "/" + adbName;
   }
 }

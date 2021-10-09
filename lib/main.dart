@@ -22,23 +22,31 @@ String _showLogText = ""; //展示日志的信息
 late CommandResult result; //命令的结果
 List<DropdownMenuItem<String>> connectDeviceDdmi = []; //获取设备下拉框的列表
 List<String> currentAllDevice = []; //当前所有连接的设备
-List<DropdownMenuItem<String>> wireLessDeviceDdmi = []; //下拉框的列表
+List<DropdownMenuItem<String>> wireLessDeviceDdmi = []; //无线连接下拉框的列表
 List<DropdownMenuItem<String>> simOpDdmi = []; //下拉框的列表
+List<DropdownMenuItem<String>> phoneInfoDdmi = []; //手机信息下拉框的列表
 
 List<DropdownMenuItem<String>> pullDdmi = []; //下拉框的列表
 final AndroidCommand command = new AndroidCommand(); //命令信息
 
 late String currentWirelessDevice; //当前需要连接的无线设备
+late String currentPhoneInfo; //当前需要获取的手机信息
 String currentSimOp = ""; //当前的模拟操作
 String currentPullPath = ""; //当前pull文件的路径
 String currentPullFile = ""; //当前pull文件的路径
 
 List<SimOperation> _simOpList = []; //所有的模拟操作集合
 
-void main() {
+void main() async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-    InitUtils.init();
+    /**
+     *  这边处理的不好，为了让一开始的UI展示，让整个界面等待我的初始化完成。
+     *  后期考虑可以把开启Root和内置ADB移到设置里面去
+     *  现在无所谓啦，启动慢点而已嘛~~~~~~~~~
+     */
+    await InitUtils.init();
     _initAllWireLessDevice();
+    _initAllPhoneInfo();
     _initSimOp();
     runApp(new MaterialApp(
       home: MyApp(),
@@ -254,6 +262,52 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
               SizedBox(
                 height: 10,
               ),
+              new Row(
+                children: [
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: Constants.isRoot,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              setState(() {});
+                              if (isCheck!) {
+                                _settings['isRoot'] = true;
+                                FileUtils.writeSetting(_settings);
+                              }
+                              Constants.isRoot = isCheck;
+                            }),
+                        new Text("开启Root")
+                      ])),
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: Constants.isInnerAdb,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) async {
+                              if (isCheck!) {
+                                _settings['adb'] = Constants.adbPath;
+                                _settings['isInnerAdb'] = true;
+                                await FileUtils.writeSetting(_settings);
+                                Constants.adbPath =
+                                    await FileUtils.getInnerAdbPath();
+                              } else {
+                                Constants.adbPath = _settings['adb'];
+                              }
+                              setState(() {});
+                              Constants.isInnerAdb = isCheck;
+                            }),
+                        new Text("内置ADB")
+                      ])),
+                ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
               new Row(children: [
                 new Text(
                   "基本操作：",
@@ -344,7 +398,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             _showLog(e.toString());
                           });
                         },
-                        child: new Text("当前activity"))),
+                        child: new Text("顶级activity"))),
                 Expanded(
                     child: new TextButton(
                         onPressed: () {
@@ -457,10 +511,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               _showLog("请先获取包名");
                               return;
                             }
-                            command.execCommand([
-                              Constants.ADB_UNINSTALL_APK,
-                              _packageController.text
-                            ]).then((value) {
+                            command
+                                .execCommand(Constants.ADB_UNINSTALL_APK
+                                    .replaceAll(
+                                        "package", _packageController.text)
+                                    .split(" "))
+                                .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_UNINSTALL_APK, value);
                               _showLog(result.mResult);
@@ -469,6 +525,27 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             });
                           },
                           child: new Text("卸载apk"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            if (_packageController.text.isEmpty) {
+                              _showLog("请先获取包名");
+                              return;
+                            }
+                            command
+                                .execCommand(Constants.ADB_APK_PATH
+                                    .replaceAll(
+                                        "package", _packageController.text)
+                                    .split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_APK_PATH, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("apk路径"))),
                 ],
               ),
               new Row(
@@ -494,7 +571,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           onPressed: () {
                             command
                                 .execCommand(
-                                    Constants.ADB_REBOOT_BOOTLOADER.split("\n"))
+                                    Constants.ADB_REBOOT_BOOTLOADER.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_REBOOT_BOOTLOADER, value);
@@ -504,18 +581,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             });
                           },
                           child: new Text("重启到fastboot"))),
-                ],
-              ),
-              new Row(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                // mainAxisSize: MainAxisSize.min,
-                children: [
                   Expanded(
                       child: new TextButton(
                           onPressed: () {
                             command
                                 .execCommand(
-                                Constants.ADB_REBOOT_RECOVERY.split("\n"))
+                                    Constants.ADB_REBOOT_RECOVERY.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_REBOOT_RECOVERY, value);
@@ -525,22 +596,39 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             });
                           },
                           child: new Text("重启到recovery"))),
-                 // Expanded(
-                      // child: new TextButton(
-                      //     onPressed: () {
-                      //       command
-                      //           .execCommand(
-                      //           Constants.ADB_REBOOT_BOOTLOADER.split("\n"))
-                      //           .then((value) {
-                      //         result = command.dealWithData(
-                      //             Constants.ADB_REBOOT_BOOTLOADER, value);
-                      //         _showLog(result.mResult);
-                      //       }).catchError((e) {
-                      //         _showLog(e.toString());
-                      //       });
-                      //     },
-                      //     child: new Text("重启到fastboot"))),
-                  //)
+                ],
+              ),
+              new Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            int index = phoneInfo.indexOf(currentPhoneInfo);
+                            command
+                                .execCommand(
+                                    Constants.getPhoneInfo(index).split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.getPhoneInfo(index), value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("获取信息"))),
+                  Expanded(
+                      child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: currentPhoneInfo,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        currentPhoneInfo = newValue!;
+                      });
+                    },
+                    items: phoneInfoDdmi,
+                  )),
                 ],
               ),
               SizedBox(
@@ -948,7 +1036,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             command
                                 .execCommand(Constants.ADB_SEARCH_ALL_FILE_PATH
                                     .split(" ")
-                                      ..addAll([pullController.text]))
+                                  ..addAll([pullController.text]))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_SEARCH_ALL_FILE_PATH, value);
@@ -1234,6 +1322,7 @@ final TextEditingController screenRecordController =
 bool isPullCrash = false; //当前需要拉取普通文件还是crash文件
 
 showSettingDialog(BuildContext context) {
+  bool checkboxSelected = true;
   showDialog(
       context: context,
       barrierDismissible: false,
@@ -1299,59 +1388,6 @@ showSettingDialog(BuildContext context) {
                                 )),
                               ],
                             ),
-                            // SizedBox(height: 10),
-                            // new Row(
-                            //   mainAxisAlignment: MainAxisAlignment.center,
-                            //   children: [
-                            //     new TextButton(
-                            //         onPressed: () async {
-                            //           String? path = await _selectFile(context);
-                            //           if (path == null) {
-                            //             _showLog("未选择apksigner文件");
-                            //           } else {
-                            //             apkSignerController.text = path;
-                            //           }
-                            //         },
-                            //         child: new Text("apksigner")),
-                            //     new Expanded(
-                            //         child: TextField(
-                            //       controller: apkSignerController,
-                            //       decoration: InputDecoration(
-                            //         labelText: 'apksigner',
-                            //         border: OutlineInputBorder(
-                            //           borderSide: BorderSide(
-                            //             color: Colors.pink,
-                            //           ),
-                            //         ),
-                            //       ),
-                            //     )),
-                            //   ],
-                            // ),
-                            // SizedBox(height: 10),
-                            // new Row(
-                            //   mainAxisAlignment: MainAxisAlignment.center,
-                            //   children: [
-                            //     // new Text("adb目录"),
-                            //     // SizedBox(width: 10),
-                            //     new Expanded(
-                            //         child: TextField(
-                            //       decoration: InputDecoration(
-                            //         // labelText: '表单label',
-                            //         // labelStyle: TextStyle(
-                            //         //   color: Colors.pink,
-                            //         //   fontSize: 12,
-                            //         // ),
-                            //         helperText: 'helperText',
-                            //         hintText: 'Placeholder...',
-                            //         border: OutlineInputBorder(
-                            //           borderSide: BorderSide(
-                            //             color: Colors.pink,
-                            //           ),
-                            //         ),
-                            //       ),
-                            //     )),
-                            //   ],
-                            // ),
                           ],
                         ),
                       ))),
@@ -1596,6 +1632,31 @@ _initAllWireLessDevice() {
   return wireLessDeviceDdmi;
 }
 
+List<String> phoneInfo = [];
+
+_initAllPhoneInfo() {
+  phoneInfo = [
+    "蓝牙 MAC地址",
+    "WIFI MAC地址",
+    "IP 地址",
+    "显示信息",
+    "CPU信息",
+    "电池信息",
+    "内存信息",
+    "版本信息",
+  ];
+  phoneInfo.forEach((element) {
+    phoneInfoDdmi.add(new DropdownMenuItem(
+        child: new Text(
+          element,
+          style: _dropDownTextStyle(),
+        ),
+        value: element));
+  });
+  currentPhoneInfo = phoneInfo[0];
+  return phoneInfoDdmi;
+}
+
 ///初始化所有模拟操作
 _initSimOp() {
   Constants.ALL_SIM_OPERATION.forEach((element) {
@@ -1736,7 +1797,7 @@ String _getDeviceIp(String device) {
 }
 
 TextStyle _dropDownTextStyle() {
-  return TextStyle(fontSize: 12, color: Colors.blue);
+  return TextStyle(fontSize: 12, color: Colors.black);
 }
 
 TextStyle _tipTextStyle() {
