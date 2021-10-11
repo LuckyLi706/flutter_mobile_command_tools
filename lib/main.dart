@@ -11,11 +11,14 @@ import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
 
 import 'model/SimOperation.dart';
 
 var _width = 0.0;
 var _height = 0.0;
+
+///目前保存adb路径(自定义的)，是否root开启，是否启用内部路径
 var _settings = {};
 var _apksigner = {};
 String _showLogText = ""; //展示日志的信息
@@ -39,12 +42,7 @@ List<SimOperation> _simOpList = []; //所有的模拟操作集合
 
 void main() async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-    /**
-     *  这边处理的不好，为了让一开始的UI展示，让整个界面等待我的初始化完成。
-     *  后期考虑可以把开启Root和内置ADB移到设置里面去
-     *  现在无所谓啦，启动慢点而已嘛~~~~~~~~~
-     */
-    await InitUtils.init();
+    await InitUtils.init(); //等待配置初始化完成
     _initAllWireLessDevice();
     _initAllPhoneInfo();
     _initSimOp();
@@ -66,7 +64,7 @@ class MyApp extends StatelessWidget {
           actions: [
             new IconButton(
                 onPressed: () async {
-                  adbController.text = Constants.adbPath;
+                  adbController.text = Constants.outerAdbPath;
                   //执行函数
                   showSettingDialog(context);
                 },
@@ -275,8 +273,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               setState(() {});
                               if (isCheck!) {
                                 _settings['isRoot'] = true;
-                                FileUtils.writeSetting(_settings);
+                              } else {
+                                _settings['isRoot'] = false;
                               }
+                              FileUtils.writeSetting(_settings);
                               Constants.isRoot = isCheck;
                             }),
                         new Text("开启Root")
@@ -290,14 +290,27 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             activeColor: Colors.red,
                             onChanged: (isCheck) async {
                               if (isCheck!) {
-                                _settings['adb'] = Constants.adbPath;
-                                _settings['isInnerAdb'] = true;
-                                await FileUtils.writeSetting(_settings);
+                                /// 存储是否使用内部adb
+                                /// 存储内部adb路径（只有一次）
+                                /// 赋值当前adb路径
+                                _settings[Constants.isInnerAdbKey] = true;
+                                if (_settings[Constants.innerKey] == null) {
+                                  _settings[Constants.innerKey] =
+                                      await FileUtils.getInnerAdbPath();
+                                }
                                 Constants.adbPath =
-                                    await FileUtils.getInnerAdbPath();
+                                    _settings[Constants.innerKey];
                               } else {
-                                Constants.adbPath = _settings['adb'];
+                                /// 赋值当前adb路径
+                                /// 存储当前外部adb路径、
+                                /// 存储是否使用内部adb
+                                Constants.adbPath = Constants.outerAdbPath;
+                                _settings[Constants.isInnerAdbKey] = false;
+                                _settings[Constants.outerKey] =
+                                    Constants.outerAdbPath;
                               }
+                              await FileUtils.writeSetting(_settings);
+                              _showLog("当前ADB路径:" + Constants.adbPath);
                               setState(() {});
                               Constants.isInnerAdb = isCheck;
                             }),
@@ -423,8 +436,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: new TextButton(
                         onPressed: () {
+                          String pngName = TimeUtils.getCurrentTimeFormat();
                           command
-                              .execCommand(Constants.ADB_SCREEN_SHOT.split(" "))
+                              .execCommand(Constants.ADB_SCREEN_SHOT
+                                  .replaceAll("shoot", pngName)
+                                  .split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_SCREEN_SHOT, value);
@@ -432,7 +448,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               _showLog("截屏成功");
                               command
                                   .execCommand(
-                                      Constants.ADB_PULL_SCREEN_SHOT.split(" "),
+                                      Constants.ADB_PULL_SCREEN_SHOT
+                                          .replaceAll("shoot", pngName)
+                                          .split(" "),
                                       workingDirectory: Constants.desktopPath)
                                   .then((value) {
                                 result = command.dealWithData(
@@ -451,9 +469,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () async {
                           String times = await showScreenRecordDialog(context);
+                          String recordName = TimeUtils.getCurrentTimeFormat();
                           command
                               .execCommand(Constants.ADB_SCREEN_RECORD
                                   .replaceAll("times", times)
+                                  .replaceAll("record_screen",
+                              recordName)
                                   .split(" "))
                               .then((value) {
                             result = command.dealWithData(
@@ -463,6 +484,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               command
                                   .execCommand(
                                       Constants.ADB_PULL_SCREEN_RECORD
+                                          .replaceAll("record_screen",
+                                          recordName)
                                           .split(" "),
                                       workingDirectory: Constants.desktopPath)
                                   .then((value) {
@@ -777,9 +800,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   if (result.mError) {
                                     _showLog(result.mResult);
                                     return;
+                                  } else {
+                                    currentAllDevice.insert(0, result.mResult);
+                                    updateConnectDevice(currentAllDevice);
                                   }
-                                  currentAllDevice.insert(0, result.mResult);
-                                  updateConnectDevice(currentAllDevice);
                                 }).catchError((e) {
                                   _showLog(e.toString());
                                 });
@@ -1343,11 +1367,14 @@ showSettingDialog(BuildContext context) {
                 TextButton(
                   child: Text('确定'),
                   onPressed: () {
-                    //settingModel.adb = _controller.text;
-                    _settings['adb'] = adbController.text;
-                    Constants.adbPath = adbController.text;
+                    _settings[Constants.outerKey] = adbController.text;
+                    if (!Constants.isInnerAdb) {
+                      Constants.adbPath = adbController.text;
+                    }
+                    Constants.outerAdbPath = adbController.text;
                     FileUtils.writeSetting(_settings);
                     Navigator.of(context).pop();
+                    _showLog("选择外置ADB路径：" + adbController.text);
                   },
                 )
               ],
@@ -1378,6 +1405,7 @@ showSettingDialog(BuildContext context) {
                                     child: TextField(
                                   controller: adbController,
                                   decoration: InputDecoration(
+                                    enabled: false,
                                     labelText: 'adb',
                                     border: OutlineInputBorder(
                                       borderSide: BorderSide(

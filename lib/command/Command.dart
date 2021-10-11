@@ -9,8 +9,12 @@ class AndroidCommand {
   Future<String> checkFirst(List<String> arguments,
       {String executable = "", String? workingDirectory}) async {
     if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
+        arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
         Constants.currentDevice.isEmpty) {
       throw "请先获取设备";
+    }
+    if (Constants.adbPath == "") {
+      throw "adb路径不能为空";
     }
     if (executable == "") {
       executable = Constants.adbPath;
@@ -107,7 +111,9 @@ class AndroidCommand {
         String ip = data.split(":")[1].split(" ")[0];
         return getProcessResult(false, ip);
       case Constants.ADB_WIRELESS_CONNECT:
-        if (data.contains("already") || data.contains("failed")) {
+        if (data.contains("already") ||
+            data.contains("failed") ||
+            data.contains("cannot")) {
           //表示已经连接上了
           return getProcessResult(true, data);
         } else {

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:path_provider/path_provider.dart';
 
 class FileUtils {
@@ -111,13 +112,19 @@ class FileUtils {
     print("解压成功");
   }
 
+  //获取内部adb路径
   static Future<String> getInnerAdbPath() async {
     String adbName = "adb";
     if (Platform.isWindows) {
       adbName = "adb.exe";
     }
     Directory directoryAdb = Directory(
-        '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}/adb');
-    return directoryAdb.path + "/" + adbName;
+        '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}' +
+            PlatformUtils.getSeparator() +
+            "adb");
+    if (!await directoryAdb.exists()) {
+      return "";
+    }
+    return directoryAdb.path + PlatformUtils.getSeparator() + adbName;
   }
 }

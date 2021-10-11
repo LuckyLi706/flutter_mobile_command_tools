@@ -64,35 +64,42 @@ class InitUtils {
     }
   }
 
+  //获取系统默认的adb目录
   static void _initAdbPath() {
-    if (Constants.adbPath.isNotEmpty) {
+    if (Constants.adbPath.isNotEmpty || Constants.isInnerAdb) {
       return;
     }
     if (Platform.isWindows) {
-      Constants.adbPath =
+      Constants.adbPath = Constants.outerAdbPath =
           Constants.userPath + r"\AppData\Local\Android\sdk\adb.exe";
     } else if (Platform.isMacOS) {
-      Constants.adbPath =
-          Constants.userPath + r"/Library/Android/sdk/platform-tools/adb";
+      Constants.outerAdbPath = Constants.outerAdbPath =
+          Constants.adbPath + r"/Library/Android/sdk/platform-tools/adb";
     } else if (Platform.isLinux) {
-      Constants.adbPath =
+      Constants.adbPath = Constants.outerAdbPath =
           Constants.userPath + r"/Android/Sdk/platform-tools/adb";
     }
-    print(Constants.adbPath);
   }
 
+  //初始化配置
   static _initSetting() async {
     String value = await FileUtils.readSetting();
     if (value.isNotEmpty) {
       Map<String, dynamic> map = jsonDecode(value);
-      if (map['adb'] != null) {
-        Constants.adbPath = map['adb'];
+      if (map[Constants.isInnerAdbKey] != null) {
+        Constants.isInnerAdb = map[Constants.isInnerAdbKey];
       }
-      if (map['isRoot'] != null) {
-        Constants.isRoot = map['isRoot'];
+      if (map[Constants.outerKey] != null) {
+        Constants.outerAdbPath = map[Constants.outerKey];
       }
-      if (map['isInnerAdb'] != null) {
-        Constants.isInnerAdb = map['isInnerAdb'];
+      if (map[Constants.innerKey] != null) {
+        Constants.innerAdbPath = map[Constants.innerKey];
+        if (Constants.isInnerAdb) {
+          Constants.adbPath = await FileUtils.getInnerAdbPath();
+        }
+      }
+      if (map[Constants.isRootKey] != null) {
+        Constants.isRoot = map[Constants.isRootKey];
       }
     }
   }
@@ -124,6 +131,10 @@ class InitUtils {
 
   //初始化内部的adb
   static _initInnerAdb() async {
+    String pathInner = await FileUtils.getInnerAdbPath();
+    if (pathInner.isNotEmpty) {
+      return;
+    }
     Directory directoryAdb = Directory(
         '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}/adb');
     var path = directoryAdb.path + ".zip";

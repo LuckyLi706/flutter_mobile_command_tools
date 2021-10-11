@@ -3,12 +3,21 @@ import 'dart:core';
 import 'dart:io';
 
 class Constants {
-  static const String APP_TITLE_NAME = "MobileTools_v1.0";
+  static const String APP_TITLE_NAME = "MobileTools_v2.0";
 
   static bool isRoot = false; //是否开启root
   static bool isInnerAdb = false; //是否使用内部的adb
 
-  static String adbPath = "";
+  static String adbPath = ""; //真正使用的adb路径
+
+  static String innerAdbPath = ""; //内置的adb路径
+  static String outerAdbPath = ""; //外置的adb路径
+
+  static String innerKey = "innerAdbPath"; //innerAdbPath对应的key
+  static String outerKey = "outerAdbPath"; //outerAdbPath对应的key
+  static String isRootKey = "isRoot";
+  static String isInnerAdbKey = "isInnerAdb";
+
   static String apksignerPath = "";
 
   static String currentDevice = ""; //当前的设备
@@ -20,7 +29,7 @@ class Constants {
   static const String LOG_SHOW_TEXT = "日志：";
 
   static const String SCREEN_SHOOT_NAME = "shoot.png";
-  static const String SCREEN_RECORD_NAME = "record.mp4";
+  static const String SCREEN_RECORD_NAME = "record_screen.mp4";
 
   //安卓的adb命令行
   static const String ADB_CONNECT_DEVICES = "devices";
