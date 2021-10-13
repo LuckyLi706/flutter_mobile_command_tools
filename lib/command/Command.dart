@@ -92,6 +92,16 @@ class AndroidCommand {
           }
         }
         return getProcessResult(true, "无信息");
+      case Constants.ADB_GET_THIRD_PACKAGE:
+      case Constants.ADB_GET_SYSTEM_PACKAGE:
+        List<String> packageNameList = data.split(PlatformUtils.getLineBreak());
+        List<String> packageNameFilter = [];
+        packageNameList.forEach((element) {
+          if(element.isNotEmpty) {
+            packageNameFilter.add(element.replaceAll("package:", ""));
+          }
+        });
+        return getProcessResult(false, packageNameFilter);
       case Constants.ADB_CURRENT_ACTIVITY:
         List<String> values = data.split('\n');
         for (int i = 0; i < values.length; i++) {

@@ -21,6 +21,7 @@ class Constants {
   static String apksignerPath = "";
 
   static String currentDevice = ""; //当前的设备
+  static String currentPackageName = "";
 
   static String desktopPath = ""; //桌面路径
 
@@ -34,6 +35,18 @@ class Constants {
   //安卓的adb命令行
   static const String ADB_CONNECT_DEVICES = "devices";
   static const String ADB_GET_PACKAGE = "shell dumpsys activity";
+  static const String ADB_GET_THIRD_PACKAGE = "shell pm list packages -3";
+  static const String ADB_GET_SYSTEM_PACKAGE = "shell pm list packages -s";
+  static const String ADB_GET_PACKAGE_INFO = "shell dumpsys package ";
+
+  static const String ADB_START_ACTIVITY_NO =
+      "shell monkey -p package -c android.intent.category.LAUNCHER 1";
+  static const String ADB_START_ACTIVITY = "shell am start -n ";
+  static const String ADB_START_BROADCAST_RECEIVER = "shell am broadcast -a ";
+  static const String ADB_START_SERVICE = "shell am startservice -n ";
+  static const String ADB_STOP_SERVICE = "shell am stopservice -n ";
+
+
   static const String ADB_CURRENT_ACTIVITY = "shell dumpsys  activity";
   static const String ADB_CLEAR_DATA = "shell pm clear";
   static const String ADB_SCREEN_SHOT =

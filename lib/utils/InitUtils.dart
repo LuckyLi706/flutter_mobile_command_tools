@@ -8,8 +8,8 @@ import '../constants.dart';
 import 'FileUtils.dart';
 
 class InitUtils {
-  static Future init() async {
-    await _initSetting();
+  static Future init(Map<String, dynamic> map) async {
+    await _initSetting(map);
     _initDesktop();
     _initApkSigner();
     _initInnerAdb();
@@ -66,14 +66,14 @@ class InitUtils {
 
   //获取系统默认的adb目录
   static void _initAdbPath() {
-    if (Constants.adbPath.isNotEmpty || Constants.isInnerAdb) {
+    if (Constants.outerAdbPath.isNotEmpty) {
       return;
     }
     if (Platform.isWindows) {
-      Constants.adbPath = Constants.outerAdbPath =
-          Constants.userPath + r"\AppData\Local\Android\sdk\adb.exe";
+      Constants.adbPath = Constants.outerAdbPath = Constants.userPath +
+          r"\AppData\Local\Android\sdk\platform-tools\adb.exe";
     } else if (Platform.isMacOS) {
-      Constants.outerAdbPath = Constants.outerAdbPath =
+      Constants.adbPath = Constants.outerAdbPath =
           Constants.adbPath + r"/Library/Android/sdk/platform-tools/adb";
     } else if (Platform.isLinux) {
       Constants.adbPath = Constants.outerAdbPath =
@@ -82,7 +82,7 @@ class InitUtils {
   }
 
   //初始化配置
-  static _initSetting() async {
+  static _initSetting(Map<String, dynamic> mapSettings) async {
     String value = await FileUtils.readSetting();
     if (value.isNotEmpty) {
       Map<String, dynamic> map = jsonDecode(value);
@@ -91,6 +91,9 @@ class InitUtils {
       }
       if (map[Constants.outerKey] != null) {
         Constants.outerAdbPath = map[Constants.outerKey];
+        if (!Constants.isInnerAdb) {
+          Constants.adbPath = await FileUtils.getInnerAdbPath();
+        }
       }
       if (map[Constants.innerKey] != null) {
         Constants.innerAdbPath = map[Constants.innerKey];
@@ -101,6 +104,7 @@ class InitUtils {
       if (map[Constants.isRootKey] != null) {
         Constants.isRoot = map[Constants.isRootKey];
       }
+      mapSettings.addAll(map);
     }
   }
 

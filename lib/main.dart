@@ -19,15 +19,21 @@ var _width = 0.0;
 var _height = 0.0;
 
 ///目前保存adb路径(自定义的)，是否root开启，是否启用内部路径
-var _settings = {};
+Map<String, dynamic> _settings = {};
+
 var _apksigner = {};
 String _showLogText = ""; //展示日志的信息
 late CommandResult result; //命令的结果
 List<DropdownMenuItem<String>> connectDeviceDdmi = []; //获取设备下拉框的列表
+List<DropdownMenuItem<String>> allPackageNameDdmi = []; //获取设备下拉框的列表
+
 List<String> currentAllDevice = []; //当前所有连接的设备
+List<String> currentAllPackageName = []; //当前所有连接的包名
+
 List<DropdownMenuItem<String>> wireLessDeviceDdmi = []; //无线连接下拉框的列表
 List<DropdownMenuItem<String>> simOpDdmi = []; //下拉框的列表
 List<DropdownMenuItem<String>> phoneInfoDdmi = []; //手机信息下拉框的列表
+List<DropdownMenuItem<String>> broadcastReceiverDdmi = []; //手机信息下拉框的列表
 
 List<DropdownMenuItem<String>> pullDdmi = []; //下拉框的列表
 final AndroidCommand command = new AndroidCommand(); //命令信息
@@ -42,7 +48,7 @@ List<SimOperation> _simOpList = []; //所有的模拟操作集合
 
 void main() async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-    await InitUtils.init(); //等待配置初始化完成
+    await InitUtils.init(_settings); //等待配置初始化完成
     _initAllWireLessDevice();
     _initAllPhoneInfo();
     _initSimOp();
@@ -81,7 +87,7 @@ class MyApp extends StatelessWidget {
           child: new Row(
             children: [
               new Container(
-                width: _width * 0.7,
+                width: _width * 0.65,
                 height: _height * 0.9,
                 child: Stack(
                   alignment: Alignment.topLeft,
@@ -105,7 +111,7 @@ class MyApp extends StatelessWidget {
               ),
               new Container(
                 color: Color.fromARGB(200, 0, 255, 255),
-                width: _width * 0.3,
+                width: _width * 0.35,
                 child: new RightPanel(),
               )
             ],
@@ -199,7 +205,6 @@ class AndroidRightPanel extends StatefulWidget {
 ScrollController scrollController = new ScrollController();
 
 class AndroidRightPanelState extends State<AndroidRightPanel> {
-  TextEditingController _packageController = new TextEditingController();
   FocusNode _wirelessFocus = FocusNode(); //得到焦点
   FocusNode _pushFocus = FocusNode(); //得到焦点
   FocusNode _pullFocus = FocusNode(); //得到焦点
@@ -224,6 +229,26 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
         });
       } else {
         Constants.currentDevice = "";
+      }
+    });
+  }
+
+  void updatePackageName(List<String> resultList) {
+    setState(() {
+      allPackageNameDdmi.clear();
+      if (resultList.length > 0) {
+        Constants.currentPackageName = resultList[0];
+        resultList.toSet().forEach((element) {
+          allPackageNameDdmi.add(new DropdownMenuItem(
+            child: new Text(
+              element,
+              style: _dropDownTextStyle(fontTextSize: 18),
+            ),
+            value: element,
+          ));
+        });
+      } else {
+        Constants.currentPackageName = "";
       }
     });
   }
@@ -366,262 +391,6 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 ],
               ),
               new Row(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                // mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            command
-                                .execCommand(
-                                    Constants.ADB_GET_PACKAGE.split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_GET_PACKAGE, value);
-                              if (result.mError) {
-                                _showLog(result.mResult);
-                              } else {
-                                _packageController.text = result.mResult;
-                              }
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("获取包名"))),
-                  Expanded(
-                      child: new TextField(
-                    controller: _packageController,
-                    enabled: false,
-                    maxLength: 20,
-                  ))
-                ],
-              ),
-              new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-                Expanded(
-                    child: new TextButton(
-                        onPressed: () {
-                          command
-                              .execCommand(
-                                  Constants.ADB_CURRENT_ACTIVITY.split(" "))
-                              .then((value) {
-                            result = command.dealWithData(
-                                Constants.ADB_CURRENT_ACTIVITY, value);
-                            _showLog(result.mResult);
-                          }).catchError((e) {
-                            _showLog(e.toString());
-                          });
-                        },
-                        child: new Text("顶级activity"))),
-                Expanded(
-                    child: new TextButton(
-                        onPressed: () {
-                          if (_packageController.text.isEmpty) {
-                            _showLog("请先获取包名");
-                            return;
-                          }
-                          command
-                              .execCommand(Constants.ADB_CLEAR_DATA.split(" ")
-                                ..add(_packageController.text))
-                              .then((value) {
-                            result = command.dealWithData(
-                                Constants.ADB_CLEAR_DATA, value);
-                            _showLog(result.mResult);
-                          }).catchError((e) {
-                            _showLog(e.toString());
-                          });
-                        },
-                        child: new Text("清除数据")))
-              ]),
-              new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-                Expanded(
-                    child: new TextButton(
-                        onPressed: () {
-                          String pngName = TimeUtils.getCurrentTimeFormat();
-                          command
-                              .execCommand(Constants.ADB_SCREEN_SHOT
-                                  .replaceAll("shoot", pngName)
-                                  .split(" "))
-                              .then((value) {
-                            result = command.dealWithData(
-                                Constants.ADB_SCREEN_SHOT, value);
-                            if (!result.mError) {
-                              _showLog("截屏成功");
-                              command
-                                  .execCommand(
-                                      Constants.ADB_PULL_SCREEN_SHOT
-                                          .replaceAll("shoot", pngName)
-                                          .split(" "),
-                                      workingDirectory: Constants.desktopPath)
-                                  .then((value) {
-                                result = command.dealWithData(
-                                    Constants.ADB_PULL_SCREEN_SHOT, value);
-                                _showLog(result.mResult);
-                              });
-                            } else {
-                              _showLog(result.mResult);
-                            }
-                          }).catchError((e) {
-                            _showLog(e.toString());
-                          });
-                        },
-                        child: new Text("截屏"))),
-                Expanded(
-                    child: new TextButton(
-                        onPressed: () async {
-                          String times = await showScreenRecordDialog(context);
-                          String recordName = TimeUtils.getCurrentTimeFormat();
-                          command
-                              .execCommand(Constants.ADB_SCREEN_RECORD
-                                  .replaceAll("times", times)
-                                  .replaceAll("record_screen",
-                              recordName)
-                                  .split(" "))
-                              .then((value) {
-                            result = command.dealWithData(
-                                Constants.ADB_SCREEN_RECORD, value);
-                            if (!result.mError) {
-                              _showLog("录屏结束");
-                              command
-                                  .execCommand(
-                                      Constants.ADB_PULL_SCREEN_RECORD
-                                          .replaceAll("record_screen",
-                                          recordName)
-                                          .split(" "),
-                                      workingDirectory: Constants.desktopPath)
-                                  .then((value) {
-                                result = command.dealWithData(
-                                    Constants.ADB_PULL_SCREEN_RECORD, value);
-                                _showLog(result.mResult);
-                              });
-                            } else {
-                              _showLog(result.mResult);
-                            }
-                          }).catchError((e) {
-                            _showLog(e.toString());
-                          });
-                        },
-                        child: new Text("录屏")))
-              ]),
-              new Row(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                // mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () async {
-                            String? apkPath =
-                                await _selectFile(context, extensions: ["apk"]);
-                            if (apkPath == null) {
-                              _showLog("未选择apk");
-                              return;
-                            }
-                            command.execCommand([
-                              Constants.ADB_INSTALL_APK,
-                              apkPath
-                            ]).then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_INSTALL_APK, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("安装apk"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            if (_packageController.text.isEmpty) {
-                              _showLog("请先获取包名");
-                              return;
-                            }
-                            command
-                                .execCommand(Constants.ADB_UNINSTALL_APK
-                                    .replaceAll(
-                                        "package", _packageController.text)
-                                    .split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_UNINSTALL_APK, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("卸载apk"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            if (_packageController.text.isEmpty) {
-                              _showLog("请先获取包名");
-                              return;
-                            }
-                            command
-                                .execCommand(Constants.ADB_APK_PATH
-                                    .replaceAll(
-                                        "package", _packageController.text)
-                                    .split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_APK_PATH, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("apk路径"))),
-                ],
-              ),
-              new Row(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                // mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () async {
-                            command.execCommand([
-                              Constants.ADB_REBOOT,
-                            ]).then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_REBOOT, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("重启手机"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            command
-                                .execCommand(
-                                    Constants.ADB_REBOOT_BOOTLOADER.split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_REBOOT_BOOTLOADER, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("重启到fastboot"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            command
-                                .execCommand(
-                                    Constants.ADB_REBOOT_RECOVERY.split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_REBOOT_RECOVERY, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("重启到recovery"))),
-                ],
-              ),
-              new Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -631,7 +400,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             int index = phoneInfo.indexOf(currentPhoneInfo);
                             command
                                 .execCommand(
-                                    Constants.getPhoneInfo(index).split(" "))
+                                    Constants.getPhoneInfo(index).split(" "),runInShell: true)
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.getPhoneInfo(index), value);
@@ -640,7 +409,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               _showLog(e.toString());
                             });
                           },
-                          child: new Text("获取信息"))),
+                          child: new Text("获取设备信息"))),
                   Expanded(
                       child: DropdownButton<String>(
                     isExpanded: true,
@@ -657,7 +426,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
               SizedBox(
                 height: 10,
               ),
-              new Row(children: [new Text("连接和断开：", style: _tipTextStyle())]),
+              new Row(children: [new Text("无线连接：", style: _tipTextStyle())]),
               new Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -885,12 +654,386 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   ))
                 ],
               ),
+              SizedBox(
+                height: 10,
+              ),
+              new Row(children: [
+                new Text(
+                  "应用管理：",
+                  style: _tipTextStyle(),
+                )
+              ]),
+              new Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Expanded(
+                      child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: Constants.currentPackageName,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        Constants.currentPackageName =
+                            newValue == null ? "" : newValue;
+                      });
+                    },
+                    items: allPackageNameDdmi,
+                  )),
+                  SizedBox(
+                    width: 20,
+                  ),
+                ],
+              ),
+              new Row(
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            command
+                                .execCommand(
+                                    Constants.ADB_GET_PACKAGE.split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_GET_PACKAGE, value);
+                              if (result.mError) {
+                                updatePackageName([]);
+                                _showLog(result.mResult);
+                              } else {
+                                updatePackageName([result.mResult]);
+                                _showLog("当前应用包名获取成功");
+                              }
+                            }).catchError((e) {
+                              updatePackageName([]);
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("当前包名"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            command
+                                .execCommand(
+                                    Constants.ADB_GET_THIRD_PACKAGE.split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_GET_THIRD_PACKAGE, value);
+                              if (result.mError) {
+                                updatePackageName([]);
+                                _showLog(result.mResult);
+                              } else {
+                                updatePackageName(result.mResult);
+                                _showLog("第三方应用所有包名获取成功");
+                              }
+                            }).catchError((e) {
+                              updatePackageName([]);
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("第三方包名"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            command
+                                .execCommand(
+                                    Constants.ADB_GET_SYSTEM_PACKAGE.split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_GET_SYSTEM_PACKAGE, value);
+                              if (result.mError) {
+                                updatePackageName([]);
+                                _showLog(result.mResult);
+                              } else {
+                                updatePackageName(result.mResult);
+                                _showLog("系统应用所有包名获取成功");
+                              }
+                            }).catchError((e) {
+                              updatePackageName([]);
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("系统包名"))),
+                ],
+              ),
+              new Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String? apkPath =
+                                await _selectFile(context, extensions: ["apk"]);
+                            if (apkPath == null) {
+                              _showLog("未选择apk");
+                              return;
+                            }
+                            command.execCommand([
+                              Constants.ADB_INSTALL_APK,
+                              apkPath
+                            ]).then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_INSTALL_APK, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("安装apk"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            if (Constants.currentPackageName.isEmpty) {
+                              _showLog("请先获取包名");
+                              return;
+                            }
+                            command
+                                .execCommand(Constants.ADB_UNINSTALL_APK
+                                    .replaceAll(
+                                        "package", Constants.currentPackageName)
+                                    .split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_UNINSTALL_APK, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("卸载apk"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            if (Constants.currentPackageName.isEmpty) {
+                              _showLog("请先获取包名");
+                              return;
+                            }
+                            command
+                                .execCommand(Constants.ADB_APK_PATH
+                                    .replaceAll(
+                                        "package", Constants.currentPackageName)
+                                    .split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_APK_PATH, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("app安装路径"))),
+                ],
+              ),
+              new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          if (Constants.currentPackageName.isEmpty) {
+                            _showLog("请先获取包名");
+                            return;
+                          }
+                          command
+                              .execCommand((Constants.ADB_GET_PACKAGE_INFO +
+                                      Constants.currentPackageName)
+                                  .split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_GET_PACKAGE_INFO, value);
+                            _showLog(Constants.currentPackageName +
+                                "包信息：\n" +
+                                result.mResult);
+                          }).catchError((e) {
+                            _showLog(e.toString());
+                          });
+                        },
+                        child: new Text("app包信息"))),
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          command
+                              .execCommand(
+                                  Constants.ADB_CURRENT_ACTIVITY.split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_CURRENT_ACTIVITY, value);
+                            _showLog(result.mResult);
+                          }).catchError((e) {
+                            _showLog(e.toString());
+                          });
+                        },
+                        child: new Text("前台Activity"))),
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          if (Constants.currentPackageName.isEmpty) {
+                            _showLog("请先获取包名");
+                            return;
+                          }
+                          command
+                              .execCommand(Constants.ADB_CLEAR_DATA.split(" ")
+                                ..add(Constants.currentPackageName))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_CLEAR_DATA, value);
+                            _showLog(result.mResult);
+                          }).catchError((e) {
+                            _showLog(e.toString());
+                          });
+                        },
+                        child: new Text("清除数据")))
+              ]),
+              SizedBox(
+                height: 10,
+              ),
+              new Row(children: [
+                new Text(
+                  "应用交互：",
+                  style: _tipTextStyle(),
+                )
+              ]),
+              new Row(
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String resultActivity = await showMutualAppDialog(
+                                context, "开启Activity");
+                            if (resultActivity.isEmpty) {
+                              if (Constants.currentPackageName.isEmpty) {
+                                _showLog("当前模式请先获取包名");
+                                return;
+                              }
+                              if (Constants.currentPackageName.isNotEmpty) {
+                                command
+                                    .execCommand(Constants.ADB_START_ACTIVITY_NO
+                                        .replaceAll("package",
+                                            Constants.currentPackageName)
+                                        .split(" "))
+                                    .then((value) {
+                                  result = command.dealWithData(
+                                      Constants.ADB_START_ACTIVITY_NO, value);
+                                  if (!result.mError) {
+                                    _showLog("开启Activity成功：" + result.mResult);
+                                  } else {
+                                    _showLog("开启Activity失败：" + result.mResult);
+                                  }
+                                }).catchError((error) {
+                                  _showLog(error.toString());
+                                });
+                              }
+                            } else {
+                              command
+                                  .execCommand((Constants.ADB_START_ACTIVITY +
+                                          resultActivity)
+                                      .split(" "))
+                                  .then((value) {
+                                result = command.dealWithData(
+                                    Constants.ADB_START_ACTIVITY, value);
+                                if (!result.mError) {
+                                  _showLog("开启Activity成功：" + result.mResult);
+                                } else {
+                                  _showLog("开启Activity失败：" + result.mResult);
+                                }
+                              }).catchError((error) {
+                                _showLog(error.toString());
+                              });
+                            }
+                          },
+                          child: new Text("启动Activity"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String resultReceiver = await showMutualAppDialog(
+                                context, "发送BroadcastReceiver");
+                            if (resultReceiver.isEmpty) {
+                              _showLog("发送空广播");
+                              return;
+                            }
+                            command
+                                .execCommand(
+                                    (Constants.ADB_START_BROADCAST_RECEIVER +
+                                            resultReceiver)
+                                        .split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_START_BROADCAST_RECEIVER,
+                                  value);
+                              if (!result.mError) {
+                                _showLog("开启广播成功：" + result.mResult);
+                              } else {
+                                _showLog("开启广播失败：" + result.mResult);
+                              }
+                            }).catchError((error) {
+                              _showLog(error.toString());
+                            });
+                          },
+                          child: new Text("发送BroadcastReceiver"))),
+                ],
+              ),
+              new Row(
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String resultService =
+                                await showMutualAppDialog(context, "发送Service");
+                            if (resultService.isEmpty) {
+                              _showLog("发送空Service");
+                              return;
+                            }
+                            command
+                                .execCommand((Constants.ADB_START_SERVICE +
+                                        resultService)
+                                    .split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_START_SERVICE, value);
+                              if (!result.mError) {
+                                _showLog("开启Service成功：" + result.mResult);
+                              } else {
+                                _showLog("开启Service失败：" + result.mResult);
+                              }
+                            }).catchError((error) {
+                              _showLog(error.toString());
+                            });
+                          },
+                          child: new Text("发送Service"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String resultService =
+                                await showMutualAppDialog(context, "停止Service");
+                            if (resultService.isEmpty) {
+                              _showLog("停止空Service");
+                              return;
+                            }
+                            command
+                                .execCommand(
+                                    (Constants.ADB_STOP_SERVICE + resultService)
+                                        .split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_STOP_SERVICE, value);
+                              if (!result.mError) {
+                                _showLog("停止Service成功：" + result.mResult);
+                              } else {
+                                _showLog("开停止Service失败：" + result.mResult);
+                              }
+                            }).catchError((error) {
+                              _showLog(error.toString());
+                            });
+                          },
+                          child: new Text("停止Service"))),
+                ],
+              ),
               new Row(
                 children: [
                   SizedBox(
                     height: 10,
                   ),
-                  new Text("推送和拉取：", style: _tipTextStyle()),
+                  new Text("文件管理：", style: _tipTextStyle()),
                 ],
               ),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -916,7 +1059,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         });
                       }
                     },
-                    child: new Text("push")),
+                    child: new Text("推送文件")),
               ]),
               new Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1237,7 +1380,126 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   SizedBox(
                     height: 10,
                   ),
-                  new Text("其他操作：", style: _tipTextStyle()),
+                  new Text("实用操作：", style: _tipTextStyle()),
+                ],
+              ),
+              new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          String pngName = TimeUtils.getCurrentTimeFormat();
+                          command
+                              .execCommand(Constants.ADB_SCREEN_SHOT
+                                  .replaceAll("shoot", pngName)
+                                  .split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_SCREEN_SHOT, value);
+                            if (!result.mError) {
+                              _showLog("截屏成功");
+                              command
+                                  .execCommand(
+                                      Constants.ADB_PULL_SCREEN_SHOT
+                                          .replaceAll("shoot", pngName)
+                                          .split(" "),
+                                      workingDirectory: Constants.desktopPath)
+                                  .then((value) {
+                                result = command.dealWithData(
+                                    Constants.ADB_PULL_SCREEN_SHOT, value);
+                                _showLog(result.mResult);
+                              });
+                            } else {
+                              _showLog(result.mResult);
+                            }
+                          }).catchError((e) {
+                            _showLog(e.toString());
+                          });
+                        },
+                        child: new Text("截屏"))),
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () async {
+                          String times = await showScreenRecordDialog(context);
+                          String recordName = TimeUtils.getCurrentTimeFormat();
+                          command
+                              .execCommand(Constants.ADB_SCREEN_RECORD
+                                  .replaceAll("times", times)
+                                  .replaceAll("record_screen", recordName)
+                                  .split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_SCREEN_RECORD, value);
+                            if (!result.mError) {
+                              _showLog("录屏结束");
+                              command
+                                  .execCommand(
+                                      Constants.ADB_PULL_SCREEN_RECORD
+                                          .replaceAll(
+                                              "record_screen", recordName)
+                                          .split(" "),
+                                      workingDirectory: Constants.desktopPath)
+                                  .then((value) {
+                                result = command.dealWithData(
+                                    Constants.ADB_PULL_SCREEN_RECORD, value);
+                                _showLog(result.mResult);
+                              });
+                            } else {
+                              _showLog(result.mResult);
+                            }
+                          }).catchError((e) {
+                            _showLog(e.toString());
+                          });
+                        },
+                        child: new Text("录屏")))
+              ]),
+              new Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            command.execCommand([
+                              Constants.ADB_REBOOT,
+                            ]).then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_REBOOT, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("重启手机"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            command
+                                .execCommand(
+                                    Constants.ADB_REBOOT_BOOTLOADER.split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_REBOOT_BOOTLOADER, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("重启到fastboot"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            command
+                                .execCommand(
+                                    Constants.ADB_REBOOT_RECOVERY.split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_REBOOT_RECOVERY, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("重启到recovery"))),
                 ],
               ),
               Row(
@@ -1334,6 +1596,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
 }
 
 final TextEditingController adbController = new TextEditingController();
+final TextEditingController mutualAppController = new TextEditingController();
 final TextEditingController apkSignerController = new TextEditingController();
 
 final TextEditingController wireLessController = new TextEditingController();
@@ -1423,6 +1686,111 @@ showSettingDialog(BuildContext context) {
           ),
         );
       });
+}
+
+String currentBroadcastReceiver = "";
+String currentActivity = "";
+String currentService = "";
+
+String showTips = "";
+
+String getCurrentType(String sceneStr) {
+  if (sceneStr.contains("Activity")) {
+    showTips = "Activity不填默认会启动你获取的包名App";
+    return currentActivity;
+  } else if (sceneStr.contains("Service")) {
+    showTips = "";
+    return currentService;
+  } else {
+    showTips = "支持的系统广播(可复制)\n" + broadcastReceiver.join("\n");
+    return currentBroadcastReceiver;
+  }
+}
+
+setCurrentType(String sceneStr, String value) {
+  if (sceneStr.contains("Activity")) {
+    currentActivity = value;
+  } else if (sceneStr.contains("Service")) {
+    currentService = value;
+  } else {
+    currentBroadcastReceiver = value;
+  }
+}
+
+///展示交互APP的弹窗
+Future<String> showMutualAppDialog(
+    BuildContext context, String sceneStr) async {
+  mutualAppController.text = getCurrentType(sceneStr);
+  var result = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return UnconstrainedBox(
+          //在Dialog的外层添加一层UnconstrainedBox
+          //constrainedAxis: Axis.vertical,
+          child: SizedBox(
+            //再用SizeBox指定宽度new Dialog(
+            child: new AlertDialog(
+              scrollable: true,
+              actions: [
+                TextButton(
+                  child: Text('确定'),
+                  onPressed: () {
+                    setCurrentType(sceneStr, mutualAppController.text);
+                    Navigator.of(context).pop(mutualAppController.text);
+                  },
+                )
+              ],
+              title: new Text(sceneStr, style: new TextStyle(fontSize: 20)),
+              content: new Center(
+                  child: new Container(
+                      //color: Color.fromARGB(255, 250, 255, 0),
+                      width: 0.3 * _width,
+                      height: 0.35 * _height,
+                      child: new SingleChildScrollView(
+                        child: new Column(
+                          children: [
+                            SizedBox(
+                              height: 10,
+                            ),
+                            new Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                new Expanded(
+                                    child: TextField(
+                                  controller: mutualAppController,
+                                  decoration: InputDecoration(
+                                    labelText: sceneStr,
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Colors.pink,
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
+                            new Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: new SelectableText(
+                                    showTips,
+                                    maxLines: null,
+                                  ),
+                                )
+                              ],
+                            )
+                          ],
+                        ),
+                      ))),
+            ),
+          ),
+        );
+      });
+  return result;
 }
 
 showSimOpDialog(BuildContext context, String operation) {
@@ -1685,6 +2053,89 @@ _initAllPhoneInfo() {
   return phoneInfoDdmi;
 }
 
+List<String> broadcastReceiver = [
+  "android.net.conn.CONNECTIVITY_CHANGE",
+  //网络连接发生变化
+  "android.intent.action.SCREEN_ON",
+  //屏幕点亮
+  "android.intent.action.SCREEN_OFF",
+  //屏幕熄灭
+  "android.intent.action.BATTERY_LOW",
+  //电量低，会弹出电量低提示框
+  "android.intent.action.BATTERY_OKAY",
+  //电量恢复了
+  "android.intent.action.BOOT_COMPLETED",
+  //设备启动完毕
+  "android.intent.action.DEVICE_STORAGE_LOW",
+  //存储空间过低
+  "android.intent.action.DEVICE_STORAGE_OK",
+  //存储空间恢复
+  "android.intent.action.PACKAGE_ADDED",
+  //安装了新的应用
+  "android.net.wifi.STATE_CHANGE",
+  //WiFi 连接状态发生变化
+  "android.net.wifi.WIFI_STATE_CHANGED",
+  //WiFi 状态变为启用/关闭/正在启动/正在关闭/未知
+  "android.intent.action.BATTERY_CHANGED",
+  //电池电量发生变化
+  "android.intent.action.INPUT_METHOD_CHANGED",
+  //系统输入法发生变化
+  "android.intent.action.ACTION_POWER_CONNECTED",
+  //外部电源连接
+  "android.intent.action.ACTION_POWER_DISCONNECTED",
+  //外部电源断开连接
+  "android.intent.action.DREAMING_STARTED",
+  //系统开始休眠
+  "android.intent.action.DREAMING_STOPPED",
+  //系统停止休眠
+  "android.intent.action.WALLPAPER_CHANGED",
+  //壁纸发生变化
+  "android.intent.action.HEADSET_PLUG",
+  //插入耳机
+  "android.intent.action.MEDIA_UNMOUNTED",
+  //卸载外部介质
+  "android.intent.action.MEDIA_MOUNTED",
+  //挂载外部介质
+  "android.os.action.POWER_SAVE_MODE_CHANGED",
+];
+
+_initAllSystemBroadcastReceiver() {
+  broadcastReceiver = [
+    "android.net.conn.CONNECTIVITY_CHANGE", //网络连接发生变化
+    "android.intent.action.SCREEN_ON", //屏幕点亮
+    "android.intent.action.SCREEN_OFF", //屏幕熄灭
+    "android.intent.action.BATTERY_LOW", //电量低，会弹出电量低提示框
+    "android.intent.action.BATTERY_OKAY", //电量恢复了
+    "android.intent.action.BOOT_COMPLETED", //设备启动完毕
+    "android.intent.action.DEVICE_STORAGE_LOW", //存储空间过低
+    "android.intent.action.DEVICE_STORAGE_OK", //存储空间恢复
+    "android.intent.action.PACKAGE_ADDED", //安装了新的应用
+    "android.net.wifi.STATE_CHANGE", //WiFi 连接状态发生变化
+    "android.net.wifi.WIFI_STATE_CHANGED", //WiFi 状态变为启用/关闭/正在启动/正在关闭/未知
+    "android.intent.action.BATTERY_CHANGED", //电池电量发生变化
+    "android.intent.action.INPUT_METHOD_CHANGED", //系统输入法发生变化
+    "android.intent.action.ACTION_POWER_CONNECTED", //外部电源连接
+    "android.intent.action.ACTION_POWER_DISCONNECTED", //外部电源断开连接
+    "android.intent.action.DREAMING_STARTED", //系统开始休眠
+    "android.intent.action.DREAMING_STOPPED", //系统停止休眠
+    "android.intent.action.WALLPAPER_CHANGED", //壁纸发生变化
+    "android.intent.action.HEADSET_PLUG", //插入耳机
+    "android.intent.action.MEDIA_UNMOUNTED", //卸载外部介质
+    "android.intent.action.MEDIA_MOUNTED", //挂载外部介质
+    "android.os.action.POWER_SAVE_MODE_CHANGED",
+  ];
+  broadcastReceiver.forEach((element) {
+    broadcastReceiverDdmi.add(new DropdownMenuItem(
+        child: new Text(
+          element,
+          style: _dropDownTextStyle(),
+        ),
+        value: element));
+  });
+  currentPhoneInfo = phoneInfo[0];
+  return broadcastReceiverDdmi;
+}
+
 ///初始化所有模拟操作
 _initSimOp() {
   Constants.ALL_SIM_OPERATION.forEach((element) {
@@ -1824,8 +2275,8 @@ String _getDeviceIp(String device) {
   }
 }
 
-TextStyle _dropDownTextStyle() {
-  return TextStyle(fontSize: 12, color: Colors.black);
+TextStyle _dropDownTextStyle({double fontTextSize = 12}) {
+  return TextStyle(fontSize: fontTextSize, color: Colors.black);
 }
 
 TextStyle _tipTextStyle() {
