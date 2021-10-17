@@ -22,6 +22,8 @@ class Constants {
 
   static String currentDevice = ""; //当前的设备
   static String currentPackageName = "";
+  static String currentSimOpName = ""; //当前的模拟操作
+  static int currentSimType = 1;
 
   static String desktopPath = ""; //桌面路径
 
@@ -33,6 +35,7 @@ class Constants {
   static const String SCREEN_RECORD_NAME = "record_screen.mp4";
 
   //安卓的adb命令行
+  static const String ADB_VERSION = "version";
   static const String ADB_CONNECT_DEVICES = "devices";
   static const String ADB_GET_PACKAGE = "shell dumpsys activity";
   static const String ADB_GET_THIRD_PACKAGE = "shell pm list packages -3";
@@ -45,7 +48,6 @@ class Constants {
   static const String ADB_START_BROADCAST_RECEIVER = "shell am broadcast -a ";
   static const String ADB_START_SERVICE = "shell am startservice -n ";
   static const String ADB_STOP_SERVICE = "shell am stopservice -n ";
-
 
   static const String ADB_CURRENT_ACTIVITY = "shell dumpsys  activity";
   static const String ADB_CLEAR_DATA = "shell pm clear";
@@ -96,6 +98,7 @@ class Constants {
   static const String ADB_SIM_TAP = "shell input tap"; //点击
   static const String ADB_SIM_INPUT = "shell input text"; //输入
   static const String ADB_SIM_BACK = "shell input keyevent 4"; //后退
+  static const String ADB_SIM_KEY_EVENT = "shell input keyevent";
   static const String APK_SIGNER =
       "java -jar apksign sign --ks jks_path --ks-key-alias myalias --ks-pass pass:mypass --key-pass pass:mykeypass --out outapk inputapk";
   static const String VERIFY_APK_SIGNER =

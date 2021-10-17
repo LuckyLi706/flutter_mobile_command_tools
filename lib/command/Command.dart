@@ -10,6 +10,7 @@ class AndroidCommand {
       {String executable = "", String? workingDirectory}) async {
     if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
         arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
+        arguments[0] != Constants.ADB_VERSION &&
         Constants.currentDevice.isEmpty) {
       throw "请先获取设备";
     }
@@ -31,7 +32,9 @@ class AndroidCommand {
       bool runInShell = false}) async {
     if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
         arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
-        arguments[0] != Constants.ADB_WIRELESS_CONNECT) {
+        arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
+        Constants.currentDevice.isEmpty &&
+        arguments[0] != Constants.ADB_VERSION) {
       arguments = ["-s", Constants.currentDevice]..addAll(arguments);
     }
     executable = await checkFirst(arguments,
@@ -97,7 +100,7 @@ class AndroidCommand {
         List<String> packageNameList = data.split(PlatformUtils.getLineBreak());
         List<String> packageNameFilter = [];
         packageNameList.forEach((element) {
-          if(element.isNotEmpty) {
+          if (element.isNotEmpty) {
             packageNameFilter.add(element.replaceAll("package:", ""));
           }
         });

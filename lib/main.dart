@@ -44,14 +44,11 @@ String currentSimOp = ""; //当前的模拟操作
 String currentPullPath = ""; //当前pull文件的路径
 String currentPullFile = ""; //当前pull文件的路径
 
-List<SimOperation> _simOpList = []; //所有的模拟操作集合
-
 void main() async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
     await InitUtils.init(_settings); //等待配置初始化完成
     _initAllWireLessDevice();
     _initAllPhoneInfo();
-    _initSimOp();
     runApp(new MaterialApp(
       home: MyApp(),
     ));
@@ -253,6 +250,26 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
     });
   }
 
+  void updateSimOpName(List<String> resultList) {
+    setState(() {
+      simOpDdmi.clear();
+      if (resultList.length > 0) {
+        Constants.currentSimOpName = resultList[0];
+        resultList.toSet().forEach((element) {
+          simOpDdmi.add(new DropdownMenuItem(
+            child: new Text(
+              element,
+              style: _dropDownTextStyle(fontTextSize: 18),
+            ),
+            value: element,
+          ));
+        });
+      } else {
+        Constants.currentSimOpName = "";
+      }
+    });
+  }
+
   void updatePull(List<String> fileList) {
     setState(() {
       pullDdmi.clear();
@@ -335,7 +352,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                     Constants.outerAdbPath;
                               }
                               await FileUtils.writeSetting(_settings);
-                              _showLog("当前ADB路径:" + Constants.adbPath);
+                              _getAdbVersion();
                               setState(() {});
                               Constants.isInnerAdb = isCheck;
                             }),
@@ -400,7 +417,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             int index = phoneInfo.indexOf(currentPhoneInfo);
                             command
                                 .execCommand(
-                                    Constants.getPhoneInfo(index).split(" "),runInShell: true)
+                                    Constants.getPhoneInfo(index).split(" "),
+                                    runInShell: true)
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.getPhoneInfo(index), value);
@@ -1279,12 +1297,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                         DropdownButton<String?>(
-                          value: currentSimOp,
+                          value: Constants.currentSimOpName,
                           onChanged: (String? newValue) {
                             setState(() {
-                              if (newValue != null) {
-                                currentSimOp = newValue;
-                              }
+                              Constants.currentSimOpName =
+                                  newValue == null ? "" : newValue;
                             });
                           },
                           items: simOpDdmi,
@@ -1292,10 +1309,20 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       ]))),
                   Expanded(
                       child: TextButton(
-                    onPressed: () {
-                      showSimOpDialog(context, currentSimOp);
+                    onPressed: () async {
+                      //showSimOpDialog(context, currentSimOp);
+                      String? path = await _selectFile(context);
+                      if (path == null) {
+                        _showLog("未选择指令文件");
+                      } else {
+                        List<String>? commandsName =
+                            await _analyseSimFile(path);
+                        if (commandsName != null) {
+                          updateSimOpName(commandsName);
+                        }
+                      }
                     },
-                    child: new Text("添加"),
+                    child: new Text("添加指令文件"),
                   )),
                   SizedBox(
                     width: 5,
@@ -1344,8 +1371,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: TextButton(
                     onPressed: () {
-                      if (_simOpList.length == 0) {
-                        _showLog("请先添加模拟操作");
+                      if (Constants.currentSimOpName.isEmpty) {
+                        _showLog("请先添加模拟指令文件");
                         return;
                       }
                       if (currentAllDevice.length == 0) {
@@ -1362,13 +1389,6 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       _stopSimOperation();
                     },
                     child: Text("停止命令"),
-                  )),
-                  Expanded(
-                      child: TextButton(
-                    onPressed: () {
-                      _simOpList.clear();
-                    },
-                    child: Text("清空列表"),
                   )),
                   SizedBox(
                     width: 5,
@@ -1637,7 +1657,7 @@ showSettingDialog(BuildContext context) {
                     Constants.outerAdbPath = adbController.text;
                     FileUtils.writeSetting(_settings);
                     Navigator.of(context).pop();
-                    _showLog("选择外置ADB路径：" + adbController.text);
+                    _getAdbVersion();
                   },
                 )
               ],
@@ -1793,68 +1813,6 @@ Future<String> showMutualAppDialog(
   return result;
 }
 
-showSimOpDialog(BuildContext context, String operation) {
-  simOpController.clear();
-  showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return UnconstrainedBox(
-          //在Dialog的外层添加一层UnconstrainedBox
-          //constrainedAxis: Axis.vertical,
-          child: SizedBox(
-            //再用SizeBox指定宽度new Dialog(
-            child: new AlertDialog(
-              scrollable: true,
-              actions: [
-                TextButton(
-                  child: Text('确定'),
-                  onPressed: () {
-                    //settingModel.adb = _controller.text;
-                    SimOperation? simOp = _isCheckSimOpValue(currentSimOp);
-                    if (simOp != null) {
-                      _simOpList.add(simOp);
-                    }
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
-              title: new Text(operation, style: new TextStyle(fontSize: 20)),
-              content: new Center(
-                  child: new Container(
-                      //color: Color.fromARGB(255, 250, 255, 0),
-                      width: 0.3 * _width,
-                      height: 0.1 * _height,
-                      child: new SingleChildScrollView(
-                        child: new Column(
-                          children: [
-                            new Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                new Expanded(
-                                    child: TextField(
-                                  controller: simOpController,
-                                  decoration: InputDecoration(
-                                    hintText: _getSimOpTips(operation),
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
-                                      ),
-                                    ),
-                                  ),
-                                )),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ))),
-            ),
-          ),
-        );
-      });
-}
-
 Future<String> showScreenRecordDialog(BuildContext context) async {
   var times = await showDialog(
       context: context,
@@ -1924,10 +1882,83 @@ Future<String> showScreenRecordDialog(BuildContext context) async {
   return times;
 }
 
+List<String> simCommand = [];
+List<String> simCommandName = [];
+
+Future<List<String>?> _analyseSimFile(String path) async {
+  simCommandName.clear();
+  simCommand.clear();
+  String fileStr = await FileUtils.readFile(File(path));
+  List<String> commands = fileStr.split(PlatformUtils.getLineBreak());
+  if (commands[0] != "0" && commands[0] == "1") {
+    _showLog("文本开始必须以0或者1");
+    return null;
+  }
+
+  for (int i = 1; i < commands.length; i++) {
+    if (commands[i].startsWith("swipe")) {
+      //滑动指令
+      //simOperation.name
+      List<String> commandSwipe = commands[i].split(" ");
+      if (commandSwipe.length >= 6) {
+        simCommand.add(Constants.ADB_SIM_SWIPE +
+            " " +
+            commandSwipe[1] +
+            " " +
+            commandSwipe[2] +
+            " " +
+            commandSwipe[3] +
+            " " +
+            commandSwipe[4]);
+        simCommandName.add(commandSwipe[5]);
+      } else {
+        _showLog("滑动格式不对");
+      }
+    } else if (commands[i].startsWith("tap")) {
+      List<String> commandTap = commands[i].split(" ");
+      if (commandTap.length >= 2) {
+        simCommand.add(Constants.ADB_SIM_TAP);
+        simCommandName.add(commandTap[1]);
+      } else {
+        _showLog("点击格式不对");
+      }
+    } else if (commands[i].startsWith("text")) {
+      List<String> commandText = commands[i].split(" ");
+      if (commandText.length >= 3) {
+        simCommand.add(Constants.ADB_SIM_TAP + " " + commandText[2]);
+        simCommandName.add(commandText[3]);
+      } else {
+        _showLog("输入文字格式不对");
+      }
+    } else {
+      //输入的是键值
+      List<String> commandKeyCode = commands[i].split(" ");
+      if (commandKeyCode.length >= 2) {
+        simCommand.add(Constants.ADB_SIM_KEY_EVENT + " " + commandKeyCode[1]);
+        simCommandName.add(commandKeyCode[2]);
+      } else {
+        _showLog("键值格式不对");
+      }
+    }
+  }
+  if (commands[0] == "0") {
+    Constants.currentSimType = 0;
+    simCommandName.clear();
+    simCommandName.add(path.split(PlatformUtils.getSeparator()).last);
+    return simCommandName;
+  } else if (commands[0] == "1") {
+    Constants.currentSimType = 1;
+    return simCommandName;
+  }
+  // List<String> returnList=[];
+//  returnList.addAll(simCommandName);
+  return simCommandName;
+}
+
 bool _opRepeat = false;
 
 void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
-  List<SimOperation> listOps = []..addAll(_simOpList);
+ // List<SimOperation> listOps = []..addAll(_simOpList);
 
   _opRepeat = checkRepeat == true;
   List<String> listDevices = [];
@@ -1938,17 +1969,22 @@ void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
   }
 
   listDevices.forEach((element) {
-    _runCommand(listOps, element);
+    if (Constants.currentSimType == 1) {
+      _runCommand(
+          [simCommand[simCommandName.indexOf(Constants.currentSimOpName)]],
+          element);
+    } else {
+      _runCommand(simCommand, element);
+    }
   });
   //});
 }
 
-_runCommand(List<SimOperation> listOps, String device) {
+_runCommand(List<String> listOps, String device) {
   List<Future> futureList = [];
   listOps.forEach((element) {
-    futureList.add(Future.delayed(Duration(seconds: element.duration), () {
-      List<String> arguments = ["-s", device]
-        ..addAll(_getSimOpCommand(element));
+    futureList.add(Future.delayed(Duration(seconds: 100), () {
+      List<String> arguments = ["-s", device]..addAll([element]);
       _showLog("执行指令：arguments:$arguments");
       Process.run(Constants.adbPath, arguments).then((value) {
         _showLog("执行结束：" + value.stdout + value.stderr);
@@ -2136,20 +2172,6 @@ _initAllSystemBroadcastReceiver() {
   return broadcastReceiverDdmi;
 }
 
-///初始化所有模拟操作
-_initSimOp() {
-  Constants.ALL_SIM_OPERATION.forEach((element) {
-    simOpDdmi.add(new DropdownMenuItem(
-        child: new Text(
-          element,
-          style: _dropDownTextStyle(),
-        ),
-        value: element));
-  });
-  currentSimOp = Constants.ALL_SIM_OPERATION[0];
-  return simOpDdmi;
-}
-
 String _getSimOpTips(String operationName) {
   int index = Constants.ALL_SIM_OPERATION.indexOf(operationName);
   switch (index) {
@@ -2164,77 +2186,6 @@ String _getSimOpTips(String operationName) {
     default:
       return "";
   }
-}
-
-List<String> _getSimOpCommand(SimOperation simOperation) {
-  int index = Constants.ALL_SIM_OPERATION.indexOf(simOperation.name);
-  switch (index) {
-    case 0:
-      return Constants.ADB_SIM_INPUT.split(" ")..add(simOperation.data);
-    case 1:
-      return Constants.ADB_SIM_SWIPE.split(" ")
-        ..add(simOperation.x1)
-        ..add(simOperation.y1)
-        ..add(simOperation.x2)
-        ..add(simOperation.y2);
-    case 2:
-      return Constants.ADB_SIM_TAP.split(" ")
-        ..add(simOperation.x1)
-        ..add(simOperation.y1);
-    case 3:
-      return Constants.ADB_SIM_BACK.split(" ");
-    default:
-      return [];
-  }
-}
-
-SimOperation? _isCheckSimOpValue(String operationName) {
-  SimOperation simOperation = SimOperation();
-  int index = Constants.ALL_SIM_OPERATION.indexOf(operationName);
-  List results = simOpController.text.split(",");
-  try {
-    switch (index) {
-      case 0:
-        if (results.length == 2) {
-          simOperation.data = results[0];
-          simOperation.name = operationName;
-          simOperation.duration = int.parse(results[1]);
-          return simOperation;
-        }
-        break;
-      case 1:
-        if (results.length == 5) {
-          simOperation.name = operationName;
-          simOperation.x1 = results[0];
-          simOperation.y1 = results[1];
-          simOperation.x2 = results[2];
-          simOperation.y2 = results[3];
-          simOperation.duration = int.parse(results[4]);
-          return simOperation;
-        }
-        break;
-      case 2:
-        if (results.length == 3) {
-          simOperation.name = operationName;
-          simOperation.x1 = results[0];
-          simOperation.y1 = results[1];
-          simOperation.duration = int.parse(results[2]);
-          return simOperation;
-        }
-        break;
-      case 3:
-        if (results.length == 1) {
-          simOperation.name = operationName;
-          simOperation.duration = int.parse(results[0]);
-          return simOperation;
-        }
-    }
-  } catch (e) {
-    _showLog("$operationName解析格式错误,添加失败," + e.toString());
-    return null;
-  }
-  _showLog("$operationName数据格式错误,添加失败");
-  return null;
 }
 
 String _getDeviceIp(String device) {
@@ -2273,6 +2224,15 @@ String _getDeviceIp(String device) {
     default:
       return "0"; //真机
   }
+}
+
+void _getAdbVersion() {
+  command.execCommand([Constants.ADB_VERSION]).then((value) {
+    result = command.dealWithData(Constants.ADB_VERSION, value);
+    _showLog(result.mResult);
+  }).catchError((error) {
+    _showLog(error.toString());
+  });
 }
 
 TextStyle _dropDownTextStyle({double fontTextSize = 12}) {
