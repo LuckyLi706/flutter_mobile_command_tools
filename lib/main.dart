@@ -1890,7 +1890,7 @@ Future<List<String>?> _analyseSimFile(String path) async {
   simCommand.clear();
   String fileStr = await FileUtils.readFile(File(path));
   List<String> commands = fileStr.split(PlatformUtils.getLineBreak());
-  if (commands[0] != "0" && commands[0] == "1") {
+  if (commands[0] != "0" && commands[0] != "1") {
     _showLog("文本开始必须以0或者1");
     return null;
   }
@@ -1934,8 +1934,8 @@ Future<List<String>?> _analyseSimFile(String path) async {
       //输入的是键值
       List<String> commandKeyCode = commands[i].split(" ");
       if (commandKeyCode.length >= 2) {
-        simCommand.add(Constants.ADB_SIM_KEY_EVENT + " " + commandKeyCode[1]);
-        simCommandName.add(commandKeyCode[2]);
+        simCommand.add(Constants.ADB_SIM_KEY_EVENT + " " + commandKeyCode[0]);
+        simCommandName.add(commandKeyCode[1].toLowerCase());
       } else {
         _showLog("键值格式不对");
       }
@@ -1983,8 +1983,8 @@ void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
 _runCommand(List<String> listOps, String device) {
   List<Future> futureList = [];
   listOps.forEach((element) {
-    futureList.add(Future.delayed(Duration(seconds: 100), () {
-      List<String> arguments = ["-s", device]..addAll([element]);
+    futureList.add(Future.delayed(Duration(milliseconds: 100), () {
+      List<String> arguments = ["-s", device]..addAll(element.split(" "));
       _showLog("执行指令：arguments:$arguments");
       Process.run(Constants.adbPath, arguments).then((value) {
         _showLog("执行结束：" + value.stdout + value.stderr);

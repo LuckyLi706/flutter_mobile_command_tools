@@ -33,7 +33,6 @@ class AndroidCommand {
     if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
         arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
         arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
-        Constants.currentDevice.isEmpty &&
         arguments[0] != Constants.ADB_VERSION) {
       arguments = ["-s", Constants.currentDevice]..addAll(arguments);
     }
