@@ -46,7 +46,7 @@ String currentPullFile = ""; //当前pull文件的路径
 
 void main() async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-    await InitUtils.init(_settings); //等待配置初始化完成
+    InitUtils.init(_settings); //等待配置初始化完成
     _initAllWireLessDevice();
     _initAllPhoneInfo();
     runApp(new MaterialApp(

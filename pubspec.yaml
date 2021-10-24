@@ -55,6 +55,8 @@ flutter:
     - assets/apk.jks
     - assets/apksigner.jar
     - assets/windows/adb.zip
+    - assets/macos/adb.zip
+
 
 
   # To add assets to your application, add an assets section, like this:
