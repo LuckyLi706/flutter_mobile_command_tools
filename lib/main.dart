@@ -13,8 +13,6 @@ import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
 
-import 'model/SimOperation.dart';
-
 var _width = 0.0;
 var _height = 0.0;
 
@@ -49,9 +47,11 @@ void main() async {
     InitUtils.init(_settings); //等待配置初始化完成
     _initAllWireLessDevice();
     _initAllPhoneInfo();
-    runApp(new MaterialApp(
-      home: MyApp(),
-    ));
+    Future.delayed(Duration(milliseconds: 50), () {
+      runApp(new MaterialApp(
+        home: MyApp(),
+      ));
+    });
   } else {
     print("不支持当前平台");
   }
@@ -1310,7 +1310,6 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: TextButton(
                     onPressed: () async {
-                      //showSimOpDialog(context, currentSimOp);
                       String? path = await _selectFile(context);
                       if (path == null) {
                         _showLog("未选择指令文件");
@@ -1370,7 +1369,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   ),
                   Expanded(
                       child: TextButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (Constants.currentSimOpName.isEmpty) {
                         _showLog("请先添加模拟指令文件");
                         return;
@@ -1378,6 +1377,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       if (currentAllDevice.length == 0) {
                         _showLog("当前无设备连接,请先获取设备");
                         return;
+                      }
+                      if (Constants.currentSimType == 0) {
+                        String? times = await showSimDelayTimes(context);
+                        if (times.isEmpty) {
+                          simOpTimeController.text = "1000"; //如果值为空，延迟默认为1s
+                        }
+                      } else {
+                        simOpTimeController.text = "100";
                       }
                       _startSimOperation(_checkAllDevice, _checkRepeat);
                     },
@@ -1622,7 +1629,7 @@ final TextEditingController apkSignerController = new TextEditingController();
 final TextEditingController wireLessController = new TextEditingController();
 final TextEditingController pushController = new TextEditingController();
 final TextEditingController pullController = new TextEditingController();
-final TextEditingController simOpController = new TextEditingController();
+final TextEditingController simOpTimeController = new TextEditingController();
 final TextEditingController screenRecordController =
     new TextEditingController();
 
@@ -1813,6 +1820,67 @@ Future<String> showMutualAppDialog(
   return result;
 }
 
+///展示获取模拟命令延迟的弹窗
+Future<String> showSimDelayTimes(BuildContext context) async {
+  var result = await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return UnconstrainedBox(
+          //在Dialog的外层添加一层UnconstrainedBox
+          //constrainedAxis: Axis.vertical,
+          child: SizedBox(
+            //再用SizeBox指定宽度new Dialog(
+            child: new AlertDialog(
+              scrollable: true,
+              actions: [
+                TextButton(
+                  child: Text('确定'),
+                  onPressed: () {
+                    Navigator.of(context).pop(simOpTimeController.text);
+                  },
+                )
+              ],
+              title: new Text("延迟", style: new TextStyle(fontSize: 20)),
+              content: new Center(
+                  child: new Container(
+                      //color: Color.fromARGB(255, 250, 255, 0),
+                      width: 0.3 * _width,
+                      height: 0.35 * _height,
+                      child: new SingleChildScrollView(
+                        child: new Column(
+                          children: [
+                            SizedBox(
+                              height: 10,
+                            ),
+                            new Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                new Expanded(
+                                    child: TextField(
+                                  controller: simOpTimeController,
+                                  decoration: InputDecoration(
+                                    labelText: "延迟时间,单位毫秒",
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Colors.pink,
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ))),
+            ),
+          ),
+        );
+      });
+  return result;
+}
+
 Future<String> showScreenRecordDialog(BuildContext context) async {
   var times = await showDialog(
       context: context,
@@ -1958,7 +2026,7 @@ Future<List<String>?> _analyseSimFile(String path) async {
 bool _opRepeat = false;
 
 void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
- // List<SimOperation> listOps = []..addAll(_simOpList);
+  // List<SimOperation> listOps = []..addAll(_simOpList);
 
   _opRepeat = checkRepeat == true;
   List<String> listDevices = [];
@@ -1980,17 +2048,16 @@ void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
   //});
 }
 
+///todo 循环操作值得被优化
 _runCommand(List<String> listOps, String device) {
   List<Future> futureList = [];
   listOps.forEach((element) {
-    futureList.add(Future.delayed(Duration(milliseconds: 100), () {
+    futureList.add(Future.delayed(
+        Duration(milliseconds: int.parse(simOpTimeController.text)), () {
       List<String> arguments = ["-s", device]..addAll(element.split(" "));
-      _showLog("执行指令：arguments:$arguments");
-      Process.run(Constants.adbPath, arguments).then((value) {
-        _showLog("执行结束：" + value.stdout + value.stderr);
-      }).catchError((e) {
-        _showLog("执行出错：");
-      });
+      //_showLog("执行指令：arguments:$arguments");
+      ProcessResult result = Process.runSync(Constants.adbPath, arguments);
+      _showLog("执行结束：$arguments" + result.stdout + result.stderr);
     }));
   });
 
@@ -2134,59 +2201,6 @@ List<String> broadcastReceiver = [
   //挂载外部介质
   "android.os.action.POWER_SAVE_MODE_CHANGED",
 ];
-
-_initAllSystemBroadcastReceiver() {
-  broadcastReceiver = [
-    "android.net.conn.CONNECTIVITY_CHANGE", //网络连接发生变化
-    "android.intent.action.SCREEN_ON", //屏幕点亮
-    "android.intent.action.SCREEN_OFF", //屏幕熄灭
-    "android.intent.action.BATTERY_LOW", //电量低，会弹出电量低提示框
-    "android.intent.action.BATTERY_OKAY", //电量恢复了
-    "android.intent.action.BOOT_COMPLETED", //设备启动完毕
-    "android.intent.action.DEVICE_STORAGE_LOW", //存储空间过低
-    "android.intent.action.DEVICE_STORAGE_OK", //存储空间恢复
-    "android.intent.action.PACKAGE_ADDED", //安装了新的应用
-    "android.net.wifi.STATE_CHANGE", //WiFi 连接状态发生变化
-    "android.net.wifi.WIFI_STATE_CHANGED", //WiFi 状态变为启用/关闭/正在启动/正在关闭/未知
-    "android.intent.action.BATTERY_CHANGED", //电池电量发生变化
-    "android.intent.action.INPUT_METHOD_CHANGED", //系统输入法发生变化
-    "android.intent.action.ACTION_POWER_CONNECTED", //外部电源连接
-    "android.intent.action.ACTION_POWER_DISCONNECTED", //外部电源断开连接
-    "android.intent.action.DREAMING_STARTED", //系统开始休眠
-    "android.intent.action.DREAMING_STOPPED", //系统停止休眠
-    "android.intent.action.WALLPAPER_CHANGED", //壁纸发生变化
-    "android.intent.action.HEADSET_PLUG", //插入耳机
-    "android.intent.action.MEDIA_UNMOUNTED", //卸载外部介质
-    "android.intent.action.MEDIA_MOUNTED", //挂载外部介质
-    "android.os.action.POWER_SAVE_MODE_CHANGED",
-  ];
-  broadcastReceiver.forEach((element) {
-    broadcastReceiverDdmi.add(new DropdownMenuItem(
-        child: new Text(
-          element,
-          style: _dropDownTextStyle(),
-        ),
-        value: element));
-  });
-  currentPhoneInfo = phoneInfo[0];
-  return broadcastReceiverDdmi;
-}
-
-String _getSimOpTips(String operationName) {
-  int index = Constants.ALL_SIM_OPERATION.indexOf(operationName);
-  switch (index) {
-    case 0:
-      return "data(值),s(秒)";
-    case 1:
-      return "x1(像素),y1(像素),x2(像素),y2(像素),s(秒)";
-    case 2:
-      return "x(像素),y(像素),s(秒)";
-    case 3:
-      return "s(秒)";
-    default:
-      return "";
-  }
-}
 
 String _getDeviceIp(String device) {
   List<String> deviceName = [

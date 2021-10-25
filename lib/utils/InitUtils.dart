@@ -139,11 +139,17 @@ class InitUtils {
     if (pathInner.isNotEmpty) {
       return;
     }
+    String assetsAdbPath;
+    if (Platform.isWindows) {
+      assetsAdbPath = "assets/windows/adb.zip";
+    } else {
+      assetsAdbPath = "assets/macos/adb.zip";
+    }
     Directory directoryAdb = Directory(
         '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}/adb');
     var path = directoryAdb.path + ".zip";
     if (!await directoryAdb.exists()) {
-      var buffer = await rootBundle.load('assets/windows/adb.zip');
+      var buffer = await rootBundle.load(assetsAdbPath);
       await FileUtils.writeBytesFile(buffer, File(path));
     }
     FileUtils.unZipFiles(directoryAdb.path, path);
