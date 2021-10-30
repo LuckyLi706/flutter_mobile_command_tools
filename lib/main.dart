@@ -1407,6 +1407,123 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   SizedBox(
                     height: 10,
                   ),
+                  new Text("刷机相关：", style: _tipTextStyle()),
+                ],
+              ),
+              new Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            command.execCommand([
+                              Constants.ADB_REBOOT,
+                            ]).then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_REBOOT, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("重启手机"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            command
+                                .execCommand(
+                                    Constants.ADB_REBOOT_BOOTLOADER.split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_REBOOT_BOOTLOADER, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("重启到fastboot"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            command
+                                .execCommand(
+                                    Constants.ADB_REBOOT_RECOVERY.split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_REBOOT_RECOVERY, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("重启到recovery"))),
+                ],
+              ),
+              new Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String fastbootPath =
+                                await FileUtils.getInnerFastBootPath();
+                            command
+                                .execCommand(
+                                    Constants.FASTBOOT_UNLOCK.split(" "),
+                                    executable: fastbootPath)
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.FASTBOOT_UNLOCK, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("解锁"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String fastbootPath =
+                                await FileUtils.getInnerFastBootPath();
+                            command
+                                .execCommand(Constants.FASTBOOT_LOCK.split(" "),
+                                    executable: fastbootPath)
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.FASTBOOT_LOCK, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("锁定"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String fastbootPath =
+                                await FileUtils.getInnerFastBootPath();
+                            command
+                                .execCommand(
+                                    Constants.FASTBOOT_LOCK_STATE.split(" "),
+                                    executable: fastbootPath)
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.FASTBOOT_LOCK_STATE, value);
+                              _showLog(result.mResult);
+                            }).catchError((e) {
+                              _showLog(e.toString());
+                            });
+                          },
+                          child: new Text("获取锁的状态"))),
+                ],
+              ),
+              new Row(
+                children: [
+                  SizedBox(
+                    height: 10,
+                  ),
                   new Text("实用操作：", style: _tipTextStyle()),
                 ],
               ),
@@ -1479,56 +1596,6 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         },
                         child: new Text("录屏")))
               ]),
-              new Row(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                // mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () async {
-                            command.execCommand([
-                              Constants.ADB_REBOOT,
-                            ]).then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_REBOOT, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("重启手机"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            command
-                                .execCommand(
-                                    Constants.ADB_REBOOT_BOOTLOADER.split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_REBOOT_BOOTLOADER, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("重启到fastboot"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            command
-                                .execCommand(
-                                    Constants.ADB_REBOOT_RECOVERY.split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_REBOOT_RECOVERY, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("重启到recovery"))),
-                ],
-              ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -2109,6 +2176,7 @@ _getWidthHeight(BuildContext context) {
 _initAllWireLessDevice() {
   List<String> deviceName = [
     "真机",
+    "SubSystem",
     "逍遥模拟器",
     "MuMu模拟器",
     "蓝叠模拟器",
@@ -2205,6 +2273,7 @@ List<String> broadcastReceiver = [
 String _getDeviceIp(String device) {
   List<String> deviceName = [
     "真机",
+    "SubSystem",
     "逍遥模拟器",
     "MuMu模拟器",
     "蓝叠模拟器",
@@ -2218,22 +2287,24 @@ String _getDeviceIp(String device) {
   int index = deviceName.indexOf(device);
   switch (index) {
     case 1:
-      return "127.0.0.1:21503";
+      return "127.0.0.1:58526";
     case 2:
-      return "127.0.0.1:7555";
+      return "127.0.0.1:21503";
     case 3:
-      return "127.0.0.1:5555";
+      return "127.0.0.1:7555";
     case 4:
-      return "127.0.0.1:6555";
-    case 5:
       return "127.0.0.1:5555";
+    case 5:
+      return "127.0.0.1:6555";
     case 6:
       return "127.0.0.1:5555";
     case 7:
-      return "127.0.0.1:62001";
+      return "127.0.0.1:5555";
     case 8:
-      return "127.0.0.1:26944";
+      return "127.0.0.1:62001";
     case 9:
+      return "127.0.0.1:26944";
+    case 10:
       return "127.0.0.1:62001";
     default:
       return "0"; //真机

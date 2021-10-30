@@ -72,6 +72,9 @@ class Constants {
   static const String ADB_REBOOT = "reboot";
   static const String ADB_REBOOT_BOOTLOADER = "reboot bootloader";
   static const String ADB_REBOOT_RECOVERY = "reboot recovery";
+  static const String FASTBOOT_UNLOCK="flashing unlock";
+  static const String FASTBOOT_LOCK="flashing lock";
+  static const String FASTBOOT_LOCK_STATE="getvar devices-state";
 
   static const String WIFI_MAC_ADDRESS =
       "shell cat /sys/class/net/wlan0/address";

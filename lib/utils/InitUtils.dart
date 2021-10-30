@@ -141,7 +141,7 @@ class InitUtils {
     }
     String assetsAdbPath;
     if (Platform.isWindows) {
-      assetsAdbPath = "assets/windows/adb.zip";
+      assetsAdbPath = "assets/windows/tools.zip";
     } else if (Platform.isMacOS) {
       assetsAdbPath = "assets/macos/adb.zip";
     } else {

@@ -136,4 +136,22 @@ class FileUtils {
     }
     return directoryAdb.path + PlatformUtils.getSeparator() + adbName;
   }
+
+  //获取内部fastboot路径
+  static Future<String> getInnerFastBootPath() async {
+    String adbName = "fastboot";
+    if (Platform.isWindows) {
+      adbName = "fastboot.exe";
+    } else {
+      adbName = "fastboot";
+    }
+    Directory directoryAdb = Directory(
+        '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}' +
+            PlatformUtils.getSeparator() +
+            Constants.TOOLS_DIRECTORY_NAME);
+    if (!await directoryAdb.exists()) {
+      return "";
+    }
+    return directoryAdb.path + PlatformUtils.getSeparator() + adbName;
+  }
 }
