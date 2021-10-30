@@ -35,7 +35,7 @@ class FileUtils {
 
   static Future<File> localFile(String file, {String subDir = ""}) async {
     String? path =
-        Platform.isMacOS ? await localPath(dir: TEMP_DIR) : await localPath();
+        await localPath(dir: DOCUMENT_DIR);
     if (path != null) {
       if (subDir.isNotEmpty) {
         if (path != "/") {
@@ -53,7 +53,7 @@ class FileUtils {
   }
 
   static Future<String> readSetting() async {
-    return readFile(File("SETTING"));
+    return readFile(await localFile("SETTING"));
   }
 
   static Future<String> readFile(File file) async {
