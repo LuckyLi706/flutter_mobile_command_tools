@@ -4,6 +4,7 @@ import 'dart:io';
 
 class Constants {
   static const String APP_TITLE_NAME = "MobileTools_v2.0";
+  static const String TOOLS_DIRECTORY_NAME = "tools";   //tools directory name
 
   static bool isRoot = false; //是否开启root
   static bool isInnerAdb = false; //是否使用内部的adb

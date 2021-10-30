@@ -6,6 +6,8 @@ import 'package:archive/archive.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../constants.dart';
+
 class FileUtils {
   static const String CURRENT_DIR = "0";
   static const String DOWNLOAD_DIR = "1";
@@ -104,6 +106,11 @@ class FileUtils {
         File f = File(storageDir + "/" + file.name)
           ..createSync(recursive: true)
           ..writeAsBytesSync(tempData);
+
+        if (Platform.isLinux) {
+          //Linux need run permission
+          Process.runSync("chmod", ["+x", f.path], runInShell: true);
+        }
         print("解压后的文件路径 = ${f.path}");
       } else {
         Directory(storageDir + "/" + file.name)..create(recursive: true);
@@ -117,11 +124,13 @@ class FileUtils {
     String adbName = "adb";
     if (Platform.isWindows) {
       adbName = "adb.exe";
+    } else {
+      adbName = "adb";
     }
     Directory directoryAdb = Directory(
         '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}' +
             PlatformUtils.getSeparator() +
-            "adb");
+            Constants.TOOLS_DIRECTORY_NAME);
     if (!await directoryAdb.exists()) {
       return "";
     }
