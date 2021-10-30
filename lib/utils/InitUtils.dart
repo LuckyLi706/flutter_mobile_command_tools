@@ -74,7 +74,7 @@ class InitUtils {
           r"\AppData\Local\Android\sdk\platform-tools\adb.exe";
     } else if (Platform.isMacOS) {
       Constants.adbPath = Constants.outerAdbPath =
-          Constants.adbPath + r"/Library/Android/sdk/platform-tools/adb";
+          Constants.userPath + r"/Library/Android/sdk/platform-tools/adb";
     } else if (Platform.isLinux) {
       Constants.adbPath = Constants.outerAdbPath =
           Constants.userPath + r"/Android/Sdk/platform-tools/adb";
@@ -143,7 +143,7 @@ class InitUtils {
     if (Platform.isWindows) {
       assetsAdbPath = "assets/windows/tools.zip";
     } else if (Platform.isMacOS) {
-      assetsAdbPath = "assets/macos/adb.zip";
+      assetsAdbPath = "assets/macos/tools.zip";
     } else {
       assetsAdbPath = "assets/linux/tools.zip";
     }

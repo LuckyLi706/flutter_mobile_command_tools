@@ -34,8 +34,7 @@ class FileUtils {
   }
 
   static Future<File> localFile(String file, {String subDir = ""}) async {
-    String? path =
-        await localPath(dir: DOCUMENT_DIR);
+    String? path = await localPath(dir: DOCUMENT_DIR);
     if (path != null) {
       if (subDir.isNotEmpty) {
         if (path != "/") {
@@ -107,8 +106,8 @@ class FileUtils {
           ..createSync(recursive: true)
           ..writeAsBytesSync(tempData);
 
-        if (Platform.isLinux) {
-          //Linux need run permission
+        if (Platform.isLinux || Platform.isMacOS) {
+          //Linux or MacOS need run permission
           Process.runSync("chmod", ["+x", f.path], runInShell: true);
         }
         print("解压后的文件路径 = ${f.path}");

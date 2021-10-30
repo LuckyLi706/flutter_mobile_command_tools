@@ -55,7 +55,7 @@ flutter:
     - assets/apk.jks
     - assets/apksigner.jar
     - assets/windows/tools.zip
-    - assets/macos/adb.zip
+    - assets/macos/tools.zip
     - assets/linux/tools.zip
 
 
