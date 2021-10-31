@@ -283,6 +283,9 @@
   
   flutter build linux //生成release包,文件在build/linux/release/bundle下面
 
+  使用adb出现adb devices => no permissions (user in plugdev group; are your udev rules wrong?) [duplicate]
+  参考地址解决：https://stackoverflow.com/questions/53887322/adb-devices-no-permissions-user-in-plugdev-group-are-your-udev-rules-wrong
+
   ```
 
 + macos
