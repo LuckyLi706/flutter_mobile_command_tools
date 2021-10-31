@@ -1461,65 +1461,65 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: new Text("重启到recovery"))),
                 ],
               ),
-              new Row(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                // mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () async {
-                            String fastbootPath =
-                                await FileUtils.getInnerFastBootPath();
-                            command
-                                .execCommand(
-                                    Constants.FASTBOOT_UNLOCK.split(" "),
-                                    executable: fastbootPath)
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.FASTBOOT_UNLOCK, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("解锁"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () async {
-                            String fastbootPath =
-                                await FileUtils.getInnerFastBootPath();
-                            command
-                                .execCommand(Constants.FASTBOOT_LOCK.split(" "),
-                                    executable: fastbootPath)
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.FASTBOOT_LOCK, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("锁定"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () async {
-                            String fastbootPath =
-                                await FileUtils.getInnerFastBootPath();
-                            command
-                                .execCommand(
-                                    Constants.FASTBOOT_LOCK_STATE.split(" "),
-                                    executable: fastbootPath)
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.FASTBOOT_LOCK_STATE, value);
-                              _showLog(result.mResult);
-                            }).catchError((e) {
-                              _showLog(e.toString());
-                            });
-                          },
-                          child: new Text("获取锁的状态"))),
-                ],
-              ),
+              // new Row(
+              //   // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              //   // mainAxisSize: MainAxisSize.min,
+              //   children: [
+              //     Expanded(
+              //         child: new TextButton(
+              //             onPressed: () async {
+              //               String fastbootPath =
+              //                   await FileUtils.getInnerFastBootPath();
+              //               command
+              //                   .execCommand(
+              //                       Constants.FASTBOOT_UNLOCK.split(" "),
+              //                       executable: fastbootPath)
+              //                   .then((value) {
+              //                 result = command.dealWithData(
+              //                     Constants.FASTBOOT_UNLOCK, value);
+              //                 _showLog(result.mResult);
+              //               }).catchError((e) {
+              //                 _showLog(e.toString());
+              //               });
+              //             },
+              //             child: new Text("解锁"))),
+              //     Expanded(
+              //         child: new TextButton(
+              //             onPressed: () async {
+              //               String fastbootPath =
+              //                   await FileUtils.getInnerFastBootPath();
+              //               command
+              //                   .execCommand(Constants.FASTBOOT_LOCK.split(" "),
+              //                       executable: fastbootPath)
+              //                   .then((value) {
+              //                 result = command.dealWithData(
+              //                     Constants.FASTBOOT_LOCK, value);
+              //                 _showLog(result.mResult);
+              //               }).catchError((e) {
+              //                 _showLog(e.toString());
+              //               });
+              //             },
+              //             child: new Text("锁定"))),
+              //     Expanded(
+              //         child: new TextButton(
+              //             onPressed: () async {
+              //               String fastbootPath =
+              //                   await FileUtils.getInnerFastBootPath();
+              //               command
+              //                   .execCommand(
+              //                       Constants.FASTBOOT_LOCK_STATE.split(" "),
+              //                       executable: fastbootPath)
+              //                   .then((value) {
+              //                 result = command.dealWithData(
+              //                     Constants.FASTBOOT_LOCK_STATE, value);
+              //                 _showLog(result.mResult);
+              //               }).catchError((e) {
+              //                 _showLog(e.toString());
+              //               });
+              //             },
+              //             child: new Text("获取锁的状态"))),
+              //   ],
+              // ),
               new Row(
                 children: [
                   SizedBox(
@@ -2052,17 +2052,18 @@ Future<List<String>?> _analyseSimFile(String path) async {
       }
     } else if (commands[i].startsWith("tap")) {
       List<String> commandTap = commands[i].split(" ");
-      if (commandTap.length >= 2) {
-        simCommand.add(Constants.ADB_SIM_TAP);
-        simCommandName.add(commandTap[1]);
+      if (commandTap.length >= 4) {
+        simCommand.add(
+            Constants.ADB_SIM_TAP + " " + commandTap[1] + " " + commandTap[2]);
+        simCommandName.add(commandTap[3]);
       } else {
         _showLog("点击格式不对");
       }
     } else if (commands[i].startsWith("text")) {
       List<String> commandText = commands[i].split(" ");
       if (commandText.length >= 3) {
-        simCommand.add(Constants.ADB_SIM_TAP + " " + commandText[2]);
-        simCommandName.add(commandText[3]);
+        simCommand.add(Constants.ADB_SIM_INPUT + " " + commandText[1]);
+        simCommandName.add(commandText[2]);
       } else {
         _showLog("输入文字格式不对");
       }
