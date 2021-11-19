@@ -34,21 +34,50 @@ class FileUtils {
   }
 
   static Future<File> localFile(String file, {String subDir = ""}) async {
-    String? path = await localPath(dir: DOCUMENT_DIR);
-    if (path != null) {
-      if (subDir.isNotEmpty) {
-        if (path != "/") {
-          path = path + "/" + subDir;
-        } else {
-          path = path + subDir;
-        }
-        bool isExist = await isExistFolder(path);
-        if (!isExist) {
-          Directory(path).create();
-        }
+    String path = await getBasePath();
+    if (subDir.isNotEmpty) {
+      if (path != "/") {
+        path = path + "/" + subDir;
+      } else {
+        path = path + subDir;
+      }
+      bool isExist = await isExistFolder(path);
+      if (!isExist) {
+        Directory(path).create();
       }
     }
     return File('$path/' + file);
+  }
+
+  //获取目录基地址
+  static Future<String> getBasePath() async {
+    String? path = await localPath(dir: DOCUMENT_DIR);
+    if (path != null) {
+      path = path + PlatformUtils.getSeparator() + Constants.APP_NAME;
+      bool isExist = await isExistFolder(path);
+      if (!isExist) {
+        Directory(path).create();
+      }
+      return path;
+    }
+    return "";
+  }
+
+  //获取tools目录
+  static Future<String> getToolPath() async {
+    return await getBasePath() +
+        PlatformUtils.getSeparator() +
+        Constants.TOOLS_DIRECTORY_NAME;
+  }
+
+  static Future<String> getConfigPath() async {
+    String configDirectory = await getBasePath() +
+        PlatformUtils.getSeparator() +
+        Constants.CONFIG_DIRECTORY_NAME;
+    if (!await isExistFolder(configDirectory)) {
+      Directory(configDirectory).create();
+    }
+    return configDirectory;
   }
 
   static Future<String> readSetting() async {
@@ -61,6 +90,17 @@ class FileUtils {
       return contents;
     } catch (e) {
       return "";
+    }
+  }
+
+  static Future<List<String>> readFileByLine(String filePath) async {
+    List<String> strList = new List.empty();
+    String content = await readFile(File(filePath));
+    if (content.isEmpty) {
+      return strList;
+    } else {
+      strList = content.split(PlatformUtils.getLineBreak());
+      return strList;
     }
   }
 
@@ -90,6 +130,18 @@ class FileUtils {
     //return isExist;
   }
 
+  static void deleteFile(String filePath) async {
+    if (await isExistFile(filePath)) {
+      File(filePath).delete();
+    }
+  }
+
+  static void createFile(String filePath) async {
+    if (!await isExistFile(filePath)) {
+      File(filePath).create();
+    }
+  }
+
   /// @storageDir 存储的目录
   /// @zipFilePath 解压的文件路径
   static unZipFiles(String storageDir, String zipFilePath) async {
@@ -112,10 +164,11 @@ class FileUtils {
         }
         print("解压后的文件路径 = ${f.path}");
       } else {
-        Directory(storageDir + "/" + file.name)..create(recursive: true);
+        Directory(storageDir + "/" + file.name)
+          ..create(recursive: true);
       }
     }
-    print("解压成功");
+    deleteFile(zipFilePath);
   }
 
   //获取内部adb路径
@@ -126,10 +179,9 @@ class FileUtils {
     } else {
       adbName = "adb";
     }
-    Directory directoryAdb = Directory(
-        '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}' +
-            PlatformUtils.getSeparator() +
-            Constants.TOOLS_DIRECTORY_NAME);
+    Directory directoryAdb = Directory('${await getBasePath()}' +
+        PlatformUtils.getSeparator() +
+        Constants.TOOLS_DIRECTORY_NAME);
     if (!await directoryAdb.exists()) {
       return "";
     }
@@ -144,13 +196,58 @@ class FileUtils {
     } else {
       adbName = "fastboot";
     }
-    Directory directoryAdb = Directory(
-        '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}' +
-            PlatformUtils.getSeparator() +
-            Constants.TOOLS_DIRECTORY_NAME);
+    Directory directoryAdb = Directory('${await getBasePath()}' +
+        PlatformUtils.getSeparator() +
+        Constants.TOOLS_DIRECTORY_NAME);
     if (!await directoryAdb.exists()) {
       return "";
     }
     return directoryAdb.path + PlatformUtils.getSeparator() + adbName;
+  }
+
+  static Future<String> getApkToolPath() async {
+    Directory directoryAdb = Directory('${await getBasePath()}' +
+        PlatformUtils.getSeparator() +
+        Constants.TOOLS_DIRECTORY_NAME +
+        PlatformUtils.getSeparator() +
+        Constants.APK_TOOL_NAME);
+    if (!await directoryAdb.exists()) {
+      return "";
+    }
+    return directoryAdb.path + PlatformUtils.getSeparator() + "apktool.jar";
+  }
+
+  static Future<String> getFakerAndroidPath() async {
+    Directory directoryAdb = Directory('${await getBasePath()}' +
+        PlatformUtils.getSeparator() +
+        Constants.TOOLS_DIRECTORY_NAME +
+        PlatformUtils.getSeparator() +
+        Constants.APK_TOOL_NAME);
+    if (!await directoryAdb.exists()) {
+      return "";
+    }
+    return directoryAdb.path +
+        PlatformUtils.getSeparator() +
+        "FakerAndroid.jar";
+  }
+
+  static Future<String> getUIToolsPath() async {
+    Directory directoryAdb = Directory('${await getBasePath()}' +
+        PlatformUtils.getSeparator() +
+        Constants.TOOLS_DIRECTORY_NAME +
+        PlatformUtils.getSeparator() +
+        Constants.UI_TOOL_NAME);
+    if (!await directoryAdb.exists()) {
+      return "";
+    }
+    return directoryAdb.path;
+  }
+
+  static Future<String> getMutualAppPath(String name) async {
+    String path= await getConfigPath()+
+        PlatformUtils.getSeparator() +
+        name;
+    createFile(path);
+    return path;
   }
 }

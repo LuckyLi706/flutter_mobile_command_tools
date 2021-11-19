@@ -3,19 +3,27 @@ import 'dart:core';
 import 'dart:io';
 
 class Constants {
-  static const String APP_TITLE_NAME = "MobileTools_v2.0";
-  static const String TOOLS_DIRECTORY_NAME = "tools";   //tools directory name
+  static String APP_TITLE_NAME = APP_NAME + "_" + APP_VERSION;
+
+  static const String APP_NAME = "MobileTools";
+  static const String APP_VERSION = "2.0";
+
+  static const String TOOLS_DIRECTORY_NAME = "tools"; //tools directory name
+  static const String CONFIG_DIRECTORY_NAME = "config"; //tools directory name
+
 
   static bool isRoot = false; //是否开启root
   static bool isInnerAdb = false; //是否使用内部的adb
 
   static String adbPath = ""; //真正使用的adb路径
+  static String javaPath = ""; //java路径
 
   static String innerAdbPath = ""; //内置的adb路径
   static String outerAdbPath = ""; //外置的adb路径
 
   static String innerKey = "innerAdbPath"; //innerAdbPath对应的key
   static String outerKey = "outerAdbPath"; //outerAdbPath对应的key
+  static String javaKey="javaPath";
   static String isRootKey = "isRoot";
   static String isInnerAdbKey = "isInnerAdb";
 
@@ -72,9 +80,9 @@ class Constants {
   static const String ADB_REBOOT = "reboot";
   static const String ADB_REBOOT_BOOTLOADER = "reboot bootloader";
   static const String ADB_REBOOT_RECOVERY = "reboot recovery";
-  static const String FASTBOOT_UNLOCK="flashing unlock";
-  static const String FASTBOOT_LOCK="flashing lock";
-  static const String FASTBOOT_LOCK_STATE="getvar devices-state";
+  static const String FASTBOOT_UNLOCK = "flashing unlock";
+  static const String FASTBOOT_LOCK = "flashing lock";
+  static const String FASTBOOT_LOCK_STATE = "getvar devices-state";
 
   static const String WIFI_MAC_ADDRESS =
       "shell cat /sys/class/net/wlan0/address";
@@ -107,6 +115,18 @@ class Constants {
       "java -jar apksign sign --ks jks_path --ks-key-alias myalias --ks-pass pass:mypass --key-pass pass:mykeypass --out outapk inputapk";
   static const String VERIFY_APK_SIGNER =
       "java -jar apksign verify -v --print-certs inputapk";
+
+  static const String UI_TOOL_NAME = "uiautomatorviewer";
+  static const String APK_TOOL_NAME = "apktool";
+
+  static const String OPEN_UI_TOOL =
+      "java -Djava.ext.dirs=. -Dcom.android.uiautomator.bindir=adb_path -jar uiautomatorviewer.jar";
+  static const String APKTOOL_DECODE =
+      "java -jar ApkTool_path d command Apk_path";
+  static const String APKTOOL_REBUILD =
+      "java -jar ApkTool_path b command Apk_path";
+  static const String Faker_Android =
+      "java -jar Faker_Android_path fk Apk_path";
 
   static const List<String> ALL_SIM_OPERATION = ["输入", "滑动", "点击", "后退"];
 

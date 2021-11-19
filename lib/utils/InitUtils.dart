@@ -13,6 +13,7 @@ class InitUtils {
     _initDesktop();
     _initApkSigner();
     _initInnerAdb();
+    _initMutualAppFile();
   }
 
   //获取桌面路径
@@ -22,7 +23,7 @@ class InitUtils {
           .then((value) async {
         if (value.stdout != "") {
           Constants.userPath =
-              value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
+          value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
           Constants.desktopPath = Constants.userPath + r"\Desktop";
           if (!await FileUtils.isExistFolder(Constants.userPath)) {
             Constants.desktopPath = Directory.current.path;
@@ -66,7 +67,7 @@ class InitUtils {
 
   //获取系统默认的adb目录
   static void _initAdbPath() {
-    if (Constants.outerAdbPath.isNotEmpty) {
+    if (Constants.adbPath.isNotEmpty) {
       return;
     }
     if (Platform.isWindows) {
@@ -86,6 +87,9 @@ class InitUtils {
     String value = await FileUtils.readSetting();
     if (value.isNotEmpty) {
       Map<String, dynamic> map = jsonDecode(value);
+      if (map[Constants.javaKey] != null) {
+        Constants.javaPath = map[Constants.javaKey];
+      }
       if (map[Constants.isInnerAdbKey] != null) {
         Constants.isInnerAdb = map[Constants.isInnerAdbKey];
       }
@@ -111,7 +115,7 @@ class InitUtils {
   ///初始化签名文件
   static _initApkSigner() async {
     Constants.signerPath =
-        await FileUtils.localFile("apksigner.json", subDir: "apksigner");
+    await FileUtils.localFile("apksigner.json", subDir: "apksigner");
     String signer = await FileUtils.readFile(Constants.signerPath);
     if (signer.isEmpty) {
       signer = await rootBundle.loadString('assets/apksigner.json');
@@ -119,14 +123,14 @@ class InitUtils {
     }
 
     Constants.jksPath =
-        await FileUtils.localFile("apk.jks", subDir: "apksigner");
+    await FileUtils.localFile("apk.jks", subDir: "apksigner");
     if (!await FileUtils.isExistFile(Constants.jksPath.path)) {
       var buffer = await rootBundle.load('assets/apk.jks');
       FileUtils.writeBytesFile(buffer, Constants.jksPath);
     }
 
     Constants.signerJarPath =
-        await FileUtils.localFile("apksigner.jar", subDir: "apksigner");
+    await FileUtils.localFile("apksigner.jar", subDir: "apksigner");
     if (!await FileUtils.isExistFile(Constants.signerJarPath.path)) {
       var buffer = await rootBundle.load('assets/apksigner.jar');
       FileUtils.writeBytesFile(buffer, Constants.signerJarPath);
@@ -158,4 +162,65 @@ class InitUtils {
     }
     FileUtils.unZipFiles(directoryAdb.path, path);
   }
+
+  static void _initMutualAppFile() async {
+    FileUtils.createFile(await FileUtils.getMutualAppPath("Activity"));
+    FileUtils.createFile(await FileUtils.getMutualAppPath("Service"));
+    if (!await FileUtils.isExistFile(
+        await FileUtils.getMutualAppPath("BroadcastReceiver"))) {
+      FileUtils.createFile(
+          await FileUtils.getMutualAppPath("BroadcastReceiver"));
+      String content = "";
+      broadcastReceiver.forEach((element) {
+        content = content + element + PlatformUtils.getLineBreak();
+      });
+      FileUtils.writeFile(content, File(await FileUtils.getMutualAppPath("BroadcastReceiver")));
+    }
+  }
+
+  static List<String> broadcastReceiver = [
+    "android.net.conn.CONNECTIVITY_CHANGE",
+    //网络连接发生变化
+    "android.intent.action.SCREEN_ON",
+    //屏幕点亮
+    "android.intent.action.SCREEN_OFF",
+    //屏幕熄灭
+    "android.intent.action.BATTERY_LOW",
+    //电量低，会弹出电量低提示框
+    "android.intent.action.BATTERY_OKAY",
+    //电量恢复了
+    "android.intent.action.BOOT_COMPLETED",
+    //设备启动完毕
+    "android.intent.action.DEVICE_STORAGE_LOW",
+    //存储空间过低
+    "android.intent.action.DEVICE_STORAGE_OK",
+    //存储空间恢复
+    "android.intent.action.PACKAGE_ADDED",
+    //安装了新的应用
+    "android.net.wifi.STATE_CHANGE",
+    //WiFi 连接状态发生变化
+    "android.net.wifi.WIFI_STATE_CHANGED",
+    //WiFi 状态变为启用/关闭/正在启动/正在关闭/未知
+    "android.intent.action.BATTERY_CHANGED",
+    //电池电量发生变化
+    "android.intent.action.INPUT_METHOD_CHANGED",
+    //系统输入法发生变化
+    "android.intent.action.ACTION_POWER_CONNECTED",
+    //外部电源连接
+    "android.intent.action.ACTION_POWER_DISCONNECTED",
+    //外部电源断开连接
+    "android.intent.action.DREAMING_STARTED",
+    //系统开始休眠
+    "android.intent.action.DREAMING_STOPPED",
+    //系统停止休眠
+    "android.intent.action.WALLPAPER_CHANGED",
+    //壁纸发生变化
+    "android.intent.action.HEADSET_PLUG",
+    //插入耳机
+    "android.intent.action.MEDIA_UNMOUNTED",
+    //卸载外部介质
+    "android.intent.action.MEDIA_MOUNTED",
+    //挂载外部介质
+    "android.os.action.POWER_SAVE_MODE_CHANGED",
+  ];
 }

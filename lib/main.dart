@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
+import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +14,7 @@ import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
+import 'package:path_provider/path_provider.dart';
 
 var _width = 0.0;
 var _height = 0.0;
@@ -34,6 +37,9 @@ List<DropdownMenuItem<String>> phoneInfoDdmi = []; //手机信息下拉框的列
 List<DropdownMenuItem<String>> broadcastReceiverDdmi = []; //手机信息下拉框的列表
 
 List<DropdownMenuItem<String>> pullDdmi = []; //下拉框的列表
+
+List<DropdownMenuItem<String>> mutualAppDdmi = []; //与App交互的列表
+
 final AndroidCommand command = new AndroidCommand(); //命令信息
 
 late String currentWirelessDevice; //当前需要连接的无线设备
@@ -41,6 +47,7 @@ late String currentPhoneInfo; //当前需要获取的手机信息
 String currentSimOp = ""; //当前的模拟操作
 String currentPullPath = ""; //当前pull文件的路径
 String currentPullFile = ""; //当前pull文件的路径
+String currentMutualApp = "";
 
 void main() async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
@@ -69,6 +76,7 @@ class MyApp extends StatelessWidget {
             new IconButton(
                 onPressed: () async {
                   adbController.text = Constants.outerAdbPath;
+                  javaController.text = Constants.javaPath;
                   //执行函数
                   showSettingDialog(context);
                 },
@@ -210,6 +218,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
   bool? _checkPush = false; //推送的复选框
   bool? _checkRepeat = false; //是否重复执行
   bool? _checkAllDevice = false;
+
+  bool? _checkF = false;
+  bool? _checkR = false;
+  bool? _checkS = false;
+  bool? _checkD = false;
 
   void updateConnectDevice(List<String> resultList) {
     setState(() {
@@ -440,6 +453,65 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     },
                     items: phoneInfoDdmi,
                   )),
+                ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              new Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String adbCommand = await showMutualAppDialog(
+                                context,
+                                await FileUtils.getMutualAppPath("adb"),
+                                "自定义adb命令",
+                                tips: "不需要加前缀adb");
+                            if (!adbCommand.isNotEmpty) {
+                              PlatformUtils.runCommand(adbCommand,
+                                      workDirectory: Constants.desktopPath)
+                                  .then((value) =>
+                                      {_showLog(value.stdout + value.stderr)})
+                                  .onError((error, stackTrace) =>
+                                      {_showLog(error.toString())});
+                            }
+                          },
+                          child: new Text("自定义adb命令"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String otherCommand = await showMutualAppDialog(
+                                context,
+                                await FileUtils.getMutualAppPath("other"),
+                                "自定义其他命令",
+                                tips: "命令必须添加了环境变量");
+                            if (otherCommand.isNotEmpty) {
+                              _showLog("执行命令：$otherCommand");
+                              PlatformUtils.startCommand(otherCommand,
+                                      runInShell: true,
+                                      workDirectory: Constants.desktopPath)
+                                  .then((value) {
+                                var stream = value.stdout;
+                                stream.listen((event) {
+                                  _showLog(utf8.decode(event));
+                                }, onError: (error) {
+                                  _showLog("解析数据出错：" + error);
+                                });
+                                utf8
+                                    .decodeStream(value.stderr)
+                                    .then((value) => _showLog("执行出错：" + value));
+                                value.exitCode
+                                    .then((value) =>
+                                        {_showLog("执行结束，退出码：$value")})
+                                    .onError((error, stackTrace) =>
+                                        {_showLog("执行结束，出错：$error")});
+                              });
+                            }
+                          },
+                          child: new Text("自定义其他命令"))),
                 ],
               ),
               SizedBox(
@@ -917,31 +989,35 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () async {
+                            String name = "Activity";
                             String resultActivity = await showMutualAppDialog(
-                                context, "开启Activity");
+                                context,
+                                await FileUtils.getMutualAppPath(name),
+                                name);
                             if (resultActivity.isEmpty) {
-                              if (Constants.currentPackageName.isEmpty) {
-                                _showLog("当前模式请先获取包名");
-                                return;
-                              }
-                              if (Constants.currentPackageName.isNotEmpty) {
-                                command
-                                    .execCommand(Constants.ADB_START_ACTIVITY_NO
-                                        .replaceAll("package",
-                                            Constants.currentPackageName)
-                                        .split(" "))
-                                    .then((value) {
-                                  result = command.dealWithData(
-                                      Constants.ADB_START_ACTIVITY_NO, value);
-                                  if (!result.mError) {
-                                    _showLog("开启Activity成功：" + result.mResult);
-                                  } else {
-                                    _showLog("开启Activity失败：" + result.mResult);
-                                  }
-                                }).catchError((error) {
-                                  _showLog(error.toString());
-                                });
-                              }
+                              // if (Constants.currentPackageName.isEmpty) {
+                              //   _showLog("当前模式请先获取包名");
+                              //   return;
+                              // }
+                              // if (Constants.currentPackageName.isNotEmpty) {
+                              //   command
+                              //       .execCommand(Constants.ADB_START_ACTIVITY_NO
+                              //           .replaceAll("package",
+                              //               Constants.currentPackageName)
+                              //           .split(" "))
+                              //       .then((value) {
+                              //     result = command.dealWithData(
+                              //         Constants.ADB_START_ACTIVITY_NO, value);
+                              //     if (!result.mError) {
+                              //       _showLog("开启Activity成功：" + result.mResult);
+                              //     } else {
+                              //       _showLog("开启Activity失败：" + result.mResult);
+                              //     }
+                              //   }).catchError((error) {
+                              //     _showLog(error.toString());
+                              //   });
+                              // }
+                              _showLog("无启动的Activity");
                             } else {
                               command
                                   .execCommand((Constants.ADB_START_ACTIVITY +
@@ -964,8 +1040,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () async {
+                            String name = "BroadcastReceiver";
                             String resultReceiver = await showMutualAppDialog(
-                                context, "发送BroadcastReceiver");
+                                context,
+                                await FileUtils.getMutualAppPath(name),
+                                name);
                             if (resultReceiver.isEmpty) {
                               _showLog("发送空广播");
                               return;
@@ -996,8 +1075,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () async {
-                            String resultService =
-                                await showMutualAppDialog(context, "发送Service");
+                            String name = "Service";
+                            String resultService = await showMutualAppDialog(
+                                context,
+                                await FileUtils.getMutualAppPath(name),
+                                name);
                             if (resultService.isEmpty) {
                               _showLog("发送空Service");
                               return;
@@ -1022,8 +1104,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () async {
-                            String resultService =
-                                await showMutualAppDialog(context, "停止Service");
+                            String name = "Service";
+                            String resultService = await showMutualAppDialog(
+                                context,
+                                await FileUtils.getMutualAppPath(name),
+                                name);
                             if (resultService.isEmpty) {
                               _showLog("停止空Service");
                               return;
@@ -1285,6 +1370,26 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   new Text("模拟操作：", style: _tipTextStyle()),
                 ],
               ),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                TextButton(
+                    onPressed: () async {
+                      if (!await FileUtils.isExistFile(Constants.adbPath)) {
+                        _showLog("${Constants.adbPath}路径不存在");
+                        return;
+                      }
+                      String uiToolPath = await FileUtils.getUIToolsPath();
+                      if (uiToolPath == "") {
+                        _showLog("uiautomatorviewer 路径不存在");
+                        return;
+                      }
+                      String commandStr = Constants.OPEN_UI_TOOL.replaceAll(
+                          "adb_path", await FileUtils.getToolPath());
+                      _showLog("执行命令：" + commandStr);
+                      PlatformUtils.runCommand(commandStr,
+                          runInShell: true, workDirectory: uiToolPath);
+                    },
+                    child: new Text("打开获取焦点工具")),
+              ]),
               new Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
@@ -1403,6 +1508,237 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   ),
                 ],
               ),
+              new Row(
+                children: [
+                  SizedBox(
+                    height: 10,
+                  ),
+                  new Text("逆向相关：", style: _tipTextStyle()),
+                ],
+              ),
+              new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () async {
+                          String apkToolPath = await FileUtils.getApkToolPath();
+                          if (apkToolPath == "") {
+                            _showLog("$apkToolPath不存在");
+                            return;
+                          }
+                          String? path =
+                              await _selectFile(context, extensions: ["apk"]);
+                          if (path == null) {
+                            _showLog("未选择apk");
+                            return;
+                          } else {
+                            String commandExt = "${!_checkF! ? "" : "-f"}" +
+                                "${!_checkR! ? "" : " -r"}" +
+                                "${!_checkS! ? "" : " -s"}";
+                            String commandStr = "";
+                            if (commandExt.isEmpty) {
+                              commandStr = Constants.APKTOOL_DECODE
+                                  .replaceAll(" command", "")
+                                  .replaceAll("ApkTool_path", apkToolPath)
+                                  .replaceAll("Apk_path", path);
+                            } else {
+                              commandStr = Constants.APKTOOL_DECODE
+                                  .replaceAll("command", commandExt)
+                                  .replaceAll("ApkTool_path", apkToolPath)
+                                  .replaceAll("Apk_path", path);
+                            }
+                            _showLog("执行命令：$commandStr");
+                            PlatformUtils.startCommand(commandStr,
+                                    runInShell: true,
+                                    workDirectory: Constants.desktopPath)
+                                .then((value) {
+                              var stream = value.stdout;
+                              stream.listen((event) {
+                                _showLog(utf8.decode(event));
+                              }, onError: (error) {
+                                _showLog("解析数据出错：" + error);
+                              });
+                              utf8
+                                  .decodeStream(value.stderr)
+                                  .then((value) => _showLog("执行出错：" + value));
+                              value.exitCode
+                                  .then(
+                                      (value) => {_showLog("执行结束，退出码：$value")})
+                                  .onError((error, stackTrace) =>
+                                      {_showLog("执行结束，出错：$error")});
+                            });
+                          }
+                        },
+                        child: new Text("Apktool拆包"))),
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () async {
+                          String apkToolPath = await FileUtils.getApkToolPath();
+                          if (apkToolPath == "") {
+                            _showLog("$apkToolPath不存在");
+                            return;
+                          }
+                          Directory rootPath = Directory(Constants.userPath);
+                          String? path = await FilesystemPicker.open(
+                            title: '选择文件夹',
+                            context: context,
+                            rootDirectory: rootPath,
+                            fsType: FilesystemType.folder,
+                            pickText: '选择文件夹',
+                            folderIconColor: Colors.teal,
+                          );
+                          if (path == null) {
+                            _showLog("文件夹不存在");
+                            return;
+                          } else {
+                            String commandExt = "${!_checkF! ? "" : "-f"}" +
+                                "${!_checkD! ? "" : " -d"}";
+                            String commandStr = "";
+                            if (commandExt.isEmpty) {
+                              commandStr = Constants.APKTOOL_REBUILD
+                                  .replaceAll(" command", "")
+                                  .replaceAll("ApkTool_path", apkToolPath)
+                                  .replaceAll("Apk_path", path);
+                            } else {
+                              commandStr = Constants.APKTOOL_REBUILD
+                                  .replaceAll("command", commandExt)
+                                  .replaceAll("ApkTool_path", apkToolPath)
+                                  .replaceAll("Apk_path", path);
+                            }
+                            _showLog("执行命令：$commandStr");
+                            PlatformUtils.startCommand(commandStr,
+                                    runInShell: true,
+                                    workDirectory: Constants.desktopPath)
+                                .then((value) {
+                              var stream = value.stdout;
+                              stream.listen((event) {
+                                _showLog(utf8.decode(event));
+                              }, onError: (error) {
+                                _showLog("解析数据出错：" + error);
+                              });
+                              utf8
+                                  .decodeStream(value.stderr)
+                                  .then((value) => _showLog("执行出错：" + value));
+                              value.exitCode
+                                  .then(
+                                      (value) => {_showLog("执行结束，退出码：$value")})
+                                  .onError((error, stackTrace) =>
+                                      {_showLog("执行结束，出错：$error")});
+                            });
+                          }
+                        },
+                        child: new Text("Apktool合包")))
+              ]),
+              new Row(
+                children: [
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: _checkF,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              setState(() {
+                                _checkF = isCheck;
+                              });
+                            }),
+                        new Text("-f")
+                      ])),
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: _checkR,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              setState(() {
+                                if (isCheck!) {
+                                  _checkS = false;
+                                }
+                                _checkR = isCheck;
+                              });
+                            }),
+                        new Text("-r") //不处理dex文件，--no-res
+                      ])),
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: _checkS,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              setState(() {
+                                if (isCheck!) {
+                                  _checkR = false;
+                                }
+                                _checkS = isCheck;
+                              });
+                            }),
+                        new Text("-s") //不处理dex文件,--no-src
+                      ])),
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: _checkD,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              setState(() {
+                                _checkD = isCheck;
+                              });
+                            }),
+                        new Text("-d")
+                        //添加debuggable="true"到AndroidManifest文件,--debug
+                      ])),
+                ],
+              ),
+              new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () async {
+                          String fakerAndroidPath =
+                              await FileUtils.getFakerAndroidPath();
+                          if (fakerAndroidPath == "") {
+                            _showLog("$fakerAndroidPath不存在");
+                            return;
+                          }
+                          String? path =
+                              await _selectFile(context, extensions: ["apk"]);
+                          if (path == null) {
+                            _showLog("未选择apk");
+                            return;
+                          } else {
+                            String commandStr =
+                                Constants.Faker_Android.replaceAll(
+                                        "Faker_Android_path", fakerAndroidPath)
+                                    .replaceAll("Apk_path", path);
+                            _showLog("执行命令：$commandStr");
+                            PlatformUtils.startCommand(commandStr,
+                                    runInShell: true,
+                                    workDirectory: Constants.desktopPath)
+                                .then((value) {
+                              var stream = value.stdout;
+                              stream.listen((event) {
+                                _showLog(utf8.decode(event));
+                              }, onError: (error) {
+                                _showLog("解析数据出错：" + error);
+                              });
+                              utf8
+                                  .decodeStream(value.stderr)
+                                  .then((value) => _showLog("执行出错：" + value));
+                              value.exitCode
+                                  .then(
+                                      (value) => {_showLog("执行结束，退出码：$value")})
+                                  .onError((error, stackTrace) =>
+                                      {_showLog("执行结束，出错：$error")});
+                            });
+                          }
+                        },
+                        child: new Text("FakerAndroid")))
+              ]),
               new Row(
                 children: [
                   SizedBox(
@@ -1691,7 +2027,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
 }
 
 final TextEditingController adbController = new TextEditingController();
-final TextEditingController mutualAppController = new TextEditingController();
+final TextEditingController javaController = new TextEditingController();
+
+final TextEditingController editorController = new TextEditingController();
 final TextEditingController apkSignerController = new TextEditingController();
 
 final TextEditingController wireLessController = new TextEditingController();
@@ -1723,16 +2061,29 @@ showSettingDialog(BuildContext context) {
               scrollable: true,
               actions: [
                 TextButton(
+                  child: Text('取消'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
                   child: Text('确定'),
                   onPressed: () {
+                    if (adbController.text.isEmpty &&
+                        javaController.text.isEmpty) {
+                      Navigator.of(context).pop();
+                      return;
+                    }
                     _settings[Constants.outerKey] = adbController.text;
+                    _settings[Constants.javaKey] = javaController.text;
                     if (!Constants.isInnerAdb) {
                       Constants.adbPath = adbController.text;
+                      _getAdbVersion();
                     }
+                    Constants.javaPath = javaController.text;
                     Constants.outerAdbPath = adbController.text;
                     FileUtils.writeSetting(_settings);
                     Navigator.of(context).pop();
-                    _getAdbVersion();
                   },
                 )
               ],
@@ -1774,6 +2125,38 @@ showSettingDialog(BuildContext context) {
                                 )),
                               ],
                             ),
+                            new SizedBox(
+                              height: 10,
+                            ),
+                            new Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                new TextButton(
+                                    onPressed: () async {
+                                      String? path = await _selectFile(context);
+                                      if (path == null) {
+                                        _showLog("未选择java文件");
+                                      } else {
+                                        javaController.text = path;
+                                      }
+                                    },
+                                    child: new Text("java")),
+                                new Expanded(
+                                    child: TextField(
+                                  controller: javaController,
+                                  decoration: InputDecoration(
+                                    enabled: false,
+                                    labelText: 'java',
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Colors.pink,
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
                           ],
                         ),
                       ))),
@@ -1789,74 +2172,198 @@ String currentService = "";
 
 String showTips = "";
 
-String getCurrentType(String sceneStr) {
-  if (sceneStr.contains("Activity")) {
-    showTips = "Activity不填默认会启动你获取的包名App";
-    return currentActivity;
-  } else if (sceneStr.contains("Service")) {
-    showTips = "";
-    return currentService;
-  } else {
-    showTips = "支持的系统广播(可复制)\n" + broadcastReceiver.join("\n");
-    return currentBroadcastReceiver;
-  }
-}
-
-setCurrentType(String sceneStr, String value) {
-  if (sceneStr.contains("Activity")) {
-    currentActivity = value;
-  } else if (sceneStr.contains("Service")) {
-    currentService = value;
-  } else {
-    currentBroadcastReceiver = value;
-  }
-}
-
 ///展示交互APP的弹窗
 Future<String> showMutualAppDialog(
-    BuildContext context, String sceneStr) async {
-  mutualAppController.text = getCurrentType(sceneStr);
+    BuildContext context, String filePath, String name,
+    {String tips = ""}) async {
+  if (tips == "") {
+    showTips = "文件路径：" + PlatformUtils.getLineBreak() + filePath;
+  } else {
+    showTips = "文件路径：" +
+        PlatformUtils.getLineBreak() +
+        filePath +
+        PlatformUtils.getLineBreak() +
+        tips;
+  }
+  await updateState(filePath);
   var result = await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, state) {
+            return UnconstrainedBox(
+              //在Dialog的外层添加一层UnconstrainedBox
+              //constrainedAxis: Axis.vertical,
+              child: SizedBox(
+                //再用SizeBox指定宽度new Dialog(
+                child: new AlertDialog(
+                  scrollable: true,
+                  actions: [
+                    TextButton(
+                      child: Text('确定'),
+                      onPressed: () {
+                        Navigator.of(context).pop(currentMutualApp);
+                      },
+                    ),
+                    TextButton(
+                      child: Text('编辑'),
+                      onPressed: () async {
+                        bool result = await showEditor(context, filePath, name);
+                        if (result) {
+                          await updateState(filePath);
+                          state(() {});
+                        }
+                      },
+                    ),
+                    TextButton(
+                      child: Text('刷新'),
+                      onPressed: () async {
+                        await updateState(filePath);
+                        state(() {});
+                      },
+                    ),
+                    TextButton(
+                      child: Text('取消'),
+                      onPressed: () {
+                        Navigator.of(context).pop("");
+                      },
+                    )
+                  ],
+                  title: new Text(name, style: new TextStyle(fontSize: 20)),
+                  content: new Center(
+                      child: new Container(
+                          width: 0.3 * _width,
+                          height: 0.35 * _height,
+                          child: new SingleChildScrollView(
+                            child: new Column(
+                              children: [
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                new Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                    Expanded(
+                                        child: DropdownButton<String?>(
+                                      isExpanded: true,
+                                      value: currentMutualApp,
+                                      onChanged: (String? newValue) {
+                                        state(() {
+                                          if (newValue != null) {
+                                            currentMutualApp = newValue;
+                                          }
+                                        });
+                                      },
+                                      items: mutualAppDdmi,
+                                    )),
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 5,
+                                ),
+                                new Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Expanded(
+                                      child: new SelectableText(
+                                        showTips,
+                                        maxLines: null,
+                                        style: TextStyle(
+                                            fontSize: 12, color: Colors.red),
+                                      ),
+                                    )
+                                  ],
+                                )
+                              ],
+                            ),
+                          ))),
+                ),
+              ),
+            );
+          },
+        );
+      });
+  return result;
+}
+
+Future updateState(String filePath) async {
+  mutualAppDdmi.clear();
+  List<String> fileList = await FileUtils.readFileByLine(filePath);
+  if (fileList.length > 0) {
+    currentMutualApp = fileList[0];
+    fileList.toSet().forEach((element) {
+      mutualAppDdmi.add(new DropdownMenuItem(
+        child: new Text(
+          element,
+          style: _dropDownTextStyle(),
+        ),
+        value: element,
+      ));
+    });
+  } else {
+    currentMutualApp = "";
+  }
+}
+
+Future<bool> showEditor(BuildContext context, String path, String name) async {
+  String content = await FileUtils.readFile(File(path));
+  editorController.text = content;
+  bool result = await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return UnconstrainedBox(
-          //在Dialog的外层添加一层UnconstrainedBox
-          //constrainedAxis: Axis.vertical,
           child: SizedBox(
-            //再用SizeBox指定宽度new Dialog(
             child: new AlertDialog(
               scrollable: true,
               actions: [
                 TextButton(
                   child: Text('确定'),
+                  onPressed: () async {
+                    await FileUtils.writeFile(
+                        editorController.text, File(path));
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+                TextButton(
+                  child: Text('取消'),
                   onPressed: () {
-                    setCurrentType(sceneStr, mutualAppController.text);
-                    Navigator.of(context).pop(mutualAppController.text);
+                    Navigator.of(context).pop(false);
                   },
                 )
               ],
-              title: new Text(sceneStr, style: new TextStyle(fontSize: 20)),
+              title: new Text("$name编辑", style: new TextStyle(fontSize: 20)),
               content: new Center(
                   child: new Container(
                       //color: Color.fromARGB(255, 250, 255, 0),
-                      width: 0.3 * _width,
-                      height: 0.35 * _height,
+                      width: 0.5 * _width,
+                      height: 0.5 * _height,
                       child: new SingleChildScrollView(
                         child: new Column(
                           children: [
-                            SizedBox(
-                              height: 10,
-                            ),
                             new Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 new Expanded(
                                     child: TextField(
-                                  controller: mutualAppController,
+                                  controller: editorController,
+                                  keyboardType: TextInputType.multiline,
+                                  maxLines: null,
+                                  //不限制行数
+                                  enabled: true,
+                                  autofocus: false,
+                                  enableInteractiveSelection: true,
+
                                   decoration: InputDecoration(
-                                    labelText: sceneStr,
                                     border: OutlineInputBorder(
                                       borderSide: BorderSide(
                                         color: Colors.pink,
@@ -1866,18 +2373,6 @@ Future<String> showMutualAppDialog(
                                 )),
                               ],
                             ),
-                            new Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: new SelectableText(
-                                    showTips,
-                                    maxLines: null,
-                                  ),
-                                )
-                              ],
-                            )
                           ],
                         ),
                       ))),
@@ -2120,15 +2615,36 @@ void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
 ///todo 循环操作值得被优化
 _runCommand(List<String> listOps, String device) {
   List<Future> futureList = [];
-  listOps.forEach((element) {
+  for (int i = 0; i < listOps.length; i++) {
     futureList.add(Future.delayed(
-        Duration(milliseconds: int.parse(simOpTimeController.text)), () {
-      List<String> arguments = ["-s", device]..addAll(element.split(" "));
-      //_showLog("执行指令：arguments:$arguments");
-      ProcessResult result = Process.runSync(Constants.adbPath, arguments);
-      _showLog("执行结束：$arguments" + result.stdout + result.stderr);
+        Duration(milliseconds: int.parse(simOpTimeController.text) * (i + 1)),
+        () {
+      List<String> arguments = ["-s", device]..addAll([listOps[i]]);
+      _showLog("执行指令：arguments:$arguments");
+      Process.run(Constants.adbPath, arguments).then((value) {
+        _showLog("执行结束：" + value.stdout + value.stderr);
+      }).catchError((e) {
+        _showLog("执行出错：");
+      });
     }));
-  });
+  }
+  // listOps.forEach((element) {
+  //   futureList.add(Future.delayed(
+  //       Duration(milliseconds: int.parse(simOpTimeController.text)), () {
+  //     // List<String> arguments = ["-s", device]..addAll(element.split(" "));
+  //     // //_showLog("执行指令：arguments:$arguments");
+  //     // ProcessResult result = Process.runSync(Constants.adbPath, arguments);
+  //     // _showLog("执行结束：$arguments" + result.stdout + result.stderr);
+  //
+  //     List<String> arguments = ["-s", device]..addAll([element]);
+  //     _showLog("执行指令：arguments:$arguments");
+  //     Process.run(Constants.adbPath, arguments).then((value) {
+  //       _showLog("执行结束：" + value.stdout + value.stderr);
+  //     }).catchError((e) {
+  //       _showLog("执行出错：");
+  //     });
+  //   }));
+  // });
 
   Future.wait(futureList).then((value) {
     if (_opRepeat) {
@@ -2225,52 +2741,6 @@ _initAllPhoneInfo() {
   currentPhoneInfo = phoneInfo[0];
   return phoneInfoDdmi;
 }
-
-List<String> broadcastReceiver = [
-  "android.net.conn.CONNECTIVITY_CHANGE",
-  //网络连接发生变化
-  "android.intent.action.SCREEN_ON",
-  //屏幕点亮
-  "android.intent.action.SCREEN_OFF",
-  //屏幕熄灭
-  "android.intent.action.BATTERY_LOW",
-  //电量低，会弹出电量低提示框
-  "android.intent.action.BATTERY_OKAY",
-  //电量恢复了
-  "android.intent.action.BOOT_COMPLETED",
-  //设备启动完毕
-  "android.intent.action.DEVICE_STORAGE_LOW",
-  //存储空间过低
-  "android.intent.action.DEVICE_STORAGE_OK",
-  //存储空间恢复
-  "android.intent.action.PACKAGE_ADDED",
-  //安装了新的应用
-  "android.net.wifi.STATE_CHANGE",
-  //WiFi 连接状态发生变化
-  "android.net.wifi.WIFI_STATE_CHANGED",
-  //WiFi 状态变为启用/关闭/正在启动/正在关闭/未知
-  "android.intent.action.BATTERY_CHANGED",
-  //电池电量发生变化
-  "android.intent.action.INPUT_METHOD_CHANGED",
-  //系统输入法发生变化
-  "android.intent.action.ACTION_POWER_CONNECTED",
-  //外部电源连接
-  "android.intent.action.ACTION_POWER_DISCONNECTED",
-  //外部电源断开连接
-  "android.intent.action.DREAMING_STARTED",
-  //系统开始休眠
-  "android.intent.action.DREAMING_STOPPED",
-  //系统停止休眠
-  "android.intent.action.WALLPAPER_CHANGED",
-  //壁纸发生变化
-  "android.intent.action.HEADSET_PLUG",
-  //插入耳机
-  "android.intent.action.MEDIA_UNMOUNTED",
-  //卸载外部介质
-  "android.intent.action.MEDIA_MOUNTED",
-  //挂载外部介质
-  "android.os.action.POWER_SAVE_MODE_CHANGED",
-];
 
 String _getDeviceIp(String device) {
   List<String> deviceName = [
