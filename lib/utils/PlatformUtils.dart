@@ -16,7 +16,12 @@ class PlatformUtils {
   ///windows和linux系统的命令行指令不一样
   ///使用run命令拿到的输出结果总是在运行完成了才全部输出
   static Future<ProcessResult> runCommand(String commandStr,
-      {bool runInShell = true, String? workDirectory}) {
+      {bool runInShell = true,
+      String? workDirectory,
+      bool isAdbCommand = false}) {
+    if (isAdbCommand) {
+      commandStr = adbCommand(commandStr);
+    }
     commandStr = javaCommand(commandStr);
     if (Platform.isMacOS || Platform.isLinux) {
       String executable = commandStr.split(" ")[0];
@@ -63,6 +68,16 @@ class PlatformUtils {
     }
     if (Constants.javaPath.isNotEmpty) {
       return command.replaceFirst("java", Constants.javaPath);
+    }
+    return command;
+  }
+
+  static String adbCommand(String command) {
+    if (!command.startsWith("adb")) {
+      return Constants.adbPath + " " + command;
+    }
+    if (Constants.javaPath.isNotEmpty) {
+      return command.replaceFirst("adb", Constants.adbPath);
     }
     return command;
   }

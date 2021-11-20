@@ -151,10 +151,9 @@ class InitUtils {
     } else {
       assetsAdbPath = "assets/linux/tools.zip";
     }
-    Directory directoryAdb = Directory(
-        '${await FileUtils.localPath(dir: FileUtils.DOCUMENT_DIR)}' +
-            PlatformUtils.getSeparator() +
-            Constants.TOOLS_DIRECTORY_NAME);
+    Directory directoryAdb = Directory('${await FileUtils.getBasePath()}' +
+        PlatformUtils.getSeparator() +
+        Constants.TOOLS_DIRECTORY_NAME);
     var path = directoryAdb.path + ".zip";
     if (!await directoryAdb.exists()) {
       var buffer = await rootBundle.load(assetsAdbPath);

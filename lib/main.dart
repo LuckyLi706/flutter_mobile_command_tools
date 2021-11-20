@@ -57,6 +57,7 @@ void main() async {
     _initAllPhoneInfo();
     Future.delayed(Duration(milliseconds: 50), () {
       runApp(new MaterialApp(
+        navigatorKey: navigatorKey,
         home: MyApp(),
       ));
     });
@@ -104,12 +105,7 @@ class MyApp extends StatelessWidget {
                       bottom: 20,
                       left: 20,
                       right: 20,
-                      child: new Scrollbar(
-                          isAlwaysShown: true,
-                          child: SingleChildScrollView(
-                            child: new LeftPanel(),
-                            scrollDirection: Axis.vertical,
-                          )),
+                      child: new LeftPanel()
                     )
                   ],
                 ),
@@ -134,20 +130,30 @@ class LeftPanel extends StatefulWidget {
   }
 }
 
-TextEditingController _logTextController = new TextEditingController();
+TextEditingController _logTextController = TextEditingController();
 FocusNode leftPanelFocus = FocusNode();
 
+final GlobalKey<NavigatorState> navigatorKey = new GlobalKey<NavigatorState>();
+
 class LeftPanelState extends State<LeftPanel> {
+
+  @override
+  void initState() {
+    _logTextController.addListener(() {
+      //每次文本框变化都会执行
+    });
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
-    return new TextField(
+    return new TextFormField(
       controller: _logTextController,
       keyboardType: TextInputType.multiline,
+      focusNode: leftPanelFocus,
       maxLines: null,
       //不限制行数
-      enabled: true,
       autofocus: false,
-      focusNode: leftPanelFocus,
+      // 长按输入的文本, 设置是否显示剪切，复制，粘贴按钮, 默认是显示的
       enableInteractiveSelection: true,
       decoration: InputDecoration(
         labelText: "日志信息",
@@ -436,7 +442,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.getPhoneInfo(index), value);
+
                               _showLog(result.mResult);
+
+
                             }).catchError((e) {
                               _showLog(e.toString());
                             });
@@ -465,14 +474,18 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () async {
+                            if (Constants.adbPath == ""||!await FileUtils.isExistFile(Constants.adbPath)) {
+                              _showLog("请先配置adb路径");
+                              return;
+                            }
                             String adbCommand = await showMutualAppDialog(
                                 context,
                                 await FileUtils.getMutualAppPath("adb"),
                                 "自定义adb命令",
                                 tips: "不需要加前缀adb");
-                            if (!adbCommand.isNotEmpty) {
+                            if (adbCommand.isNotEmpty) {
                               PlatformUtils.runCommand(adbCommand,
-                                      workDirectory: Constants.desktopPath)
+                                      workDirectory: Constants.desktopPath,isAdbCommand: true)
                                   .then((value) =>
                                       {_showLog(value.stdout + value.stderr)})
                                   .onError((error, stackTrace) =>
@@ -1373,13 +1386,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 TextButton(
                     onPressed: () async {
-                      if (!await FileUtils.isExistFile(Constants.adbPath)) {
-                        _showLog("${Constants.adbPath}路径不存在");
-                        return;
-                      }
                       String uiToolPath = await FileUtils.getUIToolsPath();
                       if (uiToolPath == "") {
                         _showLog("uiautomatorviewer 路径不存在");
+                        return;
+                      }
+                      if (!await FileUtils.isExistFile(Constants.adbPath)) {
+                        _showLog("${Constants.adbPath}路径不存在");
                         return;
                       }
                       String commandStr = Constants.OPEN_UI_TOOL.replaceAll(
@@ -1522,7 +1535,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         onPressed: () async {
                           String apkToolPath = await FileUtils.getApkToolPath();
                           if (apkToolPath == "") {
-                            _showLog("$apkToolPath不存在");
+                            _showLog("ApkTool路径不存在");
                             return;
                           }
                           String? path =
@@ -1574,7 +1587,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         onPressed: () async {
                           String apkToolPath = await FileUtils.getApkToolPath();
                           if (apkToolPath == "") {
-                            _showLog("$apkToolPath不存在");
+                            _showLog("ApkTool路径不存在");
                             return;
                           }
                           Directory rootPath = Directory(Constants.userPath);
@@ -1702,7 +1715,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           String fakerAndroidPath =
                               await FileUtils.getFakerAndroidPath();
                           if (fakerAndroidPath == "") {
-                            _showLog("$fakerAndroidPath不存在");
+                            _showLog("FakerAndroid 路径不存在");
                             return;
                           }
                           String? path =
@@ -2612,15 +2625,14 @@ void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
   //});
 }
 
-///todo 循环操作值得被优化
 _runCommand(List<String> listOps, String device) {
   List<Future> futureList = [];
   for (int i = 0; i < listOps.length; i++) {
     futureList.add(Future.delayed(
         Duration(milliseconds: int.parse(simOpTimeController.text) * (i + 1)),
         () {
-      List<String> arguments = ["-s", device]..addAll([listOps[i]]);
-      _showLog("执行指令：arguments:$arguments");
+      List<String> arguments = ["-s", device]..addAll(listOps[i].split(" "));
+      _showLog("执行指令：adb:${Constants.adbPath},arguments:$arguments");
       Process.run(Constants.adbPath, arguments).then((value) {
         _showLog("执行结束：" + value.stdout + value.stderr);
       }).catchError((e) {
@@ -2628,23 +2640,6 @@ _runCommand(List<String> listOps, String device) {
       });
     }));
   }
-  // listOps.forEach((element) {
-  //   futureList.add(Future.delayed(
-  //       Duration(milliseconds: int.parse(simOpTimeController.text)), () {
-  //     // List<String> arguments = ["-s", device]..addAll(element.split(" "));
-  //     // //_showLog("执行指令：arguments:$arguments");
-  //     // ProcessResult result = Process.runSync(Constants.adbPath, arguments);
-  //     // _showLog("执行结束：$arguments" + result.stdout + result.stderr);
-  //
-  //     List<String> arguments = ["-s", device]..addAll([element]);
-  //     _showLog("执行指令：arguments:$arguments");
-  //     Process.run(Constants.adbPath, arguments).then((value) {
-  //       _showLog("执行结束：" + value.stdout + value.stderr);
-  //     }).catchError((e) {
-  //       _showLog("执行出错：");
-  //     });
-  //   }));
-  // });
 
   Future.wait(futureList).then((value) {
     if (_opRepeat) {
@@ -2673,7 +2668,7 @@ Future<String?> _selectFile(BuildContext context,
 }
 
 void _showLog(String msg) {
-  leftPanelFocus.unfocus();
+  //leftPanelFocus.unfocus();
   if (msg.isEmpty) {
     return;
   }
@@ -2683,6 +2678,15 @@ void _showLog(String msg) {
     _showLogText = _showLogText + "\n" + ">>>>>>>" + msg.trim();
   }
   _logTextController.text = _showLogText;
+
+  //移动光标位置到最后
+  _logTextController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _logTextController.text.length));
+  FocusScope.of(navigatorKey.currentState!.overlay!.context).requestFocus(leftPanelFocus);
+  //延迟移除光标闪烁
+  Future.delayed(Duration(milliseconds: 500),(){
+    leftPanelFocus.unfocus();
+  });
 }
 
 _getWidthHeight(BuildContext context) {

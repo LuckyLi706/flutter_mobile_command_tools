@@ -65,9 +65,13 @@ class FileUtils {
 
   //获取tools目录
   static Future<String> getToolPath() async {
-    return await getBasePath() +
+    String toolDirectory = await getBasePath() +
         PlatformUtils.getSeparator() +
         Constants.TOOLS_DIRECTORY_NAME;
+    if (!await isExistFolder(toolDirectory)) {
+      Directory(toolDirectory).create();
+    }
+    return toolDirectory;
   }
 
   static Future<String> getConfigPath() async {
