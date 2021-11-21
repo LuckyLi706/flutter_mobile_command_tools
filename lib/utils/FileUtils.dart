@@ -103,7 +103,7 @@ class FileUtils {
     if (content.isEmpty) {
       return strList;
     } else {
-      strList = content.split(PlatformUtils.getLineBreak());
+      strList = content.split("\n");
       return strList;
     }
   }

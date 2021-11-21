@@ -49,6 +49,8 @@ String currentPullPath = ""; //当前pull文件的路径
 String currentPullFile = ""; //当前pull文件的路径
 String currentMutualApp = "";
 
+String? simCommandPath;
+
 void main() async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
     WidgetsFlutterBinding.ensureInitialized();
@@ -101,12 +103,11 @@ class MyApp extends StatelessWidget {
                   //fit: StackFit.expand, //未定位widget占满Stack整个空间
                   children: <Widget>[
                     Positioned(
-                      top: 20.0,
-                      bottom: 20,
-                      left: 20,
-                      right: 20,
-                      child: new LeftPanel()
-                    )
+                        top: 20.0,
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                        child: new LeftPanel())
                   ],
                 ),
                 padding: EdgeInsets.all(10),
@@ -136,7 +137,6 @@ FocusNode leftPanelFocus = FocusNode();
 final GlobalKey<NavigatorState> navigatorKey = new GlobalKey<NavigatorState>();
 
 class LeftPanelState extends State<LeftPanel> {
-
   @override
   void initState() {
     _logTextController.addListener(() {
@@ -144,6 +144,7 @@ class LeftPanelState extends State<LeftPanel> {
     });
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     return new TextFormField(
@@ -444,8 +445,6 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   Constants.getPhoneInfo(index), value);
 
                               _showLog(result.mResult);
-
-
                             }).catchError((e) {
                               _showLog(e.toString());
                             });
@@ -474,7 +473,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () async {
-                            if (Constants.adbPath == ""||!await FileUtils.isExistFile(Constants.adbPath)) {
+                            if (Constants.adbPath == "" ||
+                                !await FileUtils.isExistFile(
+                                    Constants.adbPath)) {
                               _showLog("请先配置adb路径");
                               return;
                             }
@@ -484,8 +485,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 "自定义adb命令",
                                 tips: "不需要加前缀adb");
                             if (adbCommand.isNotEmpty) {
+                              _showLog("执行命令：$adbCommand");
                               PlatformUtils.runCommand(adbCommand,
-                                      workDirectory: Constants.desktopPath,isAdbCommand: true)
+                                      workDirectory: Constants.desktopPath,
+                                      isAdbCommand: true)
                                   .then((value) =>
                                       {_showLog(value.stdout + value.stderr)})
                                   .onError((error, stackTrace) =>
@@ -1429,18 +1432,33 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: TextButton(
                     onPressed: () async {
-                      String? path = await _selectFile(context);
-                      if (path == null) {
+                      simCommandPath = await _selectFile(context);
+                      if (simCommandPath == null) {
                         _showLog("未选择指令文件");
                       } else {
                         List<String>? commandsName =
-                            await _analyseSimFile(path);
+                            await _analyseSimFile(simCommandPath!);
                         if (commandsName != null) {
                           updateSimOpName(commandsName);
                         }
                       }
                     },
                     child: new Text("添加指令文件"),
+                  )),
+                  Expanded(
+                      child: TextButton(
+                    onPressed: () async {
+                      if (simCommandPath == null) {
+                        _showLog("刷新失败");
+                      } else {
+                        List<String>? commandsName =
+                            await _analyseSimFile(simCommandPath!);
+                        if (commandsName != null) {
+                          updateSimOpName(commandsName);
+                        }
+                      }
+                    },
+                    child: new Text("刷新指令文件"),
                   )),
                   SizedBox(
                     width: 5,
@@ -1493,17 +1511,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         _showLog("请先添加模拟指令文件");
                         return;
                       }
-                      if (currentAllDevice.length == 0) {
-                        _showLog("当前无设备连接,请先获取设备");
-                        return;
-                      }
                       if (Constants.currentSimType == 0) {
                         String? times = await showSimDelayTimes(context);
                         if (times.isEmpty) {
-                          simOpTimeController.text = "1000"; //如果值为空，延迟默认为1s
+                          return; //如果值为空，延迟默认为1s
                         }
-                      } else {
-                        simOpTimeController.text = "100";
                       }
                       _startSimOperation(_checkAllDevice, _checkRepeat);
                     },
@@ -1810,65 +1822,6 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: new Text("重启到recovery"))),
                 ],
               ),
-              // new Row(
-              //   // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              //   // mainAxisSize: MainAxisSize.min,
-              //   children: [
-              //     Expanded(
-              //         child: new TextButton(
-              //             onPressed: () async {
-              //               String fastbootPath =
-              //                   await FileUtils.getInnerFastBootPath();
-              //               command
-              //                   .execCommand(
-              //                       Constants.FASTBOOT_UNLOCK.split(" "),
-              //                       executable: fastbootPath)
-              //                   .then((value) {
-              //                 result = command.dealWithData(
-              //                     Constants.FASTBOOT_UNLOCK, value);
-              //                 _showLog(result.mResult);
-              //               }).catchError((e) {
-              //                 _showLog(e.toString());
-              //               });
-              //             },
-              //             child: new Text("解锁"))),
-              //     Expanded(
-              //         child: new TextButton(
-              //             onPressed: () async {
-              //               String fastbootPath =
-              //                   await FileUtils.getInnerFastBootPath();
-              //               command
-              //                   .execCommand(Constants.FASTBOOT_LOCK.split(" "),
-              //                       executable: fastbootPath)
-              //                   .then((value) {
-              //                 result = command.dealWithData(
-              //                     Constants.FASTBOOT_LOCK, value);
-              //                 _showLog(result.mResult);
-              //               }).catchError((e) {
-              //                 _showLog(e.toString());
-              //               });
-              //             },
-              //             child: new Text("锁定"))),
-              //     Expanded(
-              //         child: new TextButton(
-              //             onPressed: () async {
-              //               String fastbootPath =
-              //                   await FileUtils.getInnerFastBootPath();
-              //               command
-              //                   .execCommand(
-              //                       Constants.FASTBOOT_LOCK_STATE.split(" "),
-              //                       executable: fastbootPath)
-              //                   .then((value) {
-              //                 result = command.dealWithData(
-              //                     Constants.FASTBOOT_LOCK_STATE, value);
-              //                 _showLog(result.mResult);
-              //               }).catchError((e) {
-              //                 _showLog(e.toString());
-              //               });
-              //             },
-              //             child: new Text("获取锁的状态"))),
-              //   ],
-              // ),
               new Row(
                 children: [
                   SizedBox(
@@ -1914,6 +1867,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () async {
                           String times = await showScreenRecordDialog(context);
+                          if (times.isEmpty) {
+                            return;
+                          }
                           String recordName = TimeUtils.getCurrentTimeFormat();
                           command
                               .execCommand(Constants.ADB_SCREEN_RECORD
@@ -2048,14 +2004,14 @@ final TextEditingController apkSignerController = new TextEditingController();
 final TextEditingController wireLessController = new TextEditingController();
 final TextEditingController pushController = new TextEditingController();
 final TextEditingController pullController = new TextEditingController();
-final TextEditingController simOpTimeController = new TextEditingController();
+final TextEditingController simOpTimeController =
+    new TextEditingController(text: "1000"); //默认1000毫米
 final TextEditingController screenRecordController =
     new TextEditingController();
 
 bool isPullCrash = false; //当前需要拉取普通文件还是crash文件
 
 showSettingDialog(BuildContext context) {
-  bool checkboxSelected = true;
   showDialog(
       context: context,
       barrierDismissible: false,
@@ -2103,7 +2059,6 @@ showSettingDialog(BuildContext context) {
               title: new Text("设置", style: new TextStyle(fontSize: 20)),
               content: new Center(
                   child: new Container(
-                      //color: Color.fromARGB(255, 250, 255, 0),
                       width: 0.3 * _width,
                       height: 0.3 * _height,
                       child: new SingleChildScrollView(
@@ -2415,6 +2370,12 @@ Future<String> showSimDelayTimes(BuildContext context) async {
                   onPressed: () {
                     Navigator.of(context).pop(simOpTimeController.text);
                   },
+                ),
+                TextButton(
+                  child: Text('取消'),
+                  onPressed: () {
+                    Navigator.of(context).pop("");
+                  },
                 )
               ],
               title: new Text("延迟", style: new TextStyle(fontSize: 20)),
@@ -2483,6 +2444,12 @@ Future<String> showScreenRecordDialog(BuildContext context) async {
                       return;
                     }
                     Navigator.of(context).pop(screenRecordController.text);
+                  },
+                ),
+                TextButton(
+                  child: Text('取消'),
+                  onPressed: () {
+                    Navigator.of(context).pop("");
                   },
                 )
               ],
@@ -2595,8 +2562,6 @@ Future<List<String>?> _analyseSimFile(String path) async {
     Constants.currentSimType = 1;
     return simCommandName;
   }
-  // List<String> returnList=[];
-//  returnList.addAll(simCommandName);
   return simCommandName;
 }
 
@@ -2608,9 +2573,17 @@ void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
   _opRepeat = checkRepeat == true;
   List<String> listDevices = [];
   if (checkAllDevice == true) {
-    listDevices..addAll(currentAllDevice);
+    if (currentAllDevice.length == 0) {
+      listDevices.add("");
+    } else {
+      listDevices..addAll(currentAllDevice);
+    }
   } else {
-    listDevices.add(Constants.currentDevice);
+    if (Constants.currentDevice.isEmpty) {
+      listDevices.add("");
+    } else {
+      listDevices.add(Constants.currentDevice);
+    }
   }
 
   listDevices.forEach((element) {
@@ -2631,7 +2604,10 @@ _runCommand(List<String> listOps, String device) {
     futureList.add(Future.delayed(
         Duration(milliseconds: int.parse(simOpTimeController.text) * (i + 1)),
         () {
-      List<String> arguments = ["-s", device]..addAll(listOps[i].split(" "));
+      List<String> arguments = listOps[i].split(" ");
+      if (device.isNotEmpty) {
+        arguments = ["-s", device]..addAll(arguments);
+      }
       _showLog("执行指令：adb:${Constants.adbPath},arguments:$arguments");
       Process.run(Constants.adbPath, arguments).then((value) {
         _showLog("执行结束：" + value.stdout + value.stderr);
@@ -2682,9 +2658,10 @@ void _showLog(String msg) {
   //移动光标位置到最后
   _logTextController.selection = TextSelection.fromPosition(
       TextPosition(offset: _logTextController.text.length));
-  FocusScope.of(navigatorKey.currentState!.overlay!.context).requestFocus(leftPanelFocus);
+  FocusScope.of(navigatorKey.currentState!.overlay!.context)
+      .requestFocus(leftPanelFocus);
   //延迟移除光标闪烁
-  Future.delayed(Duration(milliseconds: 500),(){
+  Future.delayed(Duration(milliseconds: 500), () {
     leftPanelFocus.unfocus();
   });
 }

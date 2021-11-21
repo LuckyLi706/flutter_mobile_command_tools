@@ -3,17 +3,12 @@ import 'dart:io';
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 class AndroidCommand {
   Future<String> checkFirst(List<String> arguments,
       {String executable = "", String? workingDirectory}) async {
-    if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
-        arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
-        arguments[0] != Constants.ADB_VERSION &&
-        Constants.currentDevice.isEmpty) {
-      throw "请先获取设备";
-    }
     if (Constants.adbPath == "") {
       throw "adb路径不能为空";
     }
@@ -23,6 +18,14 @@ class AndroidCommand {
     if (!await FileUtils.isExistFile(executable)) {
       throw executable + "该路径不存在";
     }
+
+    if (Constants.ADB_CONNECT_DEVICES.isNotEmpty) {
+      if (arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
+          arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
+          arguments[0] != Constants.ADB_VERSION) {
+        arguments = ["-s", Constants.currentDevice]..addAll(arguments);
+      }
+    }
     return executable;
   }
 
@@ -30,33 +33,46 @@ class AndroidCommand {
       {String executable = "",
       String? workingDirectory,
       bool runInShell = false}) async {
-    if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
-        arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
-        arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
-        arguments[0] != Constants.ADB_VERSION) {
-      arguments = ["-s", Constants.currentDevice]..addAll(arguments);
-    }
     executable = await checkFirst(arguments,
         executable: executable, workingDirectory: workingDirectory);
-    print(
+    LogUtils.printLog(
         "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
+
+    //对grep做处理,
+    if (arguments.contains("grep") && !arguments.contains("dropbox")) {
+      int index = arguments.indexOf("grep");
+      arguments[index] = PlatformUtils.grepFindStr();
+    }
+
     return await Process.run(executable, arguments,
         workingDirectory: workingDirectory, runInShell: runInShell);
   }
 
   Future<ProcessResult> execCommandSync(List<String> arguments,
       {String executable = "", String? workingDirectory}) async {
-    if (arguments[0] != Constants.ADB_CONNECT_DEVICES) {
-      arguments = ["-s", Constants.currentDevice]..addAll(arguments);
-    }
     executable = await checkFirst(arguments,
         executable: executable, workingDirectory: workingDirectory);
+
+    LogUtils.printLog(
+        "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
+
+    //对grep做处理,
+    if (arguments.contains("grep") && !arguments.contains("dropbox")) {
+      int index = arguments.indexOf("grep");
+      arguments[index] = PlatformUtils.grepFindStr();
+    }
+
     return Process.runSync(executable, arguments,
         workingDirectory: workingDirectory);
   }
 
   CommandResult dealWithData(String arguments, ProcessResult processResult) {
     if (processResult.stderr != "") {
+      if (processResult.stderr
+          .toString()
+          .contains("more than one device/emulator")) {
+        return getProcessResult(true, "当前设备大于等于两个,请先获取设备");
+      }
       return getProcessResult(true, processResult.stderr);
     }
     String data = processResult.stdout;

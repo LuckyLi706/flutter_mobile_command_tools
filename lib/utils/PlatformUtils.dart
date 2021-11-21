@@ -35,6 +35,13 @@ class PlatformUtils {
     }
   }
 
+  static String grepFindStr(){
+    if(Platform.isWindows){
+      return "findstr";
+    }
+    return "grep";
+  }
+
   /// ProcessStartMode 可以设置开启进程模式，但是我测试没成功，没法重定向输出流到我的文本上面来
   /// 在命令行界面倒是可以实时输出，可以了，可以拿到输出流然后
   /**
