@@ -29,13 +29,14 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   path_provider: ^2.0.2
+  file_picker: ^4.2.4
   archive: ^3.1.2
   date_format: ^2.0.4
   file_selector: ^0.8.2
   file_selector_windows: ^0.0.2
   file_selector_macos: ^0.0.3
   file_selector_linux: ^0.0.2
-  filesystem_picker: ^2.0.0
+  fast_gbk: ^1.0.0
 
 dev_dependencies:
   test_process: ^2.0.2

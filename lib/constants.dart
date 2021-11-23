@@ -11,26 +11,31 @@ class Constants {
   static const String TOOLS_DIRECTORY_NAME = "tools"; //tools directory name
   static const String CONFIG_DIRECTORY_NAME = "config"; //tools directory name
 
-
   static bool isRoot = false; //是否开启root
   static bool isInnerAdb = false; //是否使用内部的adb
 
   static String adbPath = ""; //真正使用的adb路径
   static String javaPath = ""; //java路径
+  static String libDevicePath = ""; //libimobiledevice目录
 
   static String innerAdbPath = ""; //内置的adb路径
   static String outerAdbPath = ""; //外置的adb路径
 
   static String innerKey = "innerAdbPath"; //innerAdbPath对应的key
   static String outerKey = "outerAdbPath"; //outerAdbPath对应的key
-  static String javaKey="javaPath";
+  static String javaKey = "javaPath";
+  static String libDeviceKey = "libDeviceKey";
   static String isRootKey = "isRoot";
   static String isInnerAdbKey = "isInnerAdb";
 
   static String apksignerPath = "";
 
-  static String currentDevice = ""; //当前的设备
+  static String currentDevice = ""; //当前的安卓设备
+  static String currentIOSDevice = ""; //当前的IOS设备
+
   static String currentPackageName = "";
+  static String currentIOSPackageName = ""; //当前IOS包名
+
   static String currentSimOpName = ""; //当前的模拟操作
   static int currentSimType = 1;
 
@@ -42,6 +47,12 @@ class Constants {
 
   static const String SCREEN_SHOOT_NAME = "shoot.png";
   static const String SCREEN_RECORD_NAME = "record_screen.mp4";
+
+  //IOS的ideviceinstaller命令行
+
+  static const String IOS_GET_DEVICE = "-l";
+  static const String IOS_GET_THIRD_PACKAGE = "-l -o list_user";
+  static const String IOS_GET_SYSTEM_PACKAGE = "-l -o list_system";
 
   //安卓的adb命令行
   static const String ADB_VERSION = "version";
@@ -124,9 +135,9 @@ class Constants {
   static const String APKTOOL_DECODE =
       "java -jar ApkTool_path d command Apk_path";
   static const String APKTOOL_REBUILD =
-      "java -jar ApkTool_path b command Apk_path";
+      "java -jar ApkTool_path b command Apk_path -o new.apk";
   static const String Faker_Android =
-      "java -jar Faker_Android_path fk Apk_path";
+      "java -jar Faker_Android_path fk Apk_path -o new.apk";
 
   static const List<String> ALL_SIM_OPERATION = ["输入", "滑动", "点击", "后退"];
 

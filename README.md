@@ -254,7 +254,7 @@
     使用apksigner的签名。windows的签名文件放在apksigner文件夹下面，macos放在/Users/用户名/Library/Caches/apksigner下面，可以进行替换，保证文件名一样。apksigner.json为签名的key以及密码。替换记得修改。
 
 ### IOS
-暂时未做（计划使用libmobileinstaller的相关指令）
+[开源库](https://github.com/libimobiledevice-win32/imobiledevice-net)
 
 ## 编译
 所有平台应用都改成了占当前屏幕的2/3，采用居中显示，linux没有居中，GTK没搞过。

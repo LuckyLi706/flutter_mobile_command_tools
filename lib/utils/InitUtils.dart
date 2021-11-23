@@ -23,7 +23,7 @@ class InitUtils {
           .then((value) async {
         if (value.stdout != "") {
           Constants.userPath =
-          value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
+              value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
           Constants.desktopPath = Constants.userPath + r"\Desktop";
           if (!await FileUtils.isExistFolder(Constants.userPath)) {
             Constants.desktopPath = Directory.current.path;
@@ -90,6 +90,9 @@ class InitUtils {
       if (map[Constants.javaKey] != null) {
         Constants.javaPath = map[Constants.javaKey];
       }
+      if (map[Constants.libDeviceKey] != null) {
+        Constants.libDevicePath = map[Constants.libDeviceKey];
+      }
       if (map[Constants.isInnerAdbKey] != null) {
         Constants.isInnerAdb = map[Constants.isInnerAdbKey];
       }
@@ -115,7 +118,7 @@ class InitUtils {
   ///初始化签名文件
   static _initApkSigner() async {
     Constants.signerPath =
-    await FileUtils.localFile("apksigner.json", subDir: "apksigner");
+        await FileUtils.localFile("apksigner.json", subDir: "apksigner");
     String signer = await FileUtils.readFile(Constants.signerPath);
     if (signer.isEmpty) {
       signer = await rootBundle.loadString('assets/apksigner.json');
@@ -123,14 +126,14 @@ class InitUtils {
     }
 
     Constants.jksPath =
-    await FileUtils.localFile("apk.jks", subDir: "apksigner");
+        await FileUtils.localFile("apk.jks", subDir: "apksigner");
     if (!await FileUtils.isExistFile(Constants.jksPath.path)) {
       var buffer = await rootBundle.load('assets/apk.jks');
       FileUtils.writeBytesFile(buffer, Constants.jksPath);
     }
 
     Constants.signerJarPath =
-    await FileUtils.localFile("apksigner.jar", subDir: "apksigner");
+        await FileUtils.localFile("apksigner.jar", subDir: "apksigner");
     if (!await FileUtils.isExistFile(Constants.signerJarPath.path)) {
       var buffer = await rootBundle.load('assets/apksigner.jar');
       FileUtils.writeBytesFile(buffer, Constants.signerJarPath);
@@ -173,7 +176,8 @@ class InitUtils {
       broadcastReceiver.forEach((element) {
         content = content + element + PlatformUtils.getLineBreak();
       });
-      FileUtils.writeFile(content, File(await FileUtils.getMutualAppPath("BroadcastReceiver")));
+      FileUtils.writeFile(
+          content, File(await FileUtils.getMutualAppPath("BroadcastReceiver")));
     }
   }
 

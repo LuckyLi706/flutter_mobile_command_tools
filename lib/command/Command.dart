@@ -192,11 +192,71 @@ class AndroidCommand {
     }
     return getProcessResult(false, data);
   }
+}
 
-  CommandResult getProcessResult(bool error, dynamic result) {
-    CommandResult commandResult = CommandResult();
-    commandResult.mError = error;
-    commandResult.mResult = result;
-    return commandResult;
+class IOSCommand {
+  Future<ProcessResult> execCommand(List<String> arguments,
+      {String executable = "",
+      String? workingDirectory,
+      bool runInShell = false}) async {
+    LogUtils.printLog(
+        "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
+
+    return await Process.run(executable, arguments,
+        workingDirectory: workingDirectory, runInShell: runInShell);
   }
+
+  Future<ProcessResult> execCommandSync(List<String> arguments,
+      {String executable = "", String? workingDirectory}) async {
+    LogUtils.printLog(
+        "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
+
+    return Process.runSync(executable, arguments,
+        workingDirectory: workingDirectory);
+  }
+
+  CommandResult dealWithData(String arguments, ProcessResult processResult) {
+    if (processResult.stderr != "") {
+      return getProcessResult(true, processResult.stderr);
+    }
+    String data = processResult.stdout;
+    switch (arguments) {
+      case Constants.IOS_GET_DEVICE:
+        List<String> devices = data.split(PlatformUtils.getLineBreak());
+        List<String> currentDevices = [];
+        devices.forEach((element) {
+          if (element.isNotEmpty) {
+            currentDevices.add(element.split("\t")[0]);
+          }
+        });
+        if (currentDevices.length > 0) {
+          return getProcessResult(false, currentDevices);
+        } else {
+          return getProcessResult(true, "无设备连接");
+        }
+      //包名获取形式
+      // tv.danmaku.bilianime, "64800100", "Bilibili"
+      // com.laiwang.DingTalk, "21728861", "DingTalk"
+      case Constants.IOS_GET_THIRD_PACKAGE:
+        List<String> packageNameList = data.split(PlatformUtils.getLineBreak());
+        List<String> packageNameFilter = [];
+        packageNameList.forEach((element) {
+          if (element.isNotEmpty) {
+            String packageName = element.split(",").first;
+            if (!packageNameFilter.contains(packageName)) {
+              packageNameFilter.add(packageName);
+            }
+          }
+        });
+        return getProcessResult(false, packageNameFilter);
+    }
+    return getProcessResult(false, data);
+  }
+}
+
+CommandResult getProcessResult(bool error, dynamic result) {
+  CommandResult commandResult = CommandResult();
+  commandResult.mError = error;
+  commandResult.mResult = result;
+  return commandResult;
 }

@@ -108,6 +108,10 @@ class FileUtils {
     }
   }
 
+  static String getDirName(String dirPath) {
+    return dirPath.split(PlatformUtils.getSeparator()).last;
+  }
+
   static Future<File> writeFile(String data, File file) async {
     return file.writeAsString(data);
   }
@@ -168,8 +172,7 @@ class FileUtils {
         }
         print("解压后的文件路径 = ${f.path}");
       } else {
-        Directory(storageDir + "/" + file.name)
-          ..create(recursive: true);
+        Directory(storageDir + "/" + file.name)..create(recursive: true);
       }
     }
     deleteFile(zipFilePath);
@@ -248,9 +251,7 @@ class FileUtils {
   }
 
   static Future<String> getMutualAppPath(String name) async {
-    String path= await getConfigPath()+
-        PlatformUtils.getSeparator() +
-        name;
+    String path = await getConfigPath() + PlatformUtils.getSeparator() + name;
     createFile(path);
     return path;
   }

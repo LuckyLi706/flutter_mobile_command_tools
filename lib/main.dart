@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
-import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +14,7 @@ import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter_mobile_command_tools/view/IOSRightPanel.dart';
 
 var _width = 0.0;
 var _height = 0.0;
@@ -23,7 +23,7 @@ var _height = 0.0;
 Map<String, dynamic> _settings = {};
 
 var _apksigner = {};
-String _showLogText = ""; //展示日志的信息
+String showLogText = ""; //展示日志的信息
 late CommandResult result; //命令的结果
 List<DropdownMenuItem<String>> connectDeviceDdmi = []; //获取设备下拉框的列表
 List<DropdownMenuItem<String>> allPackageNameDdmi = []; //获取设备下拉框的列表
@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
                 icon: new Icon(Icons.settings)),
             new IconButton(
                 onPressed: () async {
-                  _showLogText = "";
+                  showLogText = "";
                   _logTextController.clear();
                 },
                 icon: new Icon(Icons.delete))
@@ -200,10 +200,7 @@ class RightPanelState extends State<RightPanel>
       ),
       body: TabBarView(
         physics: NeverScrollableScrollPhysics(),
-        children: [
-          AndroidRightPanel(),
-          Center(child: Text('敬请期待')),
-        ],
+        children: [AndroidRightPanel(), IOSRightPanel()],
         controller: tabController,
       ),
     );
@@ -306,7 +303,6 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
           ));
         });
       } else {
-        currentPullFile = "";
       }
     });
   }
@@ -403,14 +399,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   Constants.ADB_CONNECT_DEVICES, value);
                               if (result.mError) {
                                 updateConnectDevice([]);
-                                _showLog(result.mResult);
+                                showLog(result.mResult);
                               } else {
                                 currentAllDevice = result.mResult;
                                 updateConnectDevice(result.mResult);
                               }
                             }).catchError((e) {
                               updateConnectDevice([]);
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("获取设备"))),
@@ -444,9 +440,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               result = command.dealWithData(
                                   Constants.getPhoneInfo(index), value);
 
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("获取设备信息"))),
@@ -476,7 +472,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             if (Constants.adbPath == "" ||
                                 !await FileUtils.isExistFile(
                                     Constants.adbPath)) {
-                              _showLog("请先配置adb路径");
+                              showLog("请先配置adb路径");
                               return;
                             }
                             String adbCommand = await showMutualAppDialog(
@@ -485,14 +481,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 "自定义adb命令",
                                 tips: "不需要加前缀adb");
                             if (adbCommand.isNotEmpty) {
-                              _showLog("执行命令：$adbCommand");
+                              showLog("执行命令：$adbCommand");
                               PlatformUtils.runCommand(adbCommand,
                                       workDirectory: Constants.desktopPath,
                                       isAdbCommand: true)
                                   .then((value) =>
-                                      {_showLog(value.stdout + value.stderr)})
+                                      {showLog(value.stdout + value.stderr)})
                                   .onError((error, stackTrace) =>
-                                      {_showLog(error.toString())});
+                                      {showLog(error.toString())});
                             }
                           },
                           child: new Text("自定义adb命令"))),
@@ -505,25 +501,25 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 "自定义其他命令",
                                 tips: "命令必须添加了环境变量");
                             if (otherCommand.isNotEmpty) {
-                              _showLog("执行命令：$otherCommand");
+                              showLog("执行命令：$otherCommand");
                               PlatformUtils.startCommand(otherCommand,
                                       runInShell: true,
                                       workDirectory: Constants.desktopPath)
                                   .then((value) {
                                 var stream = value.stdout;
                                 stream.listen((event) {
-                                  _showLog(utf8.decode(event));
+                                  showLog(utf8.decode(event));
                                 }, onError: (error) {
-                                  _showLog("解析数据出错：" + error);
+                                  showLog("解析数据出错：" + error);
                                 });
                                 utf8
                                     .decodeStream(value.stderr)
-                                    .then((value) => _showLog("执行出错：" + value));
+                                    .then((value) => showLog("执行出错：" + value));
                                 value.exitCode
-                                    .then((value) =>
-                                        {_showLog("执行结束，退出码：$value")})
+                                    .then(
+                                        (value) => {showLog("执行结束，退出码：$value")})
                                     .onError((error, stackTrace) =>
-                                        {_showLog("执行结束，出错：$error")});
+                                        {showLog("执行结束，出错：$error")});
                               });
                             }
                           },
@@ -561,7 +557,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   result = command.dealWithData(
                                       Constants.ADB_FORWARD_PORT, value);
                                   if (result.mError) {
-                                    _showLog(result.mResult);
+                                    showLog(result.mResult);
                                   } else {
                                     command
                                         .execCommand(
@@ -574,18 +570,18 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                           Constants.ADB_WIRELESS_CONNECT,
                                           value);
                                       if (result.mError) {
-                                        _showLog(result.mResult);
+                                        showLog(result.mResult);
                                         return;
                                       }
                                       currentAllDevice.insert(
                                           0, result.mResult);
                                       updateConnectDevice(currentAllDevice);
                                     }).catchError((e) {
-                                      _showLog(e.toString());
+                                      showLog(e.toString());
                                     });
                                   }
                                 }).catchError((e) {
-                                  _showLog(e.toString());
+                                  showLog(e.toString());
                                 });
                               } else {
                                 if (Constants.currentDevice.isNotEmpty) {
@@ -596,7 +592,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                     result = command.dealWithData(
                                         Constants.ADB_IP, process);
                                     if (result.mError) {
-                                      _showLog(
+                                      showLog(
                                           result.mResult + "获取ip失败，尝试手动输入连接");
                                     } else {
                                       deviceIp = result.mResult + ":5555";
@@ -608,7 +604,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                         result = command.dealWithData(
                                             Constants.ADB_FORWARD_PORT, value);
                                         if (result.mError) {
-                                          _showLog(result.mResult);
+                                          showLog(result.mResult);
                                         } else {
                                           command
                                               .execCommand((Constants
@@ -621,7 +617,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                                 Constants.ADB_WIRELESS_CONNECT,
                                                 value);
                                             if (result.mError) {
-                                              _showLog(result.mResult);
+                                              showLog(result.mResult);
                                               return;
                                             }
                                             currentAllDevice.insert(
@@ -629,18 +625,18 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                             updateConnectDevice(
                                                 currentAllDevice);
                                           }).catchError((e) {
-                                            _showLog(e.toString());
+                                            showLog(e.toString());
                                           });
                                         }
                                       }).catchError((e) {
-                                        _showLog(e.toString());
+                                        showLog(e.toString());
                                       });
                                     }
                                   } catch (e) {
-                                    _showLog(e.toString());
+                                    showLog(e.toString());
                                   }
                                 } else {
-                                  _showLog("请先获取真机设备");
+                                  showLog("请先获取真机设备");
                                 }
                               }
                             } else {
@@ -655,13 +651,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   result = command.dealWithData(
                                       Constants.ADB_WIRELESS_CONNECT, value);
                                   if (result.mError) {
-                                    _showLog(result.mResult);
+                                    showLog(result.mResult);
                                     return;
                                   }
                                   currentAllDevice.insert(0, result.mResult);
                                   updateConnectDevice(currentAllDevice);
                                 }).catchError((e) {
-                                  _showLog(e.toString());
+                                  showLog(e.toString());
                                 });
                               } else {
                                 command
@@ -674,14 +670,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   result = command.dealWithData(
                                       Constants.ADB_WIRELESS_CONNECT, value);
                                   if (result.mError) {
-                                    _showLog(result.mResult);
+                                    showLog(result.mResult);
                                     return;
                                   } else {
                                     currentAllDevice.insert(0, result.mResult);
                                     updateConnectDevice(currentAllDevice);
                                   }
                                 }).catchError((e) {
-                                  _showLog(e.toString());
+                                  showLog(e.toString());
                                 });
                               }
                             }
@@ -691,7 +687,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new TextButton(
                           onPressed: () {
                             if (Constants.currentDevice.isEmpty) {
-                              _showLog("请先获取设备");
+                              showLog("请先获取设备");
                             }
                             command
                                 .execCommand(
@@ -703,13 +699,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               result = command.dealWithData(
                                   Constants.ADB_WIRELESS_DISCONNECT, value);
                               if (result.mError) {
-                                _showLog(result.mResult);
+                                showLog(result.mResult);
                                 return;
                               }
                               currentAllDevice.remove(result.mResult);
                               updateConnectDevice(currentAllDevice);
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("断开"))),
@@ -807,14 +803,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   Constants.ADB_GET_PACKAGE, value);
                               if (result.mError) {
                                 updatePackageName([]);
-                                _showLog(result.mResult);
+                                showLog(result.mResult);
                               } else {
                                 updatePackageName([result.mResult]);
-                                _showLog("当前应用包名获取成功");
+                                showLog("当前应用包名获取成功");
                               }
                             }).catchError((e) {
                               updatePackageName([]);
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("当前包名"))),
@@ -829,14 +825,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   Constants.ADB_GET_THIRD_PACKAGE, value);
                               if (result.mError) {
                                 updatePackageName([]);
-                                _showLog(result.mResult);
+                                showLog(result.mResult);
                               } else {
                                 updatePackageName(result.mResult);
-                                _showLog("第三方应用所有包名获取成功");
+                                showLog("第三方应用所有包名获取成功");
                               }
                             }).catchError((e) {
                               updatePackageName([]);
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("第三方包名"))),
@@ -851,14 +847,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   Constants.ADB_GET_SYSTEM_PACKAGE, value);
                               if (result.mError) {
                                 updatePackageName([]);
-                                _showLog(result.mResult);
+                                showLog(result.mResult);
                               } else {
                                 updatePackageName(result.mResult);
-                                _showLog("系统应用所有包名获取成功");
+                                showLog("系统应用所有包名获取成功");
                               }
                             }).catchError((e) {
                               updatePackageName([]);
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("系统包名"))),
@@ -874,7 +870,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             String? apkPath =
                                 await _selectFile(context, extensions: ["apk"]);
                             if (apkPath == null) {
-                              _showLog("未选择apk");
+                              showLog("未选择apk");
                               return;
                             }
                             command.execCommand([
@@ -883,9 +879,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             ]).then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_INSTALL_APK, value);
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("安装apk"))),
@@ -893,7 +889,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new TextButton(
                           onPressed: () {
                             if (Constants.currentPackageName.isEmpty) {
-                              _showLog("请先获取包名");
+                              showLog("请先获取包名");
                               return;
                             }
                             command
@@ -904,9 +900,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_UNINSTALL_APK, value);
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("卸载apk"))),
@@ -914,7 +910,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new TextButton(
                           onPressed: () {
                             if (Constants.currentPackageName.isEmpty) {
-                              _showLog("请先获取包名");
+                              showLog("请先获取包名");
                               return;
                             }
                             command
@@ -925,9 +921,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_APK_PATH, value);
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("app安装路径"))),
@@ -938,7 +934,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () {
                           if (Constants.currentPackageName.isEmpty) {
-                            _showLog("请先获取包名");
+                            showLog("请先获取包名");
                             return;
                           }
                           command
@@ -948,11 +944,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_GET_PACKAGE_INFO, value);
-                            _showLog(Constants.currentPackageName +
+                            showLog(Constants.currentPackageName +
                                 "包信息：\n" +
                                 result.mResult);
                           }).catchError((e) {
-                            _showLog(e.toString());
+                            showLog(e.toString());
                           });
                         },
                         child: new Text("app包信息"))),
@@ -965,9 +961,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_CURRENT_ACTIVITY, value);
-                            _showLog(result.mResult);
+                            showLog(result.mResult);
                           }).catchError((e) {
-                            _showLog(e.toString());
+                            showLog(e.toString());
                           });
                         },
                         child: new Text("前台Activity"))),
@@ -975,7 +971,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () {
                           if (Constants.currentPackageName.isEmpty) {
-                            _showLog("请先获取包名");
+                            showLog("请先获取包名");
                             return;
                           }
                           command
@@ -984,9 +980,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_CLEAR_DATA, value);
-                            _showLog(result.mResult);
+                            showLog(result.mResult);
                           }).catchError((e) {
-                            _showLog(e.toString());
+                            showLog(e.toString());
                           });
                         },
                         child: new Text("清除数据")))
@@ -1012,7 +1008,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 name);
                             if (resultActivity.isEmpty) {
                               // if (Constants.currentPackageName.isEmpty) {
-                              //   _showLog("当前模式请先获取包名");
+                              //   showLog("当前模式请先获取包名");
                               //   return;
                               // }
                               // if (Constants.currentPackageName.isNotEmpty) {
@@ -1025,15 +1021,15 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               //     result = command.dealWithData(
                               //         Constants.ADB_START_ACTIVITY_NO, value);
                               //     if (!result.mError) {
-                              //       _showLog("开启Activity成功：" + result.mResult);
+                              //       showLog("开启Activity成功：" + result.mResult);
                               //     } else {
-                              //       _showLog("开启Activity失败：" + result.mResult);
+                              //       showLog("开启Activity失败：" + result.mResult);
                               //     }
                               //   }).catchError((error) {
-                              //     _showLog(error.toString());
+                              //     showLog(error.toString());
                               //   });
                               // }
-                              _showLog("无启动的Activity");
+                              showLog("无启动的Activity");
                             } else {
                               command
                                   .execCommand((Constants.ADB_START_ACTIVITY +
@@ -1043,12 +1039,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 result = command.dealWithData(
                                     Constants.ADB_START_ACTIVITY, value);
                                 if (!result.mError) {
-                                  _showLog("开启Activity成功：" + result.mResult);
+                                  showLog("开启Activity成功：" + result.mResult);
                                 } else {
-                                  _showLog("开启Activity失败：" + result.mResult);
+                                  showLog("开启Activity失败：" + result.mResult);
                                 }
                               }).catchError((error) {
-                                _showLog(error.toString());
+                                showLog(error.toString());
                               });
                             }
                           },
@@ -1062,7 +1058,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 await FileUtils.getMutualAppPath(name),
                                 name);
                             if (resultReceiver.isEmpty) {
-                              _showLog("发送空广播");
+                              showLog("发送空广播");
                               return;
                             }
                             command
@@ -1075,12 +1071,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   Constants.ADB_START_BROADCAST_RECEIVER,
                                   value);
                               if (!result.mError) {
-                                _showLog("开启广播成功：" + result.mResult);
+                                showLog("开启广播成功：" + result.mResult);
                               } else {
-                                _showLog("开启广播失败：" + result.mResult);
+                                showLog("开启广播失败：" + result.mResult);
                               }
                             }).catchError((error) {
-                              _showLog(error.toString());
+                              showLog(error.toString());
                             });
                           },
                           child: new Text("发送BroadcastReceiver"))),
@@ -1097,7 +1093,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 await FileUtils.getMutualAppPath(name),
                                 name);
                             if (resultService.isEmpty) {
-                              _showLog("发送空Service");
+                              showLog("发送空Service");
                               return;
                             }
                             command
@@ -1108,12 +1104,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               result = command.dealWithData(
                                   Constants.ADB_START_SERVICE, value);
                               if (!result.mError) {
-                                _showLog("开启Service成功：" + result.mResult);
+                                showLog("开启Service成功：" + result.mResult);
                               } else {
-                                _showLog("开启Service失败：" + result.mResult);
+                                showLog("开启Service失败：" + result.mResult);
                               }
                             }).catchError((error) {
-                              _showLog(error.toString());
+                              showLog(error.toString());
                             });
                           },
                           child: new Text("发送Service"))),
@@ -1126,7 +1122,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 await FileUtils.getMutualAppPath(name),
                                 name);
                             if (resultService.isEmpty) {
-                              _showLog("停止空Service");
+                              showLog("停止空Service");
                               return;
                             }
                             command
@@ -1137,12 +1133,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               result = command.dealWithData(
                                   Constants.ADB_STOP_SERVICE, value);
                               if (!result.mError) {
-                                _showLog("停止Service成功：" + result.mResult);
+                                showLog("停止Service成功：" + result.mResult);
                               } else {
-                                _showLog("开停止Service失败：" + result.mResult);
+                                showLog("开停止Service失败：" + result.mResult);
                               }
                             }).catchError((error) {
-                              _showLog(error.toString());
+                              showLog(error.toString());
                             });
                           },
                           child: new Text("停止Service"))),
@@ -1161,7 +1157,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     onPressed: () async {
                       String? filePath = await _selectFile(context);
                       if (filePath == null) {
-                        _showLog("未选择文件");
+                        showLog("未选择文件");
                       } else {
                         String pushPath = _checkPush == true
                             ? pushController.text
@@ -1173,9 +1169,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         ]).then((value) {
                           result = command.dealWithData(
                               Constants.ADB_PUSH_FILE, value);
-                          _showLog(result.mResult);
+                          showLog(result.mResult);
                         }).catchError((e) {
-                          _showLog(e.toString());
+                          showLog(e.toString());
                         });
                       }
                     },
@@ -1238,23 +1234,23 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 result = command.dealWithData(
                                     Constants.ADB_PULL_CRASH_FILE, value);
                                 if (result.mError) {
-                                  _showLog(result.mResult);
+                                  showLog(result.mResult);
                                 } else {
-                                  _showLog("拉取成功");
+                                  showLog("拉取成功");
                                 }
                               }).catchError((e) {
-                                _showLog(e.toString());
+                                showLog(e.toString());
                               });
                             } else {
-                              _showLog("请先点击点击收集crash");
+                              showLog("请先点击点击收集crash");
                             }
                           } else {
                             if (currentPullPath.isEmpty) {
-                              _showLog("请先输入路径");
+                              showLog("请先输入路径");
                               return;
                             }
                             if (currentPullFile.isEmpty) {
-                              _showLog("请先点击搜索该路径下的文件");
+                              showLog("请先点击搜索该路径下的文件");
                               return;
                             } else {
                               command.execCommand(
@@ -1267,12 +1263,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 result = command.dealWithData(
                                     Constants.ADB_PULL_CRASH_FILE, value);
                                 if (result.mError) {
-                                  _showLog(result.mResult);
+                                  showLog(result.mResult);
                                 } else {
-                                  _showLog("拉取成功");
+                                  showLog("拉取成功");
                                 }
                               }).catchError((e) {
-                                _showLog(e.toString());
+                                showLog(e.toString());
                               });
                             }
                           }
@@ -1287,13 +1283,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             result = command.dealWithData(
                                 Constants.ADB_PULL_CRASH, value);
                             if (result.mError) {
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             } else {
                               isPullCrash = true;
                               updatePull(result.mResult);
                             }
                           }).catchError((e) {
-                            _showLog(e.toString());
+                            showLog(e.toString());
                           });
                         },
                         child: new Text("收集crash"))),
@@ -1305,9 +1301,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   Constants.desktopPath).then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_PULL_ANR, value);
-                            _showLog(result.mResult);
+                            showLog(result.mResult);
                           }).catchError((e) {
-                            _showLog(e.toString());
+                            showLog(e.toString());
                           });
                         },
                         child: new Text("拉取anr"))),
@@ -1328,14 +1324,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               result = command.dealWithData(
                                   Constants.ADB_SEARCH_ALL_FILE_PATH, value);
                               if (result.mError) {
-                                _showLog(result.mResult);
+                                showLog(result.mResult);
                               } else {
                                 isPullCrash = false;
                                 updatePull(result.mResult);
                                 currentPullPath = pullController.text;
                               }
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("搜索"))),
@@ -1391,16 +1387,16 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     onPressed: () async {
                       String uiToolPath = await FileUtils.getUIToolsPath();
                       if (uiToolPath == "") {
-                        _showLog("uiautomatorviewer 路径不存在");
+                        showLog("uiautomatorviewer 路径不存在");
                         return;
                       }
                       if (!await FileUtils.isExistFile(Constants.adbPath)) {
-                        _showLog("${Constants.adbPath}路径不存在");
+                        showLog("${Constants.adbPath}路径不存在");
                         return;
                       }
                       String commandStr = Constants.OPEN_UI_TOOL.replaceAll(
                           "adb_path", await FileUtils.getToolPath());
-                      _showLog("执行命令：" + commandStr);
+                      showLog("执行命令：" + commandStr);
                       PlatformUtils.runCommand(commandStr,
                           runInShell: true, workDirectory: uiToolPath);
                     },
@@ -1434,7 +1430,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     onPressed: () async {
                       simCommandPath = await _selectFile(context);
                       if (simCommandPath == null) {
-                        _showLog("未选择指令文件");
+                        showLog("未选择指令文件");
                       } else {
                         List<String>? commandsName =
                             await _analyseSimFile(simCommandPath!);
@@ -1449,7 +1445,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: TextButton(
                     onPressed: () async {
                       if (simCommandPath == null) {
-                        _showLog("刷新失败");
+                        showLog("刷新失败");
                       } else {
                         List<String>? commandsName =
                             await _analyseSimFile(simCommandPath!);
@@ -1508,7 +1504,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: TextButton(
                     onPressed: () async {
                       if (Constants.currentSimOpName.isEmpty) {
-                        _showLog("请先添加模拟指令文件");
+                        showLog("请先添加模拟指令文件");
                         return;
                       }
                       if (Constants.currentSimType == 0) {
@@ -1547,13 +1543,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         onPressed: () async {
                           String apkToolPath = await FileUtils.getApkToolPath();
                           if (apkToolPath == "") {
-                            _showLog("ApkTool路径不存在");
+                            showLog("ApkTool路径不存在");
                             return;
                           }
                           String? path =
                               await _selectFile(context, extensions: ["apk"]);
                           if (path == null) {
-                            _showLog("未选择apk");
+                            showLog("未选择apk");
                             return;
                           } else {
                             String commandExt = "${!_checkF! ? "" : "-f"}" +
@@ -1571,25 +1567,26 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   .replaceAll("ApkTool_path", apkToolPath)
                                   .replaceAll("Apk_path", path);
                             }
-                            _showLog("执行命令：$commandStr");
+                            showLog("执行命令：$commandStr");
                             PlatformUtils.startCommand(commandStr,
                                     runInShell: true,
                                     workDirectory: Constants.desktopPath)
                                 .then((value) {
                               var stream = value.stdout;
                               stream.listen((event) {
-                                _showLog(utf8.decode(event));
+                                showLog(utf8.decode(event));
                               }, onError: (error) {
-                                _showLog("解析数据出错：" + error);
+                                showLog("解析数据出错：" + error);
                               });
-                              utf8
-                                  .decodeStream(value.stderr)
-                                  .then((value) => _showLog("执行出错：" + value));
+                              utf8.decodeStream(value.stderr).then((value) {
+                                if (value.isNotEmpty) {
+                                  showLog("执行出错：" + value);
+                                }
+                              });
                               value.exitCode
-                                  .then(
-                                      (value) => {_showLog("执行结束，退出码：$value")})
+                                  .then((value) => {showLog("执行结束，退出码：$value")})
                                   .onError((error, stackTrace) =>
-                                      {_showLog("执行结束，出错：$error")});
+                                      {showLog("执行结束，出错：$error")});
                             });
                           }
                         },
@@ -1599,20 +1596,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         onPressed: () async {
                           String apkToolPath = await FileUtils.getApkToolPath();
                           if (apkToolPath == "") {
-                            _showLog("ApkTool路径不存在");
+                            showLog("ApkTool路径不存在");
                             return;
                           }
-                          Directory rootPath = Directory(Constants.userPath);
-                          String? path = await FilesystemPicker.open(
-                            title: '选择文件夹',
-                            context: context,
-                            rootDirectory: rootPath,
-                            fsType: FilesystemType.folder,
-                            pickText: '选择文件夹',
-                            folderIconColor: Colors.teal,
-                          );
+                          String? path =
+                              await FilePicker.platform.getDirectoryPath();
                           if (path == null) {
-                            _showLog("文件夹不存在");
+                            showLog("文件夹不存在");
                             return;
                           } else {
                             String commandExt = "${!_checkF! ? "" : "-f"}" +
@@ -1622,32 +1612,37 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               commandStr = Constants.APKTOOL_REBUILD
                                   .replaceAll(" command", "")
                                   .replaceAll("ApkTool_path", apkToolPath)
-                                  .replaceAll("Apk_path", path);
+                                  .replaceAll("Apk_path", path)
+                                  .replaceAll("new.apk",
+                                      "${FileUtils.getDirName(path)}_new.apk");
                             } else {
                               commandStr = Constants.APKTOOL_REBUILD
                                   .replaceAll("command", commandExt)
                                   .replaceAll("ApkTool_path", apkToolPath)
-                                  .replaceAll("Apk_path", path);
+                                  .replaceAll("Apk_path", path)
+                                  .replaceAll("new.apk",
+                                      "${FileUtils.getDirName(path)}_new.apk");
                             }
-                            _showLog("执行命令：$commandStr");
+                            showLog("执行命令：$commandStr");
                             PlatformUtils.startCommand(commandStr,
                                     runInShell: true,
                                     workDirectory: Constants.desktopPath)
                                 .then((value) {
                               var stream = value.stdout;
                               stream.listen((event) {
-                                _showLog(utf8.decode(event));
+                                showLog(utf8.decode(event));
                               }, onError: (error) {
-                                _showLog("解析数据出错：" + error);
+                                showLog("解析数据出错：" + error);
                               });
-                              utf8
-                                  .decodeStream(value.stderr)
-                                  .then((value) => _showLog("执行出错：" + value));
+                              utf8.decodeStream(value.stderr).then((value) {
+                                if (value.isNotEmpty) {
+                                  showLog("执行出错：" + value);
+                                }
+                              });
                               value.exitCode
-                                  .then(
-                                      (value) => {_showLog("执行结束，退出码：$value")})
+                                  .then((value) => {showLog("执行结束，退出码：$value")})
                                   .onError((error, stackTrace) =>
-                                      {_showLog("执行结束，出错：$error")});
+                                      {showLog("执行结束，出错：$error")});
                             });
                           }
                         },
@@ -1727,38 +1722,37 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           String fakerAndroidPath =
                               await FileUtils.getFakerAndroidPath();
                           if (fakerAndroidPath == "") {
-                            _showLog("FakerAndroid 路径不存在");
+                            showLog("FakerAndroid 路径不存在");
                             return;
                           }
                           String? path =
                               await _selectFile(context, extensions: ["apk"]);
                           if (path == null) {
-                            _showLog("未选择apk");
+                            showLog("未选择apk");
                             return;
                           } else {
                             String commandStr =
                                 Constants.Faker_Android.replaceAll(
                                         "Faker_Android_path", fakerAndroidPath)
                                     .replaceAll("Apk_path", path);
-                            _showLog("执行命令：$commandStr");
+                            showLog("执行命令：$commandStr");
                             PlatformUtils.startCommand(commandStr,
                                     runInShell: true,
                                     workDirectory: Constants.desktopPath)
                                 .then((value) {
                               var stream = value.stdout;
                               stream.listen((event) {
-                                _showLog(utf8.decode(event));
+                                showLog(utf8.decode(event));
                               }, onError: (error) {
-                                _showLog("解析数据出错：" + error);
+                                showLog("解析数据出错：" + error);
                               });
                               utf8
                                   .decodeStream(value.stderr)
-                                  .then((value) => _showLog("执行出错：" + value));
+                                  .then((value) => showLog("执行出错：" + value));
                               value.exitCode
-                                  .then(
-                                      (value) => {_showLog("执行结束，退出码：$value")})
+                                  .then((value) => {showLog("执行结束，退出码：$value")})
                                   .onError((error, stackTrace) =>
-                                      {_showLog("执行结束，出错：$error")});
+                                      {showLog("执行结束，出错：$error")});
                             });
                           }
                         },
@@ -1784,9 +1778,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             ]).then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_REBOOT, value);
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("重启手机"))),
@@ -1799,9 +1793,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_REBOOT_BOOTLOADER, value);
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("重启到fastboot"))),
@@ -1814,9 +1808,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_REBOOT_RECOVERY, value);
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }).catchError((e) {
-                              _showLog(e.toString());
+                              showLog(e.toString());
                             });
                           },
                           child: new Text("重启到recovery"))),
@@ -1843,7 +1837,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             result = command.dealWithData(
                                 Constants.ADB_SCREEN_SHOT, value);
                             if (!result.mError) {
-                              _showLog("截屏成功");
+                              showLog("截屏成功");
                               command
                                   .execCommand(
                                       Constants.ADB_PULL_SCREEN_SHOT
@@ -1853,13 +1847,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   .then((value) {
                                 result = command.dealWithData(
                                     Constants.ADB_PULL_SCREEN_SHOT, value);
-                                _showLog(result.mResult);
+                                showLog(result.mResult);
                               });
                             } else {
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }
                           }).catchError((e) {
-                            _showLog(e.toString());
+                            showLog(e.toString());
                           });
                         },
                         child: new Text("截屏"))),
@@ -1880,7 +1874,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             result = command.dealWithData(
                                 Constants.ADB_SCREEN_RECORD, value);
                             if (!result.mError) {
-                              _showLog("录屏结束");
+                              showLog("录屏结束");
                               command
                                   .execCommand(
                                       Constants.ADB_PULL_SCREEN_RECORD
@@ -1891,13 +1885,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   .then((value) {
                                 result = command.dealWithData(
                                     Constants.ADB_PULL_SCREEN_RECORD, value);
-                                _showLog(result.mResult);
+                                showLog(result.mResult);
                               });
                             } else {
-                              _showLog(result.mResult);
+                              showLog(result.mResult);
                             }
                           }).catchError((e) {
-                            _showLog(e.toString());
+                            showLog(e.toString());
                           });
                         },
                         child: new Text("录屏")))
@@ -1910,9 +1904,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           onPressed: () async {
                             String? apkPath =
                                 await _selectFile(context, extensions: ["apk"]);
+                            if (apkPath == null) {
+                              showLog("未选择Apk文件");
+                              return;
+                            }
                             if (!await FileUtils.isExistFile(
                                 Constants.signerPath.path)) {
-                              _showLog("apksigner签名文件不存在");
+                              showLog("apksigner签名文件不存在");
                               return;
                             } else {
                               if (_apksigner.length == 0) {
@@ -1932,20 +1930,19 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   .replaceAll("mypass", _apksigner["ks_pass"])
                                   .replaceAll(
                                       "mykeypass", _apksigner["key_pass"])
-                                  .replaceAll("outapk", "signer.apk")
-                                  .replaceAll("inputapk",
-                                      apkPath == null ? "" : apkPath);
+                                  .replaceAll("outapk",
+                                      "${FileUtils.getDirName(apkPath)}_signer.apk")
+                                  .replaceAll("inputapk", apkPath);
                               PlatformUtils.runCommand(commandStr,
-                                      runInShell: true,
                                       workDirectory: Constants.desktopPath)
                                   .then((value) {
                                 if (value.stderr.toString().isEmpty) {
-                                  _showLog("签名成功");
+                                  showLog("签名成功");
                                 } else {
-                                  _showLog(value.stderr.toString());
+                                  showLog(value.stderr.toString());
                                 }
                               }).catchError((e) {
-                                _showLog(e.toString());
+                                showLog(e.toString());
                               });
                             }
                           },
@@ -1957,7 +1954,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           await _selectFile(context, extensions: ["apk"]);
                       if (!await FileUtils.isExistFile(
                           Constants.signerPath.path)) {
-                        _showLog("apksigner签名文件不存在");
+                        showLog("apksigner签名文件不存在");
                         return;
                       } else {
                         if (_apksigner.length == 0) {
@@ -1978,12 +1975,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 workDirectory: Constants.desktopPath)
                             .then((value) {
                           if (value.stderr.toString().isEmpty) {
-                            _showLog(value.stdout);
+                            showLog(value.stdout);
                           } else {
-                            _showLog(value.stderr);
+                            showLog(value.stderr);
                           }
                         }).catchError((e) {
-                          _showLog(e.toString());
+                          showLog(e.toString());
                         });
                       }
                     },
@@ -1997,6 +1994,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
 
 final TextEditingController adbController = new TextEditingController();
 final TextEditingController javaController = new TextEditingController();
+final TextEditingController libDeviceController = new TextEditingController();
 
 final TextEditingController editorController = new TextEditingController();
 final TextEditingController apkSignerController = new TextEditingController();
@@ -2039,18 +2037,22 @@ showSettingDialog(BuildContext context) {
                   child: Text('确定'),
                   onPressed: () {
                     if (adbController.text.isEmpty &&
-                        javaController.text.isEmpty) {
+                        javaController.text.isEmpty &&
+                        libDeviceController.text.isEmpty) {
                       Navigator.of(context).pop();
                       return;
                     }
                     _settings[Constants.outerKey] = adbController.text;
                     _settings[Constants.javaKey] = javaController.text;
+                    _settings[Constants.libDeviceKey] =
+                        libDeviceController.text;
                     if (!Constants.isInnerAdb) {
                       Constants.adbPath = adbController.text;
                       _getAdbVersion();
                     }
                     Constants.javaPath = javaController.text;
                     Constants.outerAdbPath = adbController.text;
+                    Constants.libDevicePath = libDeviceController.text;
                     FileUtils.writeSetting(_settings);
                     Navigator.of(context).pop();
                   },
@@ -2072,7 +2074,7 @@ showSettingDialog(BuildContext context) {
                                     onPressed: () async {
                                       String? path = await _selectFile(context);
                                       if (path == null) {
-                                        _showLog("未选择adb文件");
+                                        showLog("未选择adb文件");
                                       } else {
                                         adbController.text = path;
                                       }
@@ -2104,7 +2106,7 @@ showSettingDialog(BuildContext context) {
                                     onPressed: () async {
                                       String? path = await _selectFile(context);
                                       if (path == null) {
-                                        _showLog("未选择java文件");
+                                        showLog("未选择java文件");
                                       } else {
                                         javaController.text = path;
                                       }
@@ -2116,6 +2118,39 @@ showSettingDialog(BuildContext context) {
                                   decoration: InputDecoration(
                                     enabled: false,
                                     labelText: 'java',
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Colors.pink,
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
+                            new SizedBox(
+                              height: 10,
+                            ),
+                            new Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                new TextButton(
+                                    onPressed: () async {
+                                      String? path = await FilePicker.platform
+                                          .getDirectoryPath();
+                                      if (path == null) {
+                                        showLog("未选择libimobiledevice文件夹");
+                                      } else {
+                                        libDeviceController.text = path;
+                                      }
+                                    },
+                                    child: new Text("libimobiledevice")),
+                                new Expanded(
+                                    child: TextField(
+                                  controller: libDeviceController,
+                                  decoration: InputDecoration(
+                                    enabled: false,
+                                    labelText: 'libimobiledevice',
                                     border: OutlineInputBorder(
                                       borderSide: BorderSide(
                                         color: Colors.pink,
@@ -2440,7 +2475,7 @@ Future<String> showScreenRecordDialog(BuildContext context) async {
                   child: Text('确定'),
                   onPressed: () {
                     if (screenRecordController.text.isEmpty) {
-                      _showLog("时间不能设置为空");
+                      showLog("时间不能设置为空");
                       return;
                     }
                     Navigator.of(context).pop(screenRecordController.text);
@@ -2502,7 +2537,7 @@ Future<List<String>?> _analyseSimFile(String path) async {
   String fileStr = await FileUtils.readFile(File(path));
   List<String> commands = fileStr.split(PlatformUtils.getLineBreak());
   if (commands[0] != "0" && commands[0] != "1") {
-    _showLog("文本开始必须以0或者1");
+    showLog("文本开始必须以0或者1");
     return null;
   }
 
@@ -2523,7 +2558,7 @@ Future<List<String>?> _analyseSimFile(String path) async {
             commandSwipe[4]);
         simCommandName.add(commandSwipe[5]);
       } else {
-        _showLog("滑动格式不对");
+        showLog("滑动格式不对");
       }
     } else if (commands[i].startsWith("tap")) {
       List<String> commandTap = commands[i].split(" ");
@@ -2532,7 +2567,7 @@ Future<List<String>?> _analyseSimFile(String path) async {
             Constants.ADB_SIM_TAP + " " + commandTap[1] + " " + commandTap[2]);
         simCommandName.add(commandTap[3]);
       } else {
-        _showLog("点击格式不对");
+        showLog("点击格式不对");
       }
     } else if (commands[i].startsWith("text")) {
       List<String> commandText = commands[i].split(" ");
@@ -2540,7 +2575,7 @@ Future<List<String>?> _analyseSimFile(String path) async {
         simCommand.add(Constants.ADB_SIM_INPUT + " " + commandText[1]);
         simCommandName.add(commandText[2]);
       } else {
-        _showLog("输入文字格式不对");
+        showLog("输入文字格式不对");
       }
     } else {
       //输入的是键值
@@ -2549,7 +2584,7 @@ Future<List<String>?> _analyseSimFile(String path) async {
         simCommand.add(Constants.ADB_SIM_KEY_EVENT + " " + commandKeyCode[0]);
         simCommandName.add(commandKeyCode[1].toLowerCase());
       } else {
-        _showLog("键值格式不对");
+        showLog("键值格式不对");
       }
     }
   }
@@ -2608,11 +2643,11 @@ _runCommand(List<String> listOps, String device) {
       if (device.isNotEmpty) {
         arguments = ["-s", device]..addAll(arguments);
       }
-      _showLog("执行指令：adb:${Constants.adbPath},arguments:$arguments");
+      showLog("执行指令：adb:${Constants.adbPath},arguments:$arguments");
       Process.run(Constants.adbPath, arguments).then((value) {
-        _showLog("执行结束：" + value.stdout + value.stderr);
+        showLog("执行结束：" + value.stdout + value.stderr);
       }).catchError((e) {
-        _showLog("执行出错：");
+        showLog("执行出错：");
       });
     }));
   }
@@ -2643,17 +2678,17 @@ Future<String?> _selectFile(BuildContext context,
   return null;
 }
 
-void _showLog(String msg) {
+void showLog(String msg) {
   //leftPanelFocus.unfocus();
   if (msg.isEmpty) {
     return;
   }
-  if (_showLogText.isEmpty) {
-    _showLogText = ">>>>>>>" + _showLogText + msg.trim();
+  if (showLogText.isEmpty) {
+    showLogText = ">>>>>>>" + showLogText + msg.trim();
   } else {
-    _showLogText = _showLogText + "\n" + ">>>>>>>" + msg.trim();
+    showLogText = showLogText + "\n" + ">>>>>>>" + msg.trim();
   }
-  _logTextController.text = _showLogText;
+  _logTextController.text = showLogText;
 
   //移动光标位置到最后
   _logTextController.selection = TextSelection.fromPosition(
@@ -2767,9 +2802,9 @@ String _getDeviceIp(String device) {
 void _getAdbVersion() {
   command.execCommand([Constants.ADB_VERSION]).then((value) {
     result = command.dealWithData(Constants.ADB_VERSION, value);
-    _showLog(result.mResult);
+    showLog(result.mResult);
   }).catchError((error) {
-    _showLog(error.toString());
+    showLog(error.toString());
   });
 }
 
