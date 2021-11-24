@@ -302,8 +302,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
             value: element,
           ));
         });
-      } else {
-      }
+      } else {}
     });
   }
 
@@ -325,56 +324,56 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: Constants.isRoot,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              setState(() {});
-                              if (isCheck!) {
-                                _settings['isRoot'] = true;
-                              } else {
-                                _settings['isRoot'] = false;
-                              }
-                              FileUtils.writeSetting(_settings);
-                              Constants.isRoot = isCheck;
-                            }),
-                        new Text("开启Root")
-                      ])),
+                            new Checkbox(
+                                value: Constants.isRoot,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  setState(() {});
+                                  if (isCheck!) {
+                                    _settings['isRoot'] = true;
+                                  } else {
+                                    _settings['isRoot'] = false;
+                                  }
+                                  FileUtils.writeSetting(_settings);
+                                  Constants.isRoot = isCheck;
+                                }),
+                            new Text("开启Root")
+                          ])),
                   Expanded(
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: Constants.isInnerAdb,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) async {
-                              if (isCheck!) {
-                                /// 存储是否使用内部adb
-                                /// 存储内部adb路径（只有一次）
-                                /// 赋值当前adb路径
-                                _settings[Constants.isInnerAdbKey] = true;
-                                if (_settings[Constants.innerKey] == null) {
-                                  _settings[Constants.innerKey] =
+                            new Checkbox(
+                                value: Constants.isInnerAdb,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) async {
+                                  if (isCheck!) {
+                                    /// 存储是否使用内部adb
+                                    /// 存储内部adb路径（只有一次）
+                                    /// 赋值当前adb路径
+                                    _settings[Constants.isInnerAdbKey] = true;
+                                    if (_settings[Constants.innerKey] == null) {
+                                      _settings[Constants.innerKey] =
                                       await FileUtils.getInnerAdbPath();
-                                }
-                                Constants.adbPath =
+                                    }
+                                    Constants.adbPath =
                                     _settings[Constants.innerKey];
-                              } else {
-                                /// 赋值当前adb路径
-                                /// 存储当前外部adb路径、
-                                /// 存储是否使用内部adb
-                                Constants.adbPath = Constants.outerAdbPath;
-                                _settings[Constants.isInnerAdbKey] = false;
-                                _settings[Constants.outerKey] =
-                                    Constants.outerAdbPath;
-                              }
-                              await FileUtils.writeSetting(_settings);
-                              _getAdbVersion();
-                              setState(() {});
-                              Constants.isInnerAdb = isCheck;
-                            }),
-                        new Text("内置ADB")
-                      ])),
+                                  } else {
+                                    /// 赋值当前adb路径
+                                    /// 存储当前外部adb路径、
+                                    /// 存储是否使用内部adb
+                                    Constants.adbPath = Constants.outerAdbPath;
+                                    _settings[Constants.isInnerAdbKey] = false;
+                                    _settings[Constants.outerKey] =
+                                        Constants.outerAdbPath;
+                                  }
+                                  await FileUtils.writeSetting(_settings);
+                                  _getAdbVersion();
+                                  setState(() {});
+                                  Constants.isInnerAdb = isCheck;
+                                }),
+                            new Text("内置ADB")
+                          ])),
                 ],
               ),
               SizedBox(
@@ -412,16 +411,16 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: new Text("获取设备"))),
                   Expanded(
                       child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: Constants.currentDevice,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        Constants.currentDevice =
+                        isExpanded: true,
+                        value: Constants.currentDevice,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            Constants.currentDevice =
                             newValue == null ? "" : newValue;
-                      });
-                    },
-                    items: connectDeviceDdmi,
-                  )),
+                          });
+                        },
+                        items: connectDeviceDdmi,
+                      )),
                 ],
               ),
               new Row(
@@ -434,8 +433,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             int index = phoneInfo.indexOf(currentPhoneInfo);
                             command
                                 .execCommand(
-                                    Constants.getPhoneInfo(index).split(" "),
-                                    runInShell: true)
+                                Constants.getPhoneInfo(index).split(" "),
+                                runInShell: true)
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.getPhoneInfo(index), value);
@@ -448,15 +447,15 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: new Text("获取设备信息"))),
                   Expanded(
                       child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: currentPhoneInfo,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        currentPhoneInfo = newValue!;
-                      });
-                    },
-                    items: phoneInfoDdmi,
-                  )),
+                        isExpanded: true,
+                        value: currentPhoneInfo,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            currentPhoneInfo = newValue!;
+                          });
+                        },
+                        items: phoneInfoDdmi,
+                      )),
                 ],
               ),
               SizedBox(
@@ -483,12 +482,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             if (adbCommand.isNotEmpty) {
                               showLog("执行命令：$adbCommand");
                               PlatformUtils.runCommand(adbCommand,
-                                      workDirectory: Constants.desktopPath,
-                                      isAdbCommand: true)
+                                  workDirectory: Constants.desktopPath,
+                                  isAdbCommand: true)
                                   .then((value) =>
-                                      {showLog(value.stdout + value.stderr)})
+                              {showLog(value.stdout + value.stderr)})
                                   .onError((error, stackTrace) =>
-                                      {showLog(error.toString())});
+                              {showLog(error.toString())});
                             }
                           },
                           child: new Text("自定义adb命令"))),
@@ -503,8 +502,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             if (otherCommand.isNotEmpty) {
                               showLog("执行命令：$otherCommand");
                               PlatformUtils.startCommand(otherCommand,
-                                      runInShell: true,
-                                      workDirectory: Constants.desktopPath)
+                                  runInShell: true,
+                                  workDirectory: Constants.desktopPath)
                                   .then((value) {
                                 var stream = value.stdout;
                                 stream.listen((event) {
@@ -514,12 +513,16 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 });
                                 utf8
                                     .decodeStream(value.stderr)
-                                    .then((value) => showLog("执行出错：" + value));
+                                    .then((value) {
+                                      if(value.isNotEmpty) {
+                                        showLog("执行出错：" + value);
+                                      }
+                                });
                                 value.exitCode
                                     .then(
                                         (value) => {showLog("执行结束，退出码：$value")})
                                     .onError((error, stackTrace) =>
-                                        {showLog("执行结束，出错：$error")});
+                                {showLog("执行结束，出错：$error")});
                               });
                             }
                           },
@@ -535,7 +538,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 children: [
                   Expanded(
                       child: new TextButton(
-                          /**
+                        /**
                          * 无线连接设备
                          * 真机：
                          * 复选框没有选择，判断当前获取的设备是否存在，存在尝试去获取他的ip，获取失败，要求去手动收入ip和port
@@ -547,12 +550,12 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                          */
                           onPressed: () async {
                             String deviceIp =
-                                _getDeviceIp(currentWirelessDevice);
+                            _getDeviceIp(currentWirelessDevice);
                             if (deviceIp == "0") {
                               if (_checkWireless == true) {
                                 command
                                     .execCommand(
-                                        Constants.ADB_FORWARD_PORT.split(" "))
+                                    Constants.ADB_FORWARD_PORT.split(" "))
                                     .then((value) {
                                   result = command.dealWithData(
                                       Constants.ADB_FORWARD_PORT, value);
@@ -561,10 +564,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   } else {
                                     command
                                         .execCommand(
-                                            (Constants.ADB_WIRELESS_CONNECT +
-                                                    " " +
-                                                    wireLessController.text)
-                                                .split(" "))
+                                        (Constants.ADB_WIRELESS_CONNECT +
+                                            " " +
+                                            wireLessController.text)
+                                            .split(" "))
                                         .then((value) {
                                       result = command.dealWithData(
                                           Constants.ADB_WIRELESS_CONNECT,
@@ -587,8 +590,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 if (Constants.currentDevice.isNotEmpty) {
                                   try {
                                     ProcessResult process =
-                                        await command.execCommandSync(
-                                            Constants.ADB_IP.split(" "));
+                                    await command.execCommandSync(
+                                        Constants.ADB_IP.split(" "));
                                     result = command.dealWithData(
                                         Constants.ADB_IP, process);
                                     if (result.mError) {
@@ -598,8 +601,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                       deviceIp = result.mResult + ":5555";
                                       command
                                           .execCommand(Constants
-                                              .ADB_FORWARD_PORT
-                                              .split(" "))
+                                          .ADB_FORWARD_PORT
+                                          .split(" "))
                                           .then((value) {
                                         result = command.dealWithData(
                                             Constants.ADB_FORWARD_PORT, value);
@@ -608,10 +611,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                         } else {
                                           command
                                               .execCommand((Constants
-                                                          .ADB_WIRELESS_CONNECT +
-                                                      " " +
-                                                      deviceIp)
-                                                  .split(" "))
+                                              .ADB_WIRELESS_CONNECT +
+                                              " " +
+                                              deviceIp)
+                                              .split(" "))
                                               .then((value) {
                                             result = command.dealWithData(
                                                 Constants.ADB_WIRELESS_CONNECT,
@@ -643,10 +646,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               if (_checkWireless == true) {
                                 command
                                     .execCommand(
-                                        (Constants.ADB_WIRELESS_CONNECT +
-                                                " " +
-                                                wireLessController.text)
-                                            .split(" "))
+                                    (Constants.ADB_WIRELESS_CONNECT +
+                                        " " +
+                                        wireLessController.text)
+                                        .split(" "))
                                     .then((value) {
                                   result = command.dealWithData(
                                       Constants.ADB_WIRELESS_CONNECT, value);
@@ -662,10 +665,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               } else {
                                 command
                                     .execCommand(
-                                        (Constants.ADB_WIRELESS_CONNECT +
-                                                " " +
-                                                deviceIp)
-                                            .split(" "))
+                                    (Constants.ADB_WIRELESS_CONNECT +
+                                        " " +
+                                        deviceIp)
+                                        .split(" "))
                                     .then((value) {
                                   result = command.dealWithData(
                                       Constants.ADB_WIRELESS_CONNECT, value);
@@ -691,10 +694,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             }
                             command
                                 .execCommand(
-                                    (Constants.ADB_WIRELESS_DISCONNECT +
-                                            " " +
-                                            Constants.currentDevice)
-                                        .split(" "))
+                                (Constants.ADB_WIRELESS_DISCONNECT +
+                                    " " +
+                                    Constants.currentDevice)
+                                    .split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_WIRELESS_DISCONNECT, value);
@@ -711,14 +714,15 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: new Text("断开"))),
                   Expanded(
                       child: DropdownButton<String?>(
-                    value: currentWirelessDevice,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        if (newValue != null) currentWirelessDevice = newValue;
-                      });
-                    },
-                    items: wireLessDeviceDdmi,
-                  )),
+                        value: currentWirelessDevice,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            if (newValue != null)
+                              currentWirelessDevice = newValue;
+                          });
+                        },
+                        items: wireLessDeviceDdmi,
+                      )),
                 ],
               ),
               new Row(
@@ -728,33 +732,33 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: _checkWireless,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              if (isCheck != null && isCheck) {
-                                FocusScope.of(context)
-                                    .requestFocus(_wirelessFocus);
-                              } else {
-                                _wirelessFocus.unfocus();
-                              }
-                              setState(() {
-                                _checkWireless = isCheck;
-                              });
-                            }),
-                        new Text("自定义")
-                      ])),
+                            new Checkbox(
+                                value: _checkWireless,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  if (isCheck != null && isCheck) {
+                                    FocusScope.of(context)
+                                        .requestFocus(_wirelessFocus);
+                                  } else {
+                                    _wirelessFocus.unfocus();
+                                  }
+                                  setState(() {
+                                    _checkWireless = isCheck;
+                                  });
+                                }),
+                            new Text("自定义")
+                          ])),
                   Expanded(
                       child: new TextField(
-                    controller: wireLessController,
-                    autofocus: false,
-                    focusNode: _wirelessFocus,
-                    decoration: InputDecoration(
-                      labelText: "输入格式ip:port",
-                      // border: OutlineInputBorder(
-                      //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
-                    ),
-                  ))
+                        controller: wireLessController,
+                        autofocus: false,
+                        focusNode: _wirelessFocus,
+                        decoration: InputDecoration(
+                          labelText: "输入格式ip:port",
+                          // border: OutlineInputBorder(
+                          //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
+                        ),
+                      ))
                 ],
               ),
               SizedBox(
@@ -775,16 +779,16 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   ),
                   Expanded(
                       child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: Constants.currentPackageName,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        Constants.currentPackageName =
+                        isExpanded: true,
+                        value: Constants.currentPackageName,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            Constants.currentPackageName =
                             newValue == null ? "" : newValue;
-                      });
-                    },
-                    items: allPackageNameDdmi,
-                  )),
+                          });
+                        },
+                        items: allPackageNameDdmi,
+                      )),
                   SizedBox(
                     width: 20,
                   ),
@@ -797,7 +801,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           onPressed: () {
                             command
                                 .execCommand(
-                                    Constants.ADB_GET_PACKAGE.split(" "))
+                                Constants.ADB_GET_PACKAGE.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_GET_PACKAGE, value);
@@ -819,7 +823,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           onPressed: () {
                             command
                                 .execCommand(
-                                    Constants.ADB_GET_THIRD_PACKAGE.split(" "))
+                                Constants.ADB_GET_THIRD_PACKAGE.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_GET_THIRD_PACKAGE, value);
@@ -841,7 +845,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           onPressed: () {
                             command
                                 .execCommand(
-                                    Constants.ADB_GET_SYSTEM_PACKAGE.split(" "))
+                                Constants.ADB_GET_SYSTEM_PACKAGE.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_GET_SYSTEM_PACKAGE, value);
@@ -868,7 +872,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new TextButton(
                           onPressed: () async {
                             String? apkPath =
-                                await _selectFile(context, extensions: ["apk"]);
+                            await _selectFile(context, extensions: ["apk"]);
                             if (apkPath == null) {
                               showLog("未选择apk");
                               return;
@@ -894,9 +898,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             }
                             command
                                 .execCommand(Constants.ADB_UNINSTALL_APK
-                                    .replaceAll(
-                                        "package", Constants.currentPackageName)
-                                    .split(" "))
+                                .replaceAll(
+                                "package", Constants.currentPackageName)
+                                .split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_UNINSTALL_APK, value);
@@ -915,9 +919,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             }
                             command
                                 .execCommand(Constants.ADB_APK_PATH
-                                    .replaceAll(
-                                        "package", Constants.currentPackageName)
-                                    .split(" "))
+                                .replaceAll(
+                                "package", Constants.currentPackageName)
+                                .split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_APK_PATH, value);
@@ -939,8 +943,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           }
                           command
                               .execCommand((Constants.ADB_GET_PACKAGE_INFO +
-                                      Constants.currentPackageName)
-                                  .split(" "))
+                              Constants.currentPackageName)
+                              .split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_GET_PACKAGE_INFO, value);
@@ -957,7 +961,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         onPressed: () {
                           command
                               .execCommand(
-                                  Constants.ADB_CURRENT_ACTIVITY.split(" "))
+                              Constants.ADB_CURRENT_ACTIVITY.split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_CURRENT_ACTIVITY, value);
@@ -976,7 +980,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           }
                           command
                               .execCommand(Constants.ADB_CLEAR_DATA.split(" ")
-                                ..add(Constants.currentPackageName))
+                            ..add(Constants.currentPackageName))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_CLEAR_DATA, value);
@@ -1033,8 +1037,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             } else {
                               command
                                   .execCommand((Constants.ADB_START_ACTIVITY +
-                                          resultActivity)
-                                      .split(" "))
+                                  resultActivity)
+                                  .split(" "))
                                   .then((value) {
                                 result = command.dealWithData(
                                     Constants.ADB_START_ACTIVITY, value);
@@ -1063,9 +1067,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             }
                             command
                                 .execCommand(
-                                    (Constants.ADB_START_BROADCAST_RECEIVER +
-                                            resultReceiver)
-                                        .split(" "))
+                                (Constants.ADB_START_BROADCAST_RECEIVER +
+                                    resultReceiver)
+                                    .split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_START_BROADCAST_RECEIVER,
@@ -1098,8 +1102,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             }
                             command
                                 .execCommand((Constants.ADB_START_SERVICE +
-                                        resultService)
-                                    .split(" "))
+                                resultService)
+                                .split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_START_SERVICE, value);
@@ -1127,8 +1131,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             }
                             command
                                 .execCommand(
-                                    (Constants.ADB_STOP_SERVICE + resultService)
-                                        .split(" "))
+                                (Constants.ADB_STOP_SERVICE + resultService)
+                                    .split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_STOP_SERVICE, value);
@@ -1184,32 +1188,33 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: _checkPush,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              if (isCheck != null && isCheck) {
-                                FocusScope.of(context).requestFocus(_pushFocus);
-                              } else {
-                                _pushFocus.unfocus();
-                              }
-                              setState(() {
-                                _checkPush = isCheck;
-                              });
-                            }),
-                        new Text("自定义路径")
-                      ])),
+                            new Checkbox(
+                                value: _checkPush,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  if (isCheck != null && isCheck) {
+                                    FocusScope.of(context).requestFocus(
+                                        _pushFocus);
+                                  } else {
+                                    _pushFocus.unfocus();
+                                  }
+                                  setState(() {
+                                    _checkPush = isCheck;
+                                  });
+                                }),
+                            new Text("自定义路径")
+                          ])),
                   Expanded(
                       child: new TextField(
-                    controller: pushController,
-                    autofocus: false,
-                    focusNode: _pushFocus,
-                    decoration: InputDecoration(
-                      labelText: "默认路径/data/local/tmp",
-                      // border: OutlineInputBorder(
-                      //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
-                    ),
-                  ))
+                        controller: pushController,
+                        autofocus: false,
+                        focusNode: _pushFocus,
+                        decoration: InputDecoration(
+                          labelText: "默认路径/data/local/tmp",
+                          // border: OutlineInputBorder(
+                          //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
+                        ),
+                      ))
                 ],
               ),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -1221,15 +1226,15 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             if (currentPullFile.isNotEmpty) {
                               command
                                   .execCommand(
-                                      Constants.ADB_PULL_CRASH_FILE.split(" ")
-                                        ..addAll([
-                                          currentPullFile,
-                                          "--print",
-                                          ">>",
-                                          "crash.txt"
-                                        ]),
-                                      workingDirectory: Constants.desktopPath,
-                                      runInShell: true)
+                                  Constants.ADB_PULL_CRASH_FILE.split(" ")
+                                    ..addAll([
+                                      currentPullFile,
+                                      "--print",
+                                      ">>",
+                                      "crash.txt"
+                                    ]),
+                                  workingDirectory: Constants.desktopPath,
+                                  runInShell: true)
                                   .then((value) {
                                 result = command.dealWithData(
                                     Constants.ADB_PULL_CRASH_FILE, value);
@@ -1298,7 +1303,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         onPressed: () {
                           command.execCommand([Constants.ADB_PULL_ANR],
                               workingDirectory:
-                                  Constants.desktopPath).then((value) {
+                              Constants.desktopPath).then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_PULL_ANR, value);
                             showLog(result.mResult);
@@ -1313,13 +1318,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 children: [
                   Expanded(
                       child: new TextButton(
-                          //todo
+                        //todo
                           onPressed: () {
                             isPullCrash = false;
                             command
                                 .execCommand(Constants.ADB_SEARCH_ALL_FILE_PATH
-                                    .split(" ")
-                                  ..addAll([pullController.text]))
+                                .split(" ")
+                              ..addAll([pullController.text]))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_SEARCH_ALL_FILE_PATH, value);
@@ -1337,16 +1342,17 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: new Text("搜索"))),
                   Expanded(
                       child: new TextField(
-                    controller: pullController,
-                    autofocus: false,
-                    focusNode: _pullFocus,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
-                      hintText: "文件路径",
-                      // border: OutlineInputBorder(
-                      //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
-                    ),
-                  )),
+                        controller: pullController,
+                        autofocus: false,
+                        focusNode: _pullFocus,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 2.0),
+                          hintText: "文件路径",
+                          // border: OutlineInputBorder(
+                          //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
+                        ),
+                      )),
                 ],
               ),
               new Row(
@@ -1358,17 +1364,17 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   ),
                   Expanded(
                       child: DropdownButton<String?>(
-                    isExpanded: true,
-                    value: currentPullFile,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        if (newValue != null) {
-                          currentPullFile = newValue;
-                        }
-                      });
-                    },
-                    items: pullDdmi,
-                  )),
+                        isExpanded: true,
+                        value: currentPullFile,
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            if (newValue != null) {
+                              currentPullFile = newValue;
+                            }
+                          });
+                        },
+                        items: pullDdmi,
+                      )),
                   SizedBox(
                     width: 5,
                   ),
@@ -1414,48 +1420,48 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: Wrap(
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                        DropdownButton<String?>(
-                          value: Constants.currentSimOpName,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              Constants.currentSimOpName =
-                                  newValue == null ? "" : newValue;
-                            });
-                          },
-                          items: simOpDdmi,
-                        )
-                      ]))),
+                                DropdownButton<String?>(
+                                  value: Constants.currentSimOpName,
+                                  onChanged: (String? newValue) {
+                                    setState(() {
+                                      Constants.currentSimOpName =
+                                      newValue == null ? "" : newValue;
+                                    });
+                                  },
+                                  items: simOpDdmi,
+                                )
+                              ]))),
                   Expanded(
                       child: TextButton(
-                    onPressed: () async {
-                      simCommandPath = await _selectFile(context);
-                      if (simCommandPath == null) {
-                        showLog("未选择指令文件");
-                      } else {
-                        List<String>? commandsName =
+                        onPressed: () async {
+                          simCommandPath = await _selectFile(context);
+                          if (simCommandPath == null) {
+                            showLog("未选择指令文件");
+                          } else {
+                            List<String>? commandsName =
                             await _analyseSimFile(simCommandPath!);
-                        if (commandsName != null) {
-                          updateSimOpName(commandsName);
-                        }
-                      }
-                    },
-                    child: new Text("添加指令文件"),
-                  )),
+                            if (commandsName != null) {
+                              updateSimOpName(commandsName);
+                            }
+                          }
+                        },
+                        child: new Text("添加指令文件"),
+                      )),
                   Expanded(
                       child: TextButton(
-                    onPressed: () async {
-                      if (simCommandPath == null) {
-                        showLog("刷新失败");
-                      } else {
-                        List<String>? commandsName =
+                        onPressed: () async {
+                          if (simCommandPath == null) {
+                            showLog("刷新失败");
+                          } else {
+                            List<String>? commandsName =
                             await _analyseSimFile(simCommandPath!);
-                        if (commandsName != null) {
-                          updateSimOpName(commandsName);
-                        }
-                      }
-                    },
-                    child: new Text("刷新指令文件"),
-                  )),
+                            if (commandsName != null) {
+                              updateSimOpName(commandsName);
+                            }
+                          }
+                        },
+                        child: new Text("刷新指令文件"),
+                      )),
                   SizedBox(
                     width: 5,
                   ),
@@ -1467,30 +1473,30 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: _checkRepeat,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              setState(() {
-                                _checkRepeat = isCheck;
-                              });
-                            }),
-                        new Text("是否循环")
-                      ])),
+                            new Checkbox(
+                                value: _checkRepeat,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  setState(() {
+                                    _checkRepeat = isCheck;
+                                  });
+                                }),
+                            new Text("是否循环")
+                          ])),
                   Expanded(
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: _checkAllDevice,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              setState(() {
-                                _checkAllDevice = isCheck;
-                              });
-                            }),
-                        new Text("所有设备")
-                      ])),
+                            new Checkbox(
+                                value: _checkAllDevice,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  setState(() {
+                                    _checkAllDevice = isCheck;
+                                  });
+                                }),
+                            new Text("所有设备")
+                          ])),
                 ],
               ),
               new Row(
@@ -1502,28 +1508,28 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   ),
                   Expanded(
                       child: TextButton(
-                    onPressed: () async {
-                      if (Constants.currentSimOpName.isEmpty) {
-                        showLog("请先添加模拟指令文件");
-                        return;
-                      }
-                      if (Constants.currentSimType == 0) {
-                        String? times = await showSimDelayTimes(context);
-                        if (times.isEmpty) {
-                          return; //如果值为空，延迟默认为1s
-                        }
-                      }
-                      _startSimOperation(_checkAllDevice, _checkRepeat);
-                    },
-                    child: Text("执行命令"),
-                  )),
+                        onPressed: () async {
+                          if (Constants.currentSimOpName.isEmpty) {
+                            showLog("请先添加模拟指令文件");
+                            return;
+                          }
+                          if (Constants.currentSimType == 0) {
+                            String? times = await showSimDelayTimes(context);
+                            if (times.isEmpty) {
+                              return; //如果值为空，延迟默认为1s
+                            }
+                          }
+                          _startSimOperation(_checkAllDevice, _checkRepeat);
+                        },
+                        child: Text("执行命令"),
+                      )),
                   Expanded(
                       child: TextButton(
-                    onPressed: () {
-                      _stopSimOperation();
-                    },
-                    child: Text("停止命令"),
-                  )),
+                        onPressed: () {
+                          _stopSimOperation();
+                        },
+                        child: Text("停止命令"),
+                      )),
                   SizedBox(
                     width: 5,
                   ),
@@ -1547,7 +1553,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             return;
                           }
                           String? path =
-                              await _selectFile(context, extensions: ["apk"]);
+                          await _selectFile(context, extensions: ["apk"]);
                           if (path == null) {
                             showLog("未选择apk");
                             return;
@@ -1569,8 +1575,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             }
                             showLog("执行命令：$commandStr");
                             PlatformUtils.startCommand(commandStr,
-                                    runInShell: true,
-                                    workDirectory: Constants.desktopPath)
+                                runInShell: true,
+                                workDirectory: Constants.desktopPath)
                                 .then((value) {
                               var stream = value.stdout;
                               stream.listen((event) {
@@ -1586,7 +1592,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               value.exitCode
                                   .then((value) => {showLog("执行结束，退出码：$value")})
                                   .onError((error, stackTrace) =>
-                                      {showLog("执行结束，出错：$error")});
+                              {showLog("执行结束，出错：$error")});
                             });
                           }
                         },
@@ -1600,7 +1606,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             return;
                           }
                           String? path =
-                              await FilePicker.platform.getDirectoryPath();
+                          await FilePicker.platform.getDirectoryPath();
                           if (path == null) {
                             showLog("文件夹不存在");
                             return;
@@ -1614,19 +1620,19 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   .replaceAll("ApkTool_path", apkToolPath)
                                   .replaceAll("Apk_path", path)
                                   .replaceAll("new.apk",
-                                      "${FileUtils.getDirName(path)}_new.apk");
+                                  "${FileUtils.getDirName(path)}_new.apk");
                             } else {
                               commandStr = Constants.APKTOOL_REBUILD
                                   .replaceAll("command", commandExt)
                                   .replaceAll("ApkTool_path", apkToolPath)
                                   .replaceAll("Apk_path", path)
                                   .replaceAll("new.apk",
-                                      "${FileUtils.getDirName(path)}_new.apk");
+                                  "${FileUtils.getDirName(path)}_new.apk");
                             }
                             showLog("执行命令：$commandStr");
                             PlatformUtils.startCommand(commandStr,
-                                    runInShell: true,
-                                    workDirectory: Constants.desktopPath)
+                                runInShell: true,
+                                workDirectory: Constants.desktopPath)
                                 .then((value) {
                               var stream = value.stdout;
                               stream.listen((event) {
@@ -1642,7 +1648,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               value.exitCode
                                   .then((value) => {showLog("执行结束，退出码：$value")})
                                   .onError((error, stackTrace) =>
-                                      {showLog("执行结束，出错：$error")});
+                              {showLog("执行结束，出错：$error")});
                             });
                           }
                         },
@@ -1654,65 +1660,65 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: _checkF,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              setState(() {
-                                _checkF = isCheck;
-                              });
-                            }),
-                        new Text("-f")
-                      ])),
+                            new Checkbox(
+                                value: _checkF,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  setState(() {
+                                    _checkF = isCheck;
+                                  });
+                                }),
+                            new Text("-f")
+                          ])),
                   Expanded(
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: _checkR,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              setState(() {
-                                if (isCheck!) {
-                                  _checkS = false;
-                                }
-                                _checkR = isCheck;
-                              });
-                            }),
-                        new Text("-r") //不处理dex文件，--no-res
-                      ])),
+                            new Checkbox(
+                                value: _checkR,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  setState(() {
+                                    if (isCheck!) {
+                                      _checkS = false;
+                                    }
+                                    _checkR = isCheck;
+                                  });
+                                }),
+                            new Text("-r") //不处理dex文件，--no-res
+                          ])),
                   Expanded(
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: _checkS,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              setState(() {
-                                if (isCheck!) {
-                                  _checkR = false;
-                                }
-                                _checkS = isCheck;
-                              });
-                            }),
-                        new Text("-s") //不处理dex文件,--no-src
-                      ])),
+                            new Checkbox(
+                                value: _checkS,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  setState(() {
+                                    if (isCheck!) {
+                                      _checkR = false;
+                                    }
+                                    _checkS = isCheck;
+                                  });
+                                }),
+                            new Text("-s") //不处理dex文件,--no-src
+                          ])),
                   Expanded(
                       child: new Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                        new Checkbox(
-                            value: _checkD,
-                            activeColor: Colors.red,
-                            onChanged: (isCheck) {
-                              setState(() {
-                                _checkD = isCheck;
-                              });
-                            }),
-                        new Text("-d")
-                        //添加debuggable="true"到AndroidManifest文件,--debug
-                      ])),
+                            new Checkbox(
+                                value: _checkD,
+                                activeColor: Colors.red,
+                                onChanged: (isCheck) {
+                                  setState(() {
+                                    _checkD = isCheck;
+                                  });
+                                }),
+                            new Text("-d")
+                            //添加debuggable="true"到AndroidManifest文件,--debug
+                          ])),
                 ],
               ),
               new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
@@ -1720,25 +1726,25 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () async {
                           String fakerAndroidPath =
-                              await FileUtils.getFakerAndroidPath();
+                          await FileUtils.getFakerAndroidPath();
                           if (fakerAndroidPath == "") {
                             showLog("FakerAndroid 路径不存在");
                             return;
                           }
                           String? path =
-                              await _selectFile(context, extensions: ["apk"]);
+                          await _selectFile(context, extensions: ["apk"]);
                           if (path == null) {
                             showLog("未选择apk");
                             return;
                           } else {
                             String commandStr =
-                                Constants.Faker_Android.replaceAll(
-                                        "Faker_Android_path", fakerAndroidPath)
-                                    .replaceAll("Apk_path", path);
+                            Constants.Faker_Android.replaceAll(
+                                "Faker_Android_path", fakerAndroidPath)
+                                .replaceAll("Apk_path", path);
                             showLog("执行命令：$commandStr");
                             PlatformUtils.startCommand(commandStr,
-                                    runInShell: true,
-                                    workDirectory: Constants.desktopPath)
+                                runInShell: true,
+                                workDirectory: Constants.desktopPath)
                                 .then((value) {
                               var stream = value.stdout;
                               stream.listen((event) {
@@ -1752,7 +1758,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               value.exitCode
                                   .then((value) => {showLog("执行结束，退出码：$value")})
                                   .onError((error, stackTrace) =>
-                                      {showLog("执行结束，出错：$error")});
+                              {showLog("执行结束，出错：$error")});
                             });
                           }
                         },
@@ -1789,7 +1795,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           onPressed: () {
                             command
                                 .execCommand(
-                                    Constants.ADB_REBOOT_BOOTLOADER.split(" "))
+                                Constants.ADB_REBOOT_BOOTLOADER.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_REBOOT_BOOTLOADER, value);
@@ -1804,7 +1810,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           onPressed: () {
                             command
                                 .execCommand(
-                                    Constants.ADB_REBOOT_RECOVERY.split(" "))
+                                Constants.ADB_REBOOT_RECOVERY.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_REBOOT_RECOVERY, value);
@@ -1831,8 +1837,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           String pngName = TimeUtils.getCurrentTimeFormat();
                           command
                               .execCommand(Constants.ADB_SCREEN_SHOT
-                                  .replaceAll("shoot", pngName)
-                                  .split(" "))
+                              .replaceAll("shoot", pngName)
+                              .split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_SCREEN_SHOT, value);
@@ -1840,10 +1846,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("截屏成功");
                               command
                                   .execCommand(
-                                      Constants.ADB_PULL_SCREEN_SHOT
-                                          .replaceAll("shoot", pngName)
-                                          .split(" "),
-                                      workingDirectory: Constants.desktopPath)
+                                  Constants.ADB_PULL_SCREEN_SHOT
+                                      .replaceAll("shoot", pngName)
+                                      .split(" "),
+                                  workingDirectory: Constants.desktopPath)
                                   .then((value) {
                                 result = command.dealWithData(
                                     Constants.ADB_PULL_SCREEN_SHOT, value);
@@ -1867,9 +1873,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           String recordName = TimeUtils.getCurrentTimeFormat();
                           command
                               .execCommand(Constants.ADB_SCREEN_RECORD
-                                  .replaceAll("times", times)
-                                  .replaceAll("record_screen", recordName)
-                                  .split(" "))
+                              .replaceAll("times", times)
+                              .replaceAll("record_screen", recordName)
+                              .split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_SCREEN_RECORD, value);
@@ -1877,11 +1883,11 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("录屏结束");
                               command
                                   .execCommand(
-                                      Constants.ADB_PULL_SCREEN_RECORD
-                                          .replaceAll(
-                                              "record_screen", recordName)
-                                          .split(" "),
-                                      workingDirectory: Constants.desktopPath)
+                                  Constants.ADB_PULL_SCREEN_RECORD
+                                      .replaceAll(
+                                      "record_screen", recordName)
+                                      .split(" "),
+                                  workingDirectory: Constants.desktopPath)
                                   .then((value) {
                                 result = command.dealWithData(
                                     Constants.ADB_PULL_SCREEN_RECORD, value);
@@ -1903,7 +1909,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: TextButton(
                           onPressed: () async {
                             String? apkPath =
-                                await _selectFile(context, extensions: ["apk"]);
+                            await _selectFile(context, extensions: ["apk"]);
                             if (apkPath == null) {
                               showLog("未选择Apk文件");
                               return;
@@ -1923,20 +1929,22 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               }
                               String commandStr = Constants.APK_SIGNER
                                   .replaceAll(
-                                      "apksign", Constants.signerJarPath.path)
+                                  "apksign", Constants.signerJarPath.path)
                                   .replaceAll(
-                                      "jks_path", Constants.jksPath.path)
+                                  "jks_path", Constants.jksPath.path)
                                   .replaceAll("myalias", _apksigner['alias'])
                                   .replaceAll("mypass", _apksigner["ks_pass"])
                                   .replaceAll(
-                                      "mykeypass", _apksigner["key_pass"])
+                                  "mykeypass", _apksigner["key_pass"])
                                   .replaceAll("outapk",
-                                      "${FileUtils.getDirName(apkPath)}_signer.apk")
+                                  "${FileUtils.getDirName(apkPath)}_signer.apk")
                                   .replaceAll("inputapk", apkPath);
                               PlatformUtils.runCommand(commandStr,
-                                      workDirectory: Constants.desktopPath)
+                                  workDirectory: Constants.desktopPath)
                                   .then((value) {
-                                if (value.stderr.toString().isEmpty) {
+                                if (value.stderr
+                                    .toString()
+                                    .isEmpty) {
                                   showLog("签名成功");
                                 } else {
                                   showLog(value.stderr.toString());
@@ -1949,43 +1957,46 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                           child: Text("v2签名"))),
                   new Expanded(
                       child: TextButton(
-                    onPressed: () async {
-                      String? apkPath =
+                        onPressed: () async {
+                          String? apkPath =
                           await _selectFile(context, extensions: ["apk"]);
-                      if (!await FileUtils.isExistFile(
-                          Constants.signerPath.path)) {
-                        showLog("apksigner签名文件不存在");
-                        return;
-                      } else {
-                        if (_apksigner.length == 0) {
-                          String value =
+                          if (!await FileUtils.isExistFile(
+                              Constants.signerPath.path)) {
+                            showLog("apksigner签名文件不存在");
+                            return;
+                          } else {
+                            if (_apksigner.length == 0) {
+                              String value =
                               await FileUtils.readFile(Constants.signerPath);
-                          if (value.isNotEmpty) {
-                            Map<String, dynamic> map = jsonDecode(value);
-                            _apksigner = map;
-                          }
-                        }
-                        String commandStr = Constants.VERIFY_APK_SIGNER
-                            .replaceAll("apksign", Constants.signerJarPath.path)
-                            .replaceAll(
+                              if (value.isNotEmpty) {
+                                Map<String, dynamic> map = jsonDecode(value);
+                                _apksigner = map;
+                              }
+                            }
+                            String commandStr = Constants.VERIFY_APK_SIGNER
+                                .replaceAll(
+                                "apksign", Constants.signerJarPath.path)
+                                .replaceAll(
                                 "inputapk", apkPath == null ? "" : apkPath);
-                        print(commandStr);
-                        PlatformUtils.runCommand(commandStr,
+                            print(commandStr);
+                            PlatformUtils.runCommand(commandStr,
                                 runInShell: true,
                                 workDirectory: Constants.desktopPath)
-                            .then((value) {
-                          if (value.stderr.toString().isEmpty) {
-                            showLog(value.stdout);
-                          } else {
-                            showLog(value.stderr);
+                                .then((value) {
+                              if (value.stderr
+                                  .toString()
+                                  .isEmpty) {
+                                showLog(value.stdout);
+                              } else {
+                                showLog(value.stderr);
+                              }
+                            }).catchError((e) {
+                              showLog(e.toString());
+                            });
                           }
-                        }).catchError((e) {
-                          showLog(e.toString());
-                        });
-                      }
-                    },
-                    child: new Text("校验签名"),
-                  ))
+                        },
+                        child: new Text("校验签名"),
+                      ))
                 ],
               )
             ]));
@@ -2003,9 +2014,9 @@ final TextEditingController wireLessController = new TextEditingController();
 final TextEditingController pushController = new TextEditingController();
 final TextEditingController pullController = new TextEditingController();
 final TextEditingController simOpTimeController =
-    new TextEditingController(text: "1000"); //默认1000毫米
+new TextEditingController(text: "1000"); //默认1000毫米
 final TextEditingController screenRecordController =
-    new TextEditingController();
+new TextEditingController();
 
 bool isPullCrash = false; //当前需要拉取普通文件还是crash文件
 
@@ -2082,17 +2093,17 @@ showSettingDialog(BuildContext context) {
                                     child: new Text("adb")),
                                 new Expanded(
                                     child: TextField(
-                                  controller: adbController,
-                                  decoration: InputDecoration(
-                                    enabled: false,
-                                    labelText: 'adb',
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
+                                      controller: adbController,
+                                      decoration: InputDecoration(
+                                        enabled: false,
+                                        labelText: 'adb',
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.pink,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )),
+                                    )),
                               ],
                             ),
                             new SizedBox(
@@ -2114,17 +2125,17 @@ showSettingDialog(BuildContext context) {
                                     child: new Text("java")),
                                 new Expanded(
                                     child: TextField(
-                                  controller: javaController,
-                                  decoration: InputDecoration(
-                                    enabled: false,
-                                    labelText: 'java',
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
+                                      controller: javaController,
+                                      decoration: InputDecoration(
+                                        enabled: false,
+                                        labelText: 'java',
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.pink,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )),
+                                    )),
                               ],
                             ),
                             new SizedBox(
@@ -2147,17 +2158,17 @@ showSettingDialog(BuildContext context) {
                                     child: new Text("libimobiledevice")),
                                 new Expanded(
                                     child: TextField(
-                                  controller: libDeviceController,
-                                  decoration: InputDecoration(
-                                    enabled: false,
-                                    labelText: 'libimobiledevice',
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
+                                      controller: libDeviceController,
+                                      decoration: InputDecoration(
+                                        enabled: false,
+                                        labelText: 'libimobiledevice',
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.pink,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )),
+                                    )),
                               ],
                             ),
                           ],
@@ -2176,8 +2187,8 @@ String currentService = "";
 String showTips = "";
 
 ///展示交互APP的弹窗
-Future<String> showMutualAppDialog(
-    BuildContext context, String filePath, String name,
+Future<String> showMutualAppDialog(BuildContext context, String filePath,
+    String name,
     {String tips = ""}) async {
   if (tips == "") {
     showTips = "文件路径：" + PlatformUtils.getLineBreak() + filePath;
@@ -2252,17 +2263,17 @@ Future<String> showMutualAppDialog(
                                     ),
                                     Expanded(
                                         child: DropdownButton<String?>(
-                                      isExpanded: true,
-                                      value: currentMutualApp,
-                                      onChanged: (String? newValue) {
-                                        state(() {
-                                          if (newValue != null) {
-                                            currentMutualApp = newValue;
-                                          }
-                                        });
-                                      },
-                                      items: mutualAppDdmi,
-                                    )),
+                                          isExpanded: true,
+                                          value: currentMutualApp,
+                                          onChanged: (String? newValue) {
+                                            state(() {
+                                              if (newValue != null) {
+                                                currentMutualApp = newValue;
+                                              }
+                                            });
+                                          },
+                                          items: mutualAppDdmi,
+                                        )),
                                     SizedBox(
                                       width: 5,
                                     ),
@@ -2346,7 +2357,7 @@ Future<bool> showEditor(BuildContext context, String path, String name) async {
               title: new Text("$name编辑", style: new TextStyle(fontSize: 20)),
               content: new Center(
                   child: new Container(
-                      //color: Color.fromARGB(255, 250, 255, 0),
+                    //color: Color.fromARGB(255, 250, 255, 0),
                       width: 0.5 * _width,
                       height: 0.5 * _height,
                       child: new SingleChildScrollView(
@@ -2358,22 +2369,22 @@ Future<bool> showEditor(BuildContext context, String path, String name) async {
                               children: [
                                 new Expanded(
                                     child: TextField(
-                                  controller: editorController,
-                                  keyboardType: TextInputType.multiline,
-                                  maxLines: null,
-                                  //不限制行数
-                                  enabled: true,
-                                  autofocus: false,
-                                  enableInteractiveSelection: true,
+                                      controller: editorController,
+                                      keyboardType: TextInputType.multiline,
+                                      maxLines: null,
+                                      //不限制行数
+                                      enabled: true,
+                                      autofocus: false,
+                                      enableInteractiveSelection: true,
 
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.pink,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )),
+                                    )),
                               ],
                             ),
                           ],
@@ -2416,7 +2427,7 @@ Future<String> showSimDelayTimes(BuildContext context) async {
               title: new Text("延迟", style: new TextStyle(fontSize: 20)),
               content: new Center(
                   child: new Container(
-                      //color: Color.fromARGB(255, 250, 255, 0),
+                    //color: Color.fromARGB(255, 250, 255, 0),
                       width: 0.3 * _width,
                       height: 0.35 * _height,
                       child: new SingleChildScrollView(
@@ -2431,16 +2442,16 @@ Future<String> showSimDelayTimes(BuildContext context) async {
                               children: [
                                 new Expanded(
                                     child: TextField(
-                                  controller: simOpTimeController,
-                                  decoration: InputDecoration(
-                                    labelText: "延迟时间,单位毫秒",
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
+                                      controller: simOpTimeController,
+                                      decoration: InputDecoration(
+                                        labelText: "延迟时间,单位毫秒",
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.pink,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )),
+                                    )),
                               ],
                             ),
                           ],
@@ -2491,7 +2502,7 @@ Future<String> showScreenRecordDialog(BuildContext context) async {
               title: new Text("录屏设置", style: new TextStyle(fontSize: 20)),
               content: new Center(
                   child: new Container(
-                      //color: Color.fromARGB(255, 250, 255, 0),
+                    //color: Color.fromARGB(255, 250, 255, 0),
                       width: 0.3 * _width,
                       height: 0.1 * _height,
                       child: new SingleChildScrollView(
@@ -2503,19 +2514,20 @@ Future<String> showScreenRecordDialog(BuildContext context) async {
                               children: [
                                 new Expanded(
                                     child: TextField(
-                                  controller: screenRecordController,
-                                  inputFormatters: [
-                                    WhitelistingTextInputFormatter.digitsOnly
-                                  ],
-                                  decoration: InputDecoration(
-                                    hintText: "录屏时间(s)",
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                        color: Colors.pink,
+                                      controller: screenRecordController,
+                                      inputFormatters: [
+                                        WhitelistingTextInputFormatter
+                                            .digitsOnly
+                                      ],
+                                      decoration: InputDecoration(
+                                        hintText: "录屏时间(s)",
+                                        border: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.pink,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                )),
+                                    )),
                               ],
                             ),
                           ],
@@ -2591,7 +2603,9 @@ Future<List<String>?> _analyseSimFile(String path) async {
   if (commands[0] == "0") {
     Constants.currentSimType = 0;
     simCommandName.clear();
-    simCommandName.add(path.split(PlatformUtils.getSeparator()).last);
+    simCommandName.add(path
+        .split(PlatformUtils.getSeparator())
+        .last);
     return simCommandName;
   } else if (commands[0] == "1") {
     Constants.currentSimType = 1;
@@ -2638,18 +2652,18 @@ _runCommand(List<String> listOps, String device) {
   for (int i = 0; i < listOps.length; i++) {
     futureList.add(Future.delayed(
         Duration(milliseconds: int.parse(simOpTimeController.text) * (i + 1)),
-        () {
-      List<String> arguments = listOps[i].split(" ");
-      if (device.isNotEmpty) {
-        arguments = ["-s", device]..addAll(arguments);
-      }
-      showLog("执行指令：adb:${Constants.adbPath},arguments:$arguments");
-      Process.run(Constants.adbPath, arguments).then((value) {
-        showLog("执行结束：" + value.stdout + value.stderr);
-      }).catchError((e) {
-        showLog("执行出错：");
-      });
-    }));
+            () {
+          List<String> arguments = listOps[i].split(" ");
+          if (device.isNotEmpty) {
+            arguments = ["-s", device]..addAll(arguments);
+          }
+          showLog("执行指令：adb:${Constants.adbPath},arguments:$arguments");
+          Process.run(Constants.adbPath, arguments).then((value) {
+            showLog("执行结束：" + value.stdout + value.stderr);
+          }).catchError((e) {
+            showLog("执行出错：");
+          });
+        }));
   }
 
   Future.wait(futureList).then((value) {
@@ -2702,7 +2716,9 @@ void showLog(String msg) {
 }
 
 _getWidthHeight(BuildContext context) {
-  final size = MediaQuery.of(context).size;
+  final size = MediaQuery
+      .of(context)
+      .size;
   _width = size.width;
   _height = size.height;
 }

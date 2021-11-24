@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:core';
 
 import 'dart:io';
@@ -33,8 +34,10 @@ class Constants {
   static String currentDevice = ""; //当前的安卓设备
   static String currentIOSDevice = ""; //当前的IOS设备
 
+  static Map<String, String> mapIOSInfo = HashMap();
+
   static String currentPackageName = "";
-  static String currentIOSPackageName = ""; //当前IOS包名
+  static String currentIOSPackageName = "CFBundleIdentifier"; //当前IOS包名
 
   static String currentSimOpName = ""; //当前的模拟操作
   static int currentSimType = 1;
@@ -53,6 +56,8 @@ class Constants {
   static const String IOS_GET_DEVICE = "-l";
   static const String IOS_GET_THIRD_PACKAGE = "-l -o list_user";
   static const String IOS_GET_SYSTEM_PACKAGE = "-l -o list_system";
+  static const String IOS_INSTALL_APP = "-i *.ipa";
+  static const String IOS_UNINSTALL_APP = "-U bundleID";
 
   //安卓的adb命令行
   static const String ADB_VERSION = "version";

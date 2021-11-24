@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_mobile_command_tools/constants.dart';
@@ -7,33 +8,35 @@ import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 class AndroidCommand {
-  Future<String> checkFirst(List<String> arguments,
+  Future<List<String>> checkFirst(List<String> arguments,
       {String executable = "", String? workingDirectory}) async {
     if (Constants.adbPath == "") {
       throw "adb路径不能为空";
     }
-    if (executable == "") {
-      executable = Constants.adbPath;
-    }
+
     if (!await FileUtils.isExistFile(executable)) {
       throw executable + "该路径不存在";
     }
 
     if (Constants.ADB_CONNECT_DEVICES.isNotEmpty) {
-      if (arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
+      if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
+          arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
           arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
           arguments[0] != Constants.ADB_VERSION) {
         arguments = ["-s", Constants.currentDevice]..addAll(arguments);
       }
     }
-    return executable;
+    return arguments;
   }
 
   Future<ProcessResult> execCommand(List<String> arguments,
       {String executable = "",
       String? workingDirectory,
       bool runInShell = false}) async {
-    executable = await checkFirst(arguments,
+    if (executable == "") {
+      executable = Constants.adbPath;
+    }
+    arguments = await checkFirst(arguments,
         executable: executable, workingDirectory: workingDirectory);
     LogUtils.printLog(
         "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
@@ -45,12 +48,18 @@ class AndroidCommand {
     }
 
     return await Process.run(executable, arguments,
-        workingDirectory: workingDirectory, runInShell: runInShell);
+        workingDirectory: workingDirectory,
+        runInShell: runInShell,
+        stdoutEncoding: Encoding.getByName("utf-8"));
   }
 
   Future<ProcessResult> execCommandSync(List<String> arguments,
       {String executable = "", String? workingDirectory}) async {
-    executable = await checkFirst(arguments,
+    if (executable == "") {
+      executable = Constants.adbPath;
+    }
+
+    arguments = await checkFirst(arguments,
         executable: executable, workingDirectory: workingDirectory);
 
     LogUtils.printLog(
@@ -63,7 +72,8 @@ class AndroidCommand {
     }
 
     return Process.runSync(executable, arguments,
-        workingDirectory: workingDirectory);
+        workingDirectory: workingDirectory,
+        stdoutEncoding: Encoding.getByName("utf-8"));
   }
 
   CommandResult dealWithData(String arguments, ProcessResult processResult) {
@@ -195,24 +205,53 @@ class AndroidCommand {
 }
 
 class IOSCommand {
+  Future<List<String>> checkFirst(
+      List<String> arguments, String executable) async {
+    if (Constants.currentIOSDevice.isNotEmpty) {
+      if (Constants.IOS_GET_DEVICE != arguments[0] || arguments.length != 1) {
+        arguments = ["-u", Constants.currentIOSDevice]..addAll(arguments);
+      }
+    }
+
+    if (!await FileUtils.isExistFile(executable)) {
+      throw executable + "该路径不存在";
+    }
+    return arguments;
+  }
+
   Future<ProcessResult> execCommand(List<String> arguments,
       {String executable = "",
       String? workingDirectory,
       bool runInShell = false}) async {
+    if (Platform.isWindows) {
+      executable = executable + ".exe";
+    }
+
+    arguments = await checkFirst(arguments, executable);
+
     LogUtils.printLog(
         "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
 
     return await Process.run(executable, arguments,
-        workingDirectory: workingDirectory, runInShell: runInShell);
+        workingDirectory: workingDirectory,
+        runInShell: runInShell,
+        stdoutEncoding: Encoding.getByName("utf-8"));
   }
 
   Future<ProcessResult> execCommandSync(List<String> arguments,
       {String executable = "", String? workingDirectory}) async {
+    if (Platform.isWindows) {
+      executable = executable + ".exe";
+    }
+
+    arguments = await checkFirst(arguments, executable);
+
     LogUtils.printLog(
         "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
 
     return Process.runSync(executable, arguments,
-        workingDirectory: workingDirectory);
+        workingDirectory: workingDirectory,
+        stdoutEncoding: Encoding.getByName("utf-8"));
   }
 
   CommandResult dealWithData(String arguments, ProcessResult processResult) {
@@ -238,13 +277,23 @@ class IOSCommand {
       // tv.danmaku.bilianime, "64800100", "Bilibili"
       // com.laiwang.DingTalk, "21728861", "DingTalk"
       case Constants.IOS_GET_THIRD_PACKAGE:
+      case Constants.IOS_GET_SYSTEM_PACKAGE:
         List<String> packageNameList = data.split(PlatformUtils.getLineBreak());
+        packageNameList.removeAt(0);
         List<String> packageNameFilter = [];
+        Constants.mapIOSInfo.clear();
         packageNameList.forEach((element) {
           if (element.isNotEmpty) {
-            String packageName = element.split(",").first;
-            if (!packageNameFilter.contains(packageName)) {
-              packageNameFilter.add(packageName);
+            List<String> iosInfo = element.split(",");
+            if (!packageNameFilter.contains(iosInfo[0])) {
+              packageNameFilter.add(iosInfo[0]);
+              if (iosInfo.length >= 3) {
+                Constants.mapIOSInfo[iosInfo[0]] =
+                    "包名：${iosInfo[0]},版本号：${iosInfo[1]},名字：${iosInfo[2]}";
+              } else {
+                Constants.mapIOSInfo[iosInfo[0]] =
+                    "包名：${iosInfo[0]},版本号：${iosInfo[1]}";
+              }
             }
           }
         });

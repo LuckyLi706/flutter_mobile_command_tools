@@ -1,12 +1,11 @@
-import 'dart:convert';
-
-import 'package:fast_gbk/fast_gbk.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobile_command_tools/command/Command.dart';
+import 'package:flutter_mobile_command_tools/main.dart' as app;
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
-import 'package:flutter_mobile_command_tools/main.dart' as app;
+import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 import '../constants.dart';
@@ -51,18 +50,18 @@ class IOSRightPanelState extends State<IOSRightPanel> {
     setState(() {
       allPackageNameDdmi.clear();
       if (resultList.length > 0) {
-        Constants.currentPackageName = resultList[0];
+        Constants.currentIOSPackageName = resultList[0];
         resultList.toSet().forEach((element) {
           allPackageNameDdmi.add(new DropdownMenuItem(
             child: new Text(
               element,
-              style: _dropDownTextStyle(fontTextSize: 18),
+              style: _dropDownTextStyle(fontTextSize: 14),
             ),
             value: element,
           ));
         });
       } else {
-        Constants.currentPackageName = "";
+        Constants.currentIOSPackageName = "";
       }
     });
   }
@@ -151,6 +150,7 @@ class IOSRightPanelState extends State<IOSRightPanel> {
                     setState(() {
                       Constants.currentIOSPackageName =
                           newValue == null ? "" : newValue;
+                      app.showLog(Constants.mapIOSInfo[newValue!]!);
                     });
                   },
                   items: allPackageNameDdmi,
@@ -173,8 +173,6 @@ class IOSRightPanelState extends State<IOSRightPanel> {
                                   Constants.IOS_GET_THIRD_PACKAGE.split(" "),
                                   executable: devicePackagePath)
                               .then((value) {
-                            print(gbk.decode(gbk.encode(value.stdout)));
-
                             CommandResult result = iosCommand.dealWithData(
                                 Constants.IOS_GET_THIRD_PACKAGE, value);
                             if (result.mError) {
@@ -183,7 +181,7 @@ class IOSRightPanelState extends State<IOSRightPanel> {
                             } else {
                               updatePackageName(result.mResult);
                               app.showLog("第三方应用所有包名获取成功");
-                              print(value);
+                              app.showLog(Constants.mapIOSInfo[Constants.currentIOSPackageName]!);
                             }
                           }).catchError((e) {
                             updatePackageName([]);
@@ -202,7 +200,6 @@ class IOSRightPanelState extends State<IOSRightPanel> {
                                   Constants.IOS_GET_SYSTEM_PACKAGE.split(" "),
                                   executable: devicePackagePath)
                               .then((value) {
-                                print(value.stdout);
                             CommandResult result = iosCommand.dealWithData(
                                 Constants.IOS_GET_SYSTEM_PACKAGE, value);
                             if (result.mError) {
@@ -211,7 +208,7 @@ class IOSRightPanelState extends State<IOSRightPanel> {
                             } else {
                               updatePackageName(result.mResult);
                               app.showLog("系统应用所有包名获取成功");
-                              print(result.mResult);
+                              app.showLog(Constants.mapIOSInfo[Constants.currentIOSPackageName]!);
                             }
                           }).catchError((e) {
                             updatePackageName([]);
@@ -219,6 +216,79 @@ class IOSRightPanelState extends State<IOSRightPanel> {
                           });
                         },
                         child: new Text("系统包名"))),
+              ],
+            ),
+            new Row(
+              children: [
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () async {
+                          FilePickerResult? result =
+                              await FilePicker.platform.pickFiles(
+                            type: FileType.custom,
+                            allowMultiple: false,
+                            allowedExtensions: ['ipa'],
+                          );
+
+                          if (result == null) {
+                            app.showLog("未选择文件");
+                            return;
+                          }
+
+                          devicePackagePath = Constants.libDevicePath +
+                              PlatformUtils.getSeparator() +
+                              "ideviceinstaller";
+                          iosCommand
+                              .execCommand(
+                                  Constants.IOS_INSTALL_APP
+                                      .replaceAll("*.ipa", result.paths[0]!)
+                                      .split(" "),
+                                  executable: devicePackagePath)
+                              .then((value) {
+                            CommandResult result = iosCommand.dealWithData(
+                                Constants.IOS_INSTALL_APP, value);
+                            if (result.mError) {
+                              app.showLog(result.mResult);
+                            } else {
+                              app.showLog("安装成功");
+                            }
+                          }).catchError((e) {
+                            app.showLog(e.toString());
+                          });
+                        },
+                        child: new Text("安装应用"))),
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          if (Constants.currentIOSPackageName.isEmpty) {
+                            app.showLog("请先获取App包名");
+                            return;
+                          }
+                          devicePackagePath = Constants.libDevicePath +
+                              PlatformUtils.getSeparator() +
+                              "ideviceinstaller";
+                          iosCommand
+                              .execCommand(
+                                  Constants.IOS_UNINSTALL_APP
+                                      .replaceAll("bundleID",
+                                          Constants.currentIOSPackageName)
+                                      .split(" "),
+                                  executable: devicePackagePath)
+                              .then((value) {
+                            CommandResult result = iosCommand.dealWithData(
+                                Constants.IOS_UNINSTALL_APP, value);
+                            if (result.mError) {
+                              app.showLog(result.mResult);
+                            } else {
+                              app.showLog("卸载成功");
+                              LogUtils.printLog(result.mResult);
+                            }
+                          }).catchError((e) {
+                            updatePackageName([]);
+                            app.showLog(e.toString());
+                          });
+                        },
+                        child: new Text("卸载应用"))),
               ],
             ),
           ],
