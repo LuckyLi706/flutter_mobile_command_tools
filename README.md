@@ -4,7 +4,13 @@
 
 ## 说明
 + 关于Android
-  请自行打开手机开发者模式中的USB调试，确保手机和电脑能连接上。确保能使用adb连接上。本地化路径保存在Documents目录下面，包含tools文件夹（相关工具文件）和SETTING文件（配置文件）。本工具Android模块只是将adb的大部分命令进行了懒人模式，有问题欢迎提issues。
+  请自行打开手机开发者模式中的USB调试，确保手机和电脑能连接上。确保能使用adb连接上。。本工具Android模块只是将adb的大部分命令进行了懒人模式，有问题欢迎提issues。
+  
++ 关于IOS
+  使用[libimobiledevice](https://github.com/libimobiledevice/libimobiledevice)，IOS意义不是很大。就写了几个小功能。用爱思吧。
+
++ 关于配置文件和工具
+  用到的配置文件和工具都保存到Documents目录下的MobileTools文件夹下面，包含tools文件夹（相关工具文件）和SETTING文件（配置文件）。里面用到的几个工具太大。保存到了百度云盘，需要的可以放到tools文件夹下面。[链接](https://pan.baidu.com/s/1uQiexdargX4ZW-GkmV_zFA)，提取码：d9e9。
 ## 功能
 ### Android
 + 开启Root
@@ -85,7 +91,7 @@
     使用apksigner的签名。windows的签名文件放在apksigner文件夹下面，macos放在/Users/用户名/Library/Caches/apksigner下面，可以进行替换，保证文件名一样。apksigner.json为签名的key以及密码。替换记得修改。
 ### IOS
 
-
+IOS意义不是很大，简单写了几个命令。要下itunes，还有下面的工具，提供获取设备，获取包名，安装和卸载ipa。直接用爱思吧。
 
 + [libimobiledevice-windows](https://github.com/libimobiledevice-win32/imobiledevice-net)
 + [libimobiledevice](https://github.com/libimobiledevice/libimobiledevice)
