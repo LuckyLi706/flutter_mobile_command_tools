@@ -4,18 +4,23 @@
 
 ## 说明
 + 关于Android
+  
   请自行打开手机开发者模式中的USB调试，确保手机和电脑能连接上。确保能使用adb连接上。。本工具Android模块只是将adb的大部分命令进行了懒人模式，有问题欢迎提issues。
   
 + 关于IOS
+  
   使用[libimobiledevice](https://github.com/libimobiledevice/libimobiledevice)，IOS意义不是很大。就写了几个小功能。用爱思吧。
 
 + 关于配置文件和工具
+  
   用到的配置文件和工具都保存到Documents目录下的MobileTools文件夹下面，包含tools文件夹（相关工具文件）和SETTING文件（配置文件）。里面用到的几个工具太大。保存到了百度云盘，需要的可以放到tools文件夹下面。[链接](https://pan.baidu.com/s/1uQiexdargX4ZW-GkmV_zFA)，提取码：d9e9。
 ## 功能
 ### Android
 + 开启Root
+  
   如果手机又Root权限，可以打开，在获取信息的时候使用到。如果手机有Magisk，可以安装这个插件[adb_root](https://github.com/evdenis/adb_root)，可以让所有的命令都走root权限。
 + 内置ADB
+  
   如果你的电脑没有adb，打开这个开关会使用内置的adb。如果你电脑本身有adb，点击右上角的配置，配置adb路径，以免内置的adb和你安装的adb冲突。
   - 外部ADB路径设置
     ![](screenshots/settings.png)
