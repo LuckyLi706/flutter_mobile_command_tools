@@ -35,8 +35,8 @@ class PlatformUtils {
     }
   }
 
-  static String grepFindStr(){
-    if(Platform.isWindows){
+  static String grepFindStr() {
+    if (Platform.isWindows) {
       return "findstr";
     }
     return "grep";
@@ -81,9 +81,23 @@ class PlatformUtils {
 
   static String adbCommand(String command) {
     if (!command.startsWith("adb")) {
+      if (Constants.currentDevice.isNotEmpty) {
+        return Constants.adbPath +
+            " -s " +
+            Constants.currentDevice +
+            " " +
+            command;
+      }
       return Constants.adbPath + " " + command;
     }
     if (Constants.javaPath.isNotEmpty) {
+      if (Constants.currentDevice.isNotEmpty) {
+        return Constants.adbPath +
+            " -s " +
+            Constants.currentDevice +
+            " " +
+            command.replaceFirst("adb", "");
+      }
       return command.replaceFirst("adb", Constants.adbPath);
     }
     return command;

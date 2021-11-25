@@ -92,7 +92,9 @@ class AndroidCommand {
           List<String> devices = data.split(PlatformUtils.getLineBreak());
           List<String> currentDevices = [];
           devices.forEach((element) {
-            if (element.isNotEmpty && element != "List of devices attached") {
+            if (element.isNotEmpty &&
+                element != "List of devices attached" &&
+                !element.contains("offline")) {
               currentDevices.add(element.split("\t")[0]);
             }
           });
