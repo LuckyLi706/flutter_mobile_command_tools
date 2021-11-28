@@ -401,7 +401,18 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 showLog(result.mResult);
                               } else {
                                 currentAllDevice = result.mResult;
-                                updateConnectDevice(result.mResult);
+                                showLog("获取到的设备数量：" +
+                                    currentAllDevice.length.toString());
+                                currentAllDevice.forEach((element) {
+                                  if (element.contains("offline")) {
+                                    showLog(element + ",当前设备不在线,移除列表");
+                                  } else {
+                                    showLog(element);
+                                  }
+                                });
+                                currentAllDevice.removeWhere(
+                                    (element) => element.contains("offline"));
+                                updateConnectDevice(currentAllDevice);
                               }
                             }).catchError((e) {
                               updateConnectDevice([]);
@@ -791,30 +802,53 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   ),
                 ],
               ),
+              new Row(children: [
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          command
+                              .execCommand(Constants.ADB_GET_PACKAGE.split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_GET_PACKAGE, value);
+                            if (result.mError) {
+                              updatePackageName([]);
+                              showLog(result.mResult);
+                            } else {
+                              updatePackageName([result.mResult]);
+                              showLog("当前应用包名获取成功");
+                            }
+                          }).catchError((e) {
+                            updatePackageName([]);
+                            showLog(e.toString());
+                          });
+                        },
+                        child: new Text("当前包名"))),
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          command
+                              .execCommand(
+                                  Constants.ADB_GET_FREEZE_PACKAGE.split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_GET_FREEZE_PACKAGE, value);
+                            if (result.mError) {
+                              updatePackageName([]);
+                              showLog(result.mResult);
+                            } else {
+                              updatePackageName(result.mResult);
+                              showLog("被冻结应用所有包名获取成功");
+                            }
+                          }).catchError((e) {
+                            updatePackageName([]);
+                            showLog(e.toString());
+                          });
+                        },
+                        child: new Text("冻结包名"))),
+              ]),
               new Row(
                 children: [
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            command
-                                .execCommand(
-                                    Constants.ADB_GET_PACKAGE.split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_GET_PACKAGE, value);
-                              if (result.mError) {
-                                updatePackageName([]);
-                                showLog(result.mResult);
-                              } else {
-                                updatePackageName([result.mResult]);
-                                showLog("当前应用包名获取成功");
-                              }
-                            }).catchError((e) {
-                              updatePackageName([]);
-                              showLog(e.toString());
-                            });
-                          },
-                          child: new Text("当前包名"))),
                   Expanded(
                       child: new TextButton(
                           onPressed: () {
@@ -859,6 +893,54 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             });
                           },
                           child: new Text("系统包名"))),
+                ],
+              ),
+              new Row(
+                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // mainAxisSize: MainAxisSize.min,
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            if (Constants.currentPackageName.isEmpty) {
+                              showLog("请先获取包名");
+                              return;
+                            }
+                            command
+                                .execCommand(Constants.ADB_FREEZE_PACKAGE
+                                    .replaceAll(
+                                        "package", Constants.currentPackageName)
+                                    .split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_FREEZE_PACKAGE, value);
+                              showLog(result.mResult);
+                            }).catchError((e) {
+                              showLog(e.toString());
+                            });
+                          },
+                          child: new Text("冷冻"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () {
+                            if (Constants.currentPackageName.isEmpty) {
+                              showLog("请先获取包名");
+                              return;
+                            }
+                            command
+                                .execCommand(Constants.ADB_NOT_FREEZE_PACKAGE
+                                    .replaceAll(
+                                        "package", Constants.currentPackageName)
+                                    .split(" "))
+                                .then((value) {
+                              result = command.dealWithData(
+                                  Constants.ADB_NOT_FREEZE_PACKAGE, value);
+                              showLog(result.mResult);
+                            }).catchError((e) {
+                              showLog(e.toString());
+                            });
+                          },
+                          child: new Text("解冻"))),
                 ],
               ),
               new Row(

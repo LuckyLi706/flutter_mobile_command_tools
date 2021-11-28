@@ -77,11 +77,12 @@ class AndroidCommand {
   }
 
   CommandResult dealWithData(String arguments, ProcessResult processResult) {
+    print(processResult.stdout);
     if (processResult.stderr != "") {
       if (processResult.stderr
           .toString()
           .contains("more than one device/emulator")) {
-        return getProcessResult(true, "当前设备大于等于两个,请先获取设备");
+        return getProcessResult(true, "当前设备大于等于两个,请先手动获取设备");
       }
       return getProcessResult(true, processResult.stderr);
     }
@@ -92,10 +93,12 @@ class AndroidCommand {
           List<String> devices = data.split(PlatformUtils.getLineBreak());
           List<String> currentDevices = [];
           devices.forEach((element) {
-            if (element.isNotEmpty &&
-                element != "List of devices attached" &&
-                !element.contains("offline")) {
-              currentDevices.add(element.split("\t")[0]);
+            if (element.isNotEmpty && element != "List of devices attached") {
+              if (!element.contains("offline")) {
+                currentDevices.add(element.split("\t")[0]);
+              } else {
+                currentDevices.add(element);
+              }
             }
           });
           if (currentDevices.length > 0) {
@@ -112,10 +115,10 @@ class AndroidCommand {
           //处理9.0版本手机顶级activity信息过滤改为mResumedActivity
           if (values[i].contains("mFocusedActivity") ||
               values[i].contains("mResumedActivity")) {
-            int a = values[i].indexOf("u0");
-            int b = values[i].indexOf('/');
-            String packageName = values[i].substring(a + 3, b);
-            return getProcessResult(false, packageName);
+            // int a = values[i].indexOf("u0");
+            // int b = values[i].indexOf('/');
+            // String packageName = values[i].substring(a + 3, b);
+            return getProcessResult(false, values[i]);
           }
           if (values[i].contains("error:")) {
             return getProcessResult(true, values[i]);
@@ -124,6 +127,7 @@ class AndroidCommand {
         return getProcessResult(true, "无信息");
       case Constants.ADB_GET_THIRD_PACKAGE:
       case Constants.ADB_GET_SYSTEM_PACKAGE:
+      case Constants.ADB_GET_FREEZE_PACKAGE:
         List<String> packageNameList = data.split(PlatformUtils.getLineBreak());
         List<String> packageNameFilter = [];
         packageNameList.forEach((element) {
