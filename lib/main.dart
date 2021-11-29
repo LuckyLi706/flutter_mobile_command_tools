@@ -1147,7 +1147,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                     apkPath, Constants.AAPT_GET_APK_INFO);
                               }
                             } else {
-                              String? apkPath = await _selectFile(context);
+                              String? apkPath = await _selectFile(context,
+                                  extensions: ["apk"]);
                               if (apkPath == null) {
                                 showLog("未选择apk");
                                 return;
