@@ -142,10 +142,11 @@ class InitUtils {
 
   //初始化内部的adb
   static _initInnerAdb() async {
-    String pathInner = await FileUtils.getInnerAdbPath();
-    if (pathInner.isNotEmpty) {
-      return;
-    }
+    File versionFile = File(await FileUtils.getBasePath() +
+        PlatformUtils.getSeparator() +
+        "VERSION");
+    String versionStr = await FileUtils.readFile(versionFile);
+
     String assetsAdbPath;
     if (Platform.isWindows) {
       assetsAdbPath = "assets/windows/tools.zip";
@@ -158,11 +159,12 @@ class InitUtils {
         PlatformUtils.getSeparator() +
         Constants.TOOLS_DIRECTORY_NAME);
     var path = directoryAdb.path + ".zip";
-    if (!await directoryAdb.exists()) {
+    if (!await directoryAdb.exists() || versionStr != Constants.APP_VERSION) {
       var buffer = await rootBundle.load(assetsAdbPath);
       await FileUtils.writeBytesFile(buffer, File(path));
+      FileUtils.unZipFiles(directoryAdb.path, path);
     }
-    FileUtils.unZipFiles(directoryAdb.path, path);
+    FileUtils.writeFile(Constants.APP_VERSION, versionFile);
   }
 
   static void _initMutualAppFile() async {

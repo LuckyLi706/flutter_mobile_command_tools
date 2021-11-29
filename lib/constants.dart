@@ -15,6 +15,9 @@ class Constants {
   static bool isRoot = false; //是否开启root
   static bool isInnerAdb = false; //是否使用内部的adb
 
+  static bool isInnerPackageName = true;
+  static bool isOuterApk = false;
+
   static String adbPath = ""; //真正使用的adb路径
   static String javaPath = ""; //java路径
   static String libDevicePath = ""; //libimobiledevice目录
@@ -76,7 +79,6 @@ class Constants {
   static const String ADB_FREEZE_PACKAGE = "shell pm disable package";
   static const String ADB_NOT_FREEZE_PACKAGE = "shell pm enable package";
 
-
   static const String ADB_START_ACTIVITY_NO =
       "shell monkey -p package -c android.intent.category.LAUNCHER 1";
   static const String ADB_START_ACTIVITY = "shell am start -n ";
@@ -106,6 +108,10 @@ class Constants {
   static const String ADB_REBOOT = "reboot";
   static const String ADB_REBOOT_BOOTLOADER = "reboot bootloader";
   static const String ADB_REBOOT_RECOVERY = "reboot recovery";
+
+  static const String AAPT_GET_APK_INFO = "aapt dump badging apk";
+  static const String AAPT_GET_APK_PERMISSION = "aapt dump permissions apk | grep permission";
+
   static const String FASTBOOT_UNLOCK = "flashing unlock";
   static const String FASTBOOT_LOCK = "flashing lock";
   static const String FASTBOOT_LOCK_STATE = "getvar devices-state";

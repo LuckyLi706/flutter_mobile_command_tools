@@ -1,5 +1,6 @@
 // ignore_for_file: slash_for_doc_comments
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_mobile_command_tools/constants.dart';
@@ -28,10 +29,14 @@ class PlatformUtils {
       List<String> arguments =
           commandStr.replaceFirst(executable, "").trim().split(" ");
       return Process.run(executable, arguments,
-          runInShell: runInShell, workingDirectory: workDirectory);
+          runInShell: runInShell,
+          workingDirectory: workDirectory,
+          stdoutEncoding: Encoding.getByName("utf-8"));
     } else {
       return Process.run(commandStr, [],
-          runInShell: runInShell, workingDirectory: workDirectory);
+          runInShell: runInShell,
+          workingDirectory: workDirectory,
+          stdoutEncoding: Encoding.getByName("utf-8"));
     }
   }
 

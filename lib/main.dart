@@ -1075,6 +1075,129 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
               ),
               new Row(children: [
                 new Text(
+                  "应用信息：",
+                  style: _tipTextStyle(),
+                )
+              ]),
+              new Row(
+                children: [
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: Constants.isInnerPackageName,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              if (isCheck!) {
+                                Constants.isInnerPackageName = true;
+                                Constants.isOuterApk = false;
+                                setState(() {});
+                              }
+                            }),
+                        new Text("内部包名")
+                      ])),
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: Constants.isOuterApk,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              if (isCheck!) {
+                                Constants.isInnerPackageName = false;
+                                Constants.isOuterApk = true;
+                                setState(() {});
+                              }
+                            }),
+                        new Text("外部apk")
+                      ])),
+                ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Row(
+                children: [
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String aaptPath =
+                                await FileUtils.getAaptToolsPath();
+                            if (!await FileUtils.isExistFile(aaptPath)) {
+                              showLog("$aaptPath 路径不存在");
+                              return;
+                            }
+                            if (Constants.isInnerPackageName) {
+                              if (Constants.currentPackageName.isEmpty) {
+                                showLog("请先获取包名");
+                                return;
+                              }
+                              String apkName =
+                                  "${Constants.currentPackageName}.apk";
+                              String apkPath = Constants.desktopPath +
+                                  PlatformUtils.getSeparator() +
+                                  apkName;
+                              if (!await FileUtils.isExistFile(apkPath)) {
+                                _aaptCommandByPackageName(
+                                    apkPath, Constants.AAPT_GET_APK_INFO);
+                              } else {
+                                _aaptCommandByApk(
+                                    apkPath, Constants.AAPT_GET_APK_INFO);
+                              }
+                            } else {
+                              String? apkPath = await _selectFile(context);
+                              if (apkPath == null) {
+                                showLog("未选择apk");
+                                return;
+                              }
+                              _aaptCommandByApk(
+                                  apkPath, Constants.AAPT_GET_APK_INFO);
+                            }
+                          },
+                          child: new Text("apk基本信息"))),
+                  Expanded(
+                      child: new TextButton(
+                          onPressed: () async {
+                            String aaptPath =
+                                await FileUtils.getAaptToolsPath();
+                            if (!await FileUtils.isExistFile(aaptPath)) {
+                              showLog("$aaptPath 路径不存在");
+                              return;
+                            }
+                            if (Constants.isInnerPackageName) {
+                              if (Constants.currentPackageName.isEmpty) {
+                                showLog("请先获取包名");
+                                return;
+                              }
+                              String apkName =
+                                  "${Constants.currentPackageName}.apk";
+                              String apkPath = Constants.desktopPath +
+                                  PlatformUtils.getSeparator() +
+                                  apkName;
+                              if (!await FileUtils.isExistFile(apkPath)) {
+                                _aaptCommandByPackageName(
+                                    apkPath, Constants.AAPT_GET_APK_PERMISSION);
+                              } else {
+                                _aaptCommandByApk(
+                                    apkPath, Constants.AAPT_GET_APK_PERMISSION);
+                              }
+                            } else {
+                              String? apkPath = await _selectFile(context);
+                              if (apkPath == null) {
+                                showLog("未选择apk");
+                                return;
+                              }
+                              _aaptCommandByApk(
+                                  apkPath, Constants.AAPT_GET_APK_PERMISSION);
+                            }
+                          },
+                          child: new Text("apk权限"))),
+                ],
+              ),
+              new Row(children: [
+                new Text(
                   "应用交互：",
                   style: _tipTextStyle(),
                 )
@@ -1469,8 +1592,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 TextButton(
                     onPressed: () async {
                       String uiToolPath = await FileUtils.getUIToolsPath();
-                      if (uiToolPath == "") {
-                        showLog("uiautomatorviewer 路径不存在");
+                      if (!await FileUtils.isExistFolder(uiToolPath)) {
+                        showLog("$uiToolPath 路径不存在,请手动配置");
                         return;
                       }
                       if (!await FileUtils.isExistFile(Constants.adbPath)) {
@@ -1625,8 +1748,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () async {
                           String apkToolPath = await FileUtils.getApkToolPath();
-                          if (apkToolPath == "") {
-                            showLog("ApkTool路径不存在");
+                          if (!await FileUtils.isExistFile(apkToolPath)) {
+                            showLog("$apkToolPath不存在,请手动配置");
                             return;
                           }
                           String? path =
@@ -1678,8 +1801,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () async {
                           String apkToolPath = await FileUtils.getApkToolPath();
-                          if (apkToolPath == "") {
-                            showLog("ApkTool路径不存在");
+                          if (!await FileUtils.isExistFile(apkToolPath)) {
+                            showLog("$apkToolPath不存在,请手动配置");
                             return;
                           }
                           String? path =
@@ -1804,8 +1927,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         onPressed: () async {
                           String fakerAndroidPath =
                               await FileUtils.getFakerAndroidPath();
-                          if (fakerAndroidPath == "") {
-                            showLog("FakerAndroid 路径不存在");
+                          if (!await FileUtils.isExistFile(fakerAndroidPath)) {
+                            showLog("$fakerAndroidPath不存在,请手动配置");
                             return;
                           }
                           String? path =
@@ -2880,6 +3003,57 @@ String _getDeviceIp(String device) {
     default:
       return "0"; //真机
   }
+}
+
+void _aaptCommandByPackageName(String apkPath, String commandStr) {
+  command
+      .execCommand(Constants.ADB_APK_PATH
+          .replaceAll("package", Constants.currentPackageName)
+          .split(" "))
+      .then((value) {
+    result = command.dealWithData(Constants.ADB_APK_PATH, value);
+    String apkInnerPath = result.mResult;
+    command.execCommand(
+      [Constants.ADB_PULL_FILE, apkInnerPath, apkPath],
+    ).then((value) {
+      result = command.dealWithData(Constants.ADB_PULL_FILE, value);
+      if (result.mError) {
+        showLog(result.mResult);
+      } else {
+        showLog(result.mResult);
+        if (result.mResult.toString().contains("error")) {
+          showLog(result.mResult);
+        } else {
+          _aaptCommandByApk(apkPath, commandStr);
+        }
+      }
+    }).catchError((e) {
+      showLog(e.toString());
+    });
+  }).catchError((e) {
+    showLog(e.toString());
+  });
+}
+
+void _aaptCommandByApk(String apkPath, String commandStr) async {
+  String aaptPath = await FileUtils.getAaptToolsPath();
+  PlatformUtils.runCommand(
+    commandStr.replaceAll("aapt", aaptPath).replaceAll("apk", apkPath),
+  ).then((value) {
+    result = command.dealWithData(commandStr, value);
+    if (result.mError) {
+      showLog(result.mResult);
+    } else {
+      showLog(result.mResult);
+      // if (result.mResult.toString().contains("error")) {
+      //   showLog(result.mResult);
+      // } else {
+      //   _aaptCommandByApk(apkPath, commandStr);
+      // }
+    }
+  }).catchError((e) {
+    showLog(e.toString());
+  });
 }
 
 void _getAdbVersion() {

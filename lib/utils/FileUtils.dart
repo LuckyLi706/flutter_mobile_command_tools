@@ -113,6 +113,7 @@ class FileUtils {
   }
 
   static Future<File> writeFile(String data, File file) async {
+    // createFile(data);
     return file.writeAsString(data);
   }
 
@@ -218,9 +219,9 @@ class FileUtils {
         Constants.TOOLS_DIRECTORY_NAME +
         PlatformUtils.getSeparator() +
         Constants.APK_TOOL_NAME);
-    if (!await directoryAdb.exists()) {
-      return "";
-    }
+    // if (!await directoryAdb.exists()) {
+    //   return "";
+    // }
     return directoryAdb.path + PlatformUtils.getSeparator() + "apktool.jar";
   }
 
@@ -230,9 +231,6 @@ class FileUtils {
         Constants.TOOLS_DIRECTORY_NAME +
         PlatformUtils.getSeparator() +
         Constants.APK_TOOL_NAME);
-    if (!await directoryAdb.exists()) {
-      return "";
-    }
     return directoryAdb.path +
         PlatformUtils.getSeparator() +
         "FakerAndroid.jar";
@@ -244,10 +242,20 @@ class FileUtils {
         Constants.TOOLS_DIRECTORY_NAME +
         PlatformUtils.getSeparator() +
         Constants.UI_TOOL_NAME);
-    if (!await directoryAdb.exists()) {
-      return "";
-    }
     return directoryAdb.path;
+  }
+
+  static Future<String> getAaptToolsPath() async {
+    String aaptName = "aapt";
+    if (Platform.isWindows) {
+      aaptName = "aapt.exe";
+    } else {
+      aaptName = "aapt";
+    }
+    Directory directoryAdb = Directory('${await getBasePath()}' +
+        PlatformUtils.getSeparator() +
+        Constants.TOOLS_DIRECTORY_NAME);
+    return directoryAdb.path + PlatformUtils.getSeparator() + aaptName;
   }
 
   static Future<String> getMutualAppPath(String name) async {

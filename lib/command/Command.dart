@@ -18,7 +18,7 @@ class AndroidCommand {
       throw executable + "该路径不存在";
     }
 
-    if (Constants.ADB_CONNECT_DEVICES.isNotEmpty) {
+    if (Constants.currentDevice.isNotEmpty) {
       if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
           arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
           arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
@@ -115,10 +115,10 @@ class AndroidCommand {
           //处理9.0版本手机顶级activity信息过滤改为mResumedActivity
           if (values[i].contains("mFocusedActivity") ||
               values[i].contains("mResumedActivity")) {
-            // int a = values[i].indexOf("u0");
-            // int b = values[i].indexOf('/');
-            // String packageName = values[i].substring(a + 3, b);
-            return getProcessResult(false, values[i]);
+            int a = values[i].indexOf("u0");
+            int b = values[i].indexOf('/');
+            String packageName = values[i].substring(a + 3, b);
+            return getProcessResult(false, packageName);
           }
           if (values[i].contains("error:")) {
             return getProcessResult(true, values[i]);
@@ -205,6 +205,34 @@ class AndroidCommand {
           }
           return getProcessResult(true, "该目录无文件或者当前就是文件");
         }
+      case Constants.ADB_APK_PATH:
+        return getProcessResult(
+            false,
+            data
+                .replaceAll("package:", "")
+                .replaceAll(PlatformUtils.getLineBreak(), ""));
+      case Constants.AAPT_GET_APK_INFO:
+        String value = "\n";
+        List<String> line =
+            data.replaceAll("\'", "").split(PlatformUtils.getLineBreak());
+        for (int i = 0; i < line.length; i++) {
+          //package: name='me.weishu.exp' versionCode='341' versionName='鏄嗕粦闀溌?.4.1' platformBuildVersionName='鏄嗕粦闀溌?.4.1' compileSdkVersion='28' compileSdkVersionCodename='9'
+          //如果想不存在乱码，先重定向到txt里面去。
+          if (line[i].startsWith("package")) {
+            List<String> apkInfo = line[i].substring(8).split(' ');
+            value = value + "包名：${apkInfo[1].substring(5)}\n";
+            value = value + "版本号：${apkInfo[2].split('=')[1]}\n";
+            continue;
+          } else if (line[i].startsWith("application-label:")) {
+            value = value + "名字：${line[i].split(':')[1]}\n";
+            continue;
+          } else if (line[i].startsWith("launchable-activity")) {
+            value = value +
+                "启动类：${line[i].substring(20).split(' ')[1].split('=')[1]}\n";
+            continue;
+          }
+        }
+        return getProcessResult(false, value);
     }
     return getProcessResult(false, data);
   }
