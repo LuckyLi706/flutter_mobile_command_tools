@@ -71,6 +71,8 @@ class Constants {
   static const String ADB_GET_FREEZE_PACKAGE = "shell pm list packages -d";
 
   static const String ADB_GET_PACKAGE_INFO = "shell dumpsys package ";
+  static const String ADB_GET_PACKAGE_INFO_MAIN_ACTIVITY =
+      "shell dumpsys package top ";
 
   ///关于冷冻/解冻app使用disable/enable命令,
   ///使用hide只是简单的从启动器移除图标而已
@@ -110,7 +112,8 @@ class Constants {
   static const String ADB_REBOOT_RECOVERY = "reboot recovery";
 
   static const String AAPT_GET_APK_INFO = "aapt dump badging apk";
-  static const String AAPT_GET_APK_PERMISSION = "aapt dump permissions apk | grep permission";
+  static const String AAPT_GET_APK_PERMISSION =
+      "aapt dump permissions apk | grep permission";
 
   static const String FASTBOOT_UNLOCK = "flashing unlock";
   static const String FASTBOOT_LOCK = "flashing lock";

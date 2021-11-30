@@ -212,7 +212,7 @@ class AndroidCommand {
                 .replaceAll("package:", "")
                 .replaceAll(PlatformUtils.getLineBreak(), ""));
       case Constants.AAPT_GET_APK_INFO:
-        String value = "\n";
+        String value = "";
         List<String> line =
             data.replaceAll("\'", "").split(PlatformUtils.getLineBreak());
         for (int i = 0; i < line.length; i++) {
@@ -232,6 +232,12 @@ class AndroidCommand {
             continue;
           }
         }
+        return getProcessResult(false, value);
+      case Constants.ADB_GET_PACKAGE_INFO_MAIN_ACTIVITY:
+        List<String> line =
+            data.replaceAll("\'", "").split(PlatformUtils.getLineBreak());
+        int index = line.indexOf("      android.intent.action.MAIN:");
+        String value = line[index + 1].trim().split(" ")[1];
         return getProcessResult(false, value);
     }
     return getProcessResult(false, data);

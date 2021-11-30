@@ -989,29 +989,48 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             });
                           },
                           child: new Text("卸载apk"))),
-                  Expanded(
-                      child: new TextButton(
-                          onPressed: () {
-                            if (Constants.currentPackageName.isEmpty) {
-                              showLog("请先获取包名");
-                              return;
-                            }
-                            command
-                                .execCommand(Constants.ADB_APK_PATH
-                                    .replaceAll(
-                                        "package", Constants.currentPackageName)
-                                    .split(" "))
-                                .then((value) {
-                              result = command.dealWithData(
-                                  Constants.ADB_APK_PATH, value);
-                              showLog(result.mResult);
-                            }).catchError((e) {
-                              showLog(e.toString());
-                            });
-                          },
-                          child: new Text("app安装路径"))),
                 ],
               ),
+              new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          if (Constants.currentPackageName.isEmpty) {
+                            showLog("请先获取包名");
+                            return;
+                          }
+                          command
+                              .execCommand((Constants
+                                      .ADB_GET_PACKAGE_INFO_MAIN_ACTIVITY
+                                      .replaceAll("package",
+                                          "package ${Constants.currentPackageName}"))
+                                  .split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_GET_PACKAGE_INFO_MAIN_ACTIVITY,
+                                value);
+                            showLog(result.mResult);
+                          }).catchError((e) {
+                            showLog(e.toString());
+                          });
+                        },
+                        child: new Text("主Activity"))),
+                Expanded(
+                    child: new TextButton(
+                        onPressed: () {
+                          command
+                              .execCommand(
+                                  Constants.ADB_CURRENT_ACTIVITY.split(" "))
+                              .then((value) {
+                            result = command.dealWithData(
+                                Constants.ADB_CURRENT_ACTIVITY, value);
+                            showLog(result.mResult);
+                          }).catchError((e) {
+                            showLog(e.toString());
+                          });
+                        },
+                        child: new Text("当前Activity"))),
+              ]),
               new Row(mainAxisAlignment: MainAxisAlignment.start, children: [
                 Expanded(
                     child: new TextButton(
@@ -1038,18 +1057,24 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: new TextButton(
                         onPressed: () {
+                          if (Constants.currentPackageName.isEmpty) {
+                            showLog("请先获取包名");
+                            return;
+                          }
                           command
-                              .execCommand(
-                                  Constants.ADB_CURRENT_ACTIVITY.split(" "))
+                              .execCommand(Constants.ADB_APK_PATH
+                                  .replaceAll(
+                                      "package", Constants.currentPackageName)
+                                  .split(" "))
                               .then((value) {
                             result = command.dealWithData(
-                                Constants.ADB_CURRENT_ACTIVITY, value);
+                                Constants.ADB_APK_PATH, value);
                             showLog(result.mResult);
                           }).catchError((e) {
                             showLog(e.toString());
                           });
                         },
-                        child: new Text("前台Activity"))),
+                        child: new Text("app安装路径"))),
                 Expanded(
                     child: new TextButton(
                         onPressed: () {
