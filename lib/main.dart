@@ -1551,7 +1551,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             command
                                 .execCommand(Constants.ADB_SEARCH_ALL_FILE_PATH
                                     .split(" ")
-                                  ..addAll([pullController.text]))
+                                      ..addAll([pullController.text]))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_SEARCH_ALL_FILE_PATH, value);
@@ -1626,11 +1626,18 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         showLog("${Constants.adbPath}路径不存在");
                         return;
                       }
-                      String commandStr = Constants.OPEN_UI_TOOL.replaceAll(
-                          "adb_path", await FileUtils.getToolPath());
+                      String commandStr = "";
+                      if (Platform.isMacOS) {
+                        commandStr = Constants.OPEN_UI_TOOL_MAC.replaceAll(
+                            "adb_path", await FileUtils.getToolPath());
+                      } else {
+                        commandStr = Constants.OPEN_UI_TOOL.replaceAll(
+                            "adb_path", await FileUtils.getToolPath());
+                      }
                       showLog("执行命令：" + commandStr);
                       PlatformUtils.startCommand(commandStr,
-                          runInShell: true, workDirectory: uiToolPath).then((value) {
+                              runInShell: true, workDirectory: uiToolPath)
+                          .then((value) {
                         var stream = value.stdout;
                         stream.listen((event) {
                           showLog(utf8.decode(event));

@@ -156,6 +156,9 @@ class Constants {
 
   static const String OPEN_UI_TOOL =
       "java -Djava.ext.dirs=. -Dcom.android.uiautomator.bindir=adb_path -jar uiautomatorviewer.jar";
+
+  static const String OPEN_UI_TOOL_MAC =
+      "java -Djava.ext.dirs=. -Dcom.android.uiautomator.bindir=adb_path -XstartOnFirstThread -jar uiautomatorviewer.jar";
   static const String APKTOOL_DECODE =
       "java -jar ApkTool_path d command Apk_path";
   static const String APKTOOL_REBUILD =
