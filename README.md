@@ -14,10 +14,8 @@
   
   - 本地文件路径
   
-    1. Windows：C:\Users\用户名\Documents\MobileTools
-  
-    2. Linux：/home/用户名/Documents/MobileTools
-  
+    1. Windows：C:\Users\用户名\Documents\MobileTools 
+    2. Linux：/home/用户名/Documents/MobileTools  
     3. Windows：/Users/用户名/Documents/MobileTools
   
   - MobileTools的目录结构
@@ -128,20 +126,13 @@
   你可以使用大部分模拟命令。
   
   + 打开获取焦点工具（3.0新增，需要java环境。需要从云盘获取工具放到tools文件夹）
-  
     ![](screenshots/simtool.png)
-  
   + 添加指令文件
-    
     支持4类指令。滑动、点击、文本、所有按键（参考[adb_simulate_code.txt](adb_simulate_code.txt)文件）    
-    
   + 刷新指令文件（3.0新增）
-  
     修改之后。可以直接刷新指令，直接使用
-  
   + 执行指令  
     用户执行指令的按钮
-    
   + 停止指令 
     只有在开启循环时有效。表示停止执行循环
   
@@ -152,7 +143,6 @@
   + ApkTool合包
     使用apktook进行合包。详情见[Apktool](https://ibotpeaches.github.io/Apktool/)
   + FakerAndroid
-  
     使用FakerAndroid进行拆包可以二次开发的gradle项目。详情见[FakerAndroid](https://github.com/Efaker/FakerAndroid)
   
 + 刷机相关
@@ -168,15 +158,11 @@
   
   + 截屏（2.0修改）
     截取当前设备的界面，并且推送到桌面（命名 当前时间.png）
-    
   + 录屏（2.0修改）
     录取当前屏幕，需要先设置时间，完成后推送到桌面（命名 当前时间.mp4）
-    
   + v2签名
     使用apksigner的签名。可以进行替换，保证文件名一样。apksigner.json为签名的key以及密码。替换记得修改。
-    
   + 前面校验
-  
     校验apk的签名信息
 ### IOS
 
