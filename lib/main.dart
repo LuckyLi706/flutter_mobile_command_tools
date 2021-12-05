@@ -1629,8 +1629,20 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       String commandStr = Constants.OPEN_UI_TOOL.replaceAll(
                           "adb_path", await FileUtils.getToolPath());
                       showLog("执行命令：" + commandStr);
-                      PlatformUtils.runCommand(commandStr,
-                          runInShell: true, workDirectory: uiToolPath);
+                      PlatformUtils.startCommand(commandStr,
+                          runInShell: true, workDirectory: uiToolPath).then((value) {
+                        var stream = value.stdout;
+                        stream.listen((event) {
+                          showLog(utf8.decode(event));
+                        }, onError: (error) {
+                          showLog("解析数据出错：" + error);
+                        });
+                        utf8.decodeStream(value.stderr).then((value) {
+                          if (value.isNotEmpty) {
+                            showLog("执行出错：" + value);
+                          }
+                        });
+                      });
                     },
                     child: new Text("打开获取焦点工具")),
               ]),
