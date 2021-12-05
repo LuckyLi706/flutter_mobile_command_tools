@@ -129,7 +129,7 @@
   
   + 打开获取焦点工具（3.0新增，需要java环境。需要从云盘获取工具放到tools文件夹）
   
-    [screenshots/![simtool](C:\Users\lijie\Desktop\simtool.png)]
+    ![](screenshots/simtool.png)
   
   + 添加指令文件
     
