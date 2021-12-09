@@ -221,7 +221,7 @@ class AndroidCommand {
           if (line[i].startsWith("package")) {
             List<String> apkInfo = line[i].substring(8).split(' ');
             value = value + "包名：${apkInfo[1].substring(5)}\n";
-            value = value + "版本号：${apkInfo[2].split('=')[1]}\n";
+            value = value + "版本号：${apkInfo[3].split('=')[1]}\n";
             continue;
           } else if (line[i].startsWith("application-label:")) {
             value = value + "名字：${line[i].split(':')[1]}\n";
