@@ -25,7 +25,7 @@
     3. tools文件（包含内置的一些文件）
     4. VERSION文件（当前软件的版本号）
   
-  如果需要使用反编译，以及获取当前界面的焦点的工具，几个工具太大。保存到了百度云盘，需要的可以放到tools文件夹下面。[链接](https://pan.baidu.com/s/1Q9CQEzFSo_RLl7PaEETmyw)，提取码：0dpp。
+  如果需要使用反编译，以及获取当前界面的焦点的工具，几个工具太大。保存到了百度云盘，需要的可以放到tools文件夹下面。[链接](链接：https://pan.baidu.com/s/12ns4VdU3xRYYmacXvUIKbw)，提取码：xjwr。
 ## 功能
 
 ### 设置
