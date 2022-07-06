@@ -128,7 +128,10 @@
   + 打开获取焦点工具（3.0新增，需要java环境。需要从云盘获取工具放到tools文件夹）
     ![](screenshots/simtool.png)
   + 添加指令文件
-    支持4类指令。滑动、点击、文本、所有按键（参考[adb_simulate_code.txt](adb_simulate_code.txt)文件）    
+    支持4类指令。滑动、点击、文本、所有按键（参考[adb_simulate_code.txt](adb_simulate_code.txt)文件）
+    - 关于输入中文的问题,参考以下：
+      + [ADBKeyBoard](https://github.com/senzhk/ADBKeyBoard)
+      + [解决adb输入中文以及乱码的问题](https://blog.csdn.net/RHJlife/article/details/122202511)
   + 刷新指令文件（3.0新增）
     修改之后。可以直接刷新指令，直接使用
   + 执行指令  
