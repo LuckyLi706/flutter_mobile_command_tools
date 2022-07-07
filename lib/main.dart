@@ -12,6 +12,7 @@ import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
 import 'package:flutter_mobile_command_tools/view/IOSRightPanel.dart';
@@ -1551,7 +1552,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             command
                                 .execCommand(Constants.ADB_SEARCH_ALL_FILE_PATH
                                     .split(" ")
-                                      ..addAll([pullController.text]))
+                                  ..addAll([pullController.text]))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_SEARCH_ALL_FILE_PATH, value);
@@ -3051,6 +3052,9 @@ String _getDeviceIp(String device) {
 }
 
 void _aaptCommandByPackageName(String apkPath, String commandStr) {
+  if (commandStr.contains("grep")) {
+    commandStr = commandStr.replaceAll("grep", PlatformUtils.grepFindStr());
+  }
   command
       .execCommand(Constants.ADB_APK_PATH
           .replaceAll("package", Constants.currentPackageName)
@@ -3081,6 +3085,9 @@ void _aaptCommandByPackageName(String apkPath, String commandStr) {
 }
 
 void _aaptCommandByApk(String apkPath, String commandStr) async {
+  if (commandStr.contains("grep")) {
+    commandStr = commandStr.replaceAll("grep", PlatformUtils.grepFindStr());
+  }
   String aaptPath = await FileUtils.getAaptToolsPath();
   PlatformUtils.runCommand(
     commandStr.replaceAll("aapt", aaptPath).replaceAll("apk", apkPath),

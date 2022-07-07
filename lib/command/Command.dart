@@ -32,20 +32,21 @@ class AndroidCommand {
   Future<ProcessResult> execCommand(List<String> arguments,
       {String executable = "",
       String? workingDirectory,
-      bool runInShell = false}) async {
+      bool runInShell = true}) async {
     if (executable == "") {
       executable = Constants.adbPath;
     }
     arguments = await checkFirst(arguments,
         executable: executable, workingDirectory: workingDirectory);
-    LogUtils.printLog(
-        "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
 
     //对grep做处理,
     if (arguments.contains("grep") && !arguments.contains("dropbox")) {
       int index = arguments.indexOf("grep");
       arguments[index] = PlatformUtils.grepFindStr();
     }
+
+    LogUtils.printLog(
+        "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
 
     return await Process.run(executable, arguments,
         workingDirectory: workingDirectory,
