@@ -10,6 +10,10 @@
   
   使用[libimobiledevice](https://github.com/libimobiledevice/libimobiledevice)，IOS意义不是很大。就写了几个小功能。用爱思吧。
 
++ 关于Windows
+
+  [调用Process.start隐藏黑色弹窗](https://github.com/dart-lang/sdk/issues/39945)
+
 + 关于配置文件和工具
   
   - 本地文件路径

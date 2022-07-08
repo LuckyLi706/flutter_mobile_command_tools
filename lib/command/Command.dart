@@ -32,7 +32,7 @@ class AndroidCommand {
   Future<ProcessResult> execCommand(List<String> arguments,
       {String executable = "",
       String? workingDirectory,
-      bool runInShell = true}) async {
+      bool runInShell = false}) async {
     if (executable == "") {
       executable = Constants.adbPath;
     }
@@ -45,6 +45,7 @@ class AndroidCommand {
       arguments[index] = PlatformUtils.grepFindStr();
     }
 
+    //showLog("执行命令：$executable ${_convertList(arguments)}");
     LogUtils.printLog(
         "executable:$executable,arguments:$arguments,workingDirectory:$workingDirectory");
 
@@ -95,7 +96,8 @@ class AndroidCommand {
           List<String> currentDevices = [];
           devices.forEach((element) {
             if (element.isNotEmpty && element != "List of devices attached") {
-              if (!element.contains("offline")) {
+              if (!element.contains("offline") &&
+                  !element.contains("unauthorized")) {
                 currentDevices.add(element.split("\t")[0]);
               } else {
                 currentDevices.add(element);

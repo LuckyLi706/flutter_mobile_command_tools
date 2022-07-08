@@ -124,11 +124,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
+final LeftPanelState leftPanelState = new LeftPanelState();
+
 /// 左边展示的面板
 class LeftPanel extends StatefulWidget {
   @override
   LeftPanelState createState() {
-    return new LeftPanelState();
+    return leftPanelState;
   }
 }
 
@@ -136,19 +138,21 @@ TextEditingController _logTextController = TextEditingController();
 FocusNode leftPanelFocus = FocusNode();
 
 final GlobalKey<NavigatorState> navigatorKey = new GlobalKey<NavigatorState>();
+final ScrollController _scrollController = ScrollController();
 
 class LeftPanelState extends State<LeftPanel> {
+  late BuildContext context;
+
   @override
   void initState() {
-    _logTextController.addListener(() {
-      //每次文本框变化都会执行
-    });
+    _logTextController.addListener(() {});
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return new TextFormField(
+    return new TextField(
+      scrollController: _scrollController,
       controller: _logTextController,
       keyboardType: TextInputType.multiline,
       focusNode: leftPanelFocus,
@@ -157,11 +161,13 @@ class LeftPanelState extends State<LeftPanel> {
       autofocus: false,
       // 长按输入的文本, 设置是否显示剪切，复制，粘贴按钮, 默认是显示的
       enableInteractiveSelection: true,
+      style: TextStyle(fontFamily: "simple", fontSize: 16),
       decoration: InputDecoration(
         labelText: "日志信息",
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
       ),
+      onChanged: (value) {},
     );
   }
 }
@@ -278,7 +284,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
           simOpDdmi.add(new DropdownMenuItem(
             child: new Text(
               element,
-              style: _dropDownTextStyle(fontTextSize: 18),
+              style: _dropDownTextStyle(fontTextSize: 14),
             ),
             value: element,
           ));
@@ -393,8 +399,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () {
-                            command.execCommand(
-                                [Constants.ADB_CONNECT_DEVICES]).then((value) {
+                            runCommand([Constants.ADB_CONNECT_DEVICES])
+                                .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_CONNECT_DEVICES, value);
                               if (result.mError) {
@@ -406,13 +412,17 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                     currentAllDevice.length.toString());
                                 currentAllDevice.forEach((element) {
                                   if (element.contains("offline")) {
-                                    showLog(element + ",当前设备不在线,移除列表");
+                                    showLog(element + ",当前设备不在线,移出设备列表");
+                                  } else if (element.contains("unauthorized")) {
+                                    showLog("$element,请点击手机确定usb认证,移出列表");
                                   } else {
                                     showLog(element);
                                   }
                                 });
                                 currentAllDevice.removeWhere(
                                     (element) => element.contains("offline"));
+                                currentAllDevice.removeWhere((element) =>
+                                    element.contains("unauthorized"));
                                 updateConnectDevice(currentAllDevice);
                               }
                             }).catchError((e) {
@@ -443,9 +453,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                       child: new TextButton(
                           onPressed: () {
                             int index = phoneInfo.indexOf(currentPhoneInfo);
-                            command
-                                .execCommand(
-                                    Constants.getPhoneInfo(index).split(" "),
+                            runCommand(Constants.getPhoneInfo(index).split(" "),
                                     runInShell: true)
                                 .then((value) {
                               result = command.dealWithData(
@@ -563,8 +571,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 _getDeviceIp(currentWirelessDevice);
                             if (deviceIp == "0") {
                               if (_checkWireless == true) {
-                                command
-                                    .execCommand(
+                                runCommand(
                                         Constants.ADB_FORWARD_PORT.split(" "))
                                     .then((value) {
                                   result = command.dealWithData(
@@ -572,12 +579,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   if (result.mError) {
                                     showLog(result.mResult);
                                   } else {
-                                    command
-                                        .execCommand(
-                                            (Constants.ADB_WIRELESS_CONNECT +
-                                                    " " +
-                                                    wireLessController.text)
-                                                .split(" "))
+                                    runCommand((Constants.ADB_WIRELESS_CONNECT +
+                                                " " +
+                                                wireLessController.text)
+                                            .split(" "))
                                         .then((value) {
                                       result = command.dealWithData(
                                           Constants.ADB_WIRELESS_CONNECT,
@@ -654,12 +659,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               }
                             } else {
                               if (_checkWireless == true) {
-                                command
-                                    .execCommand(
-                                        (Constants.ADB_WIRELESS_CONNECT +
-                                                " " +
-                                                wireLessController.text)
-                                            .split(" "))
+                                runCommand((Constants.ADB_WIRELESS_CONNECT +
+                                            " " +
+                                            wireLessController.text)
+                                        .split(" "))
                                     .then((value) {
                                   result = command.dealWithData(
                                       Constants.ADB_WIRELESS_CONNECT, value);
@@ -673,12 +676,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                   showLog(e.toString());
                                 });
                               } else {
-                                command
-                                    .execCommand(
-                                        (Constants.ADB_WIRELESS_CONNECT +
-                                                " " +
-                                                deviceIp)
-                                            .split(" "))
+                                runCommand((Constants.ADB_WIRELESS_CONNECT +
+                                            " " +
+                                            deviceIp)
+                                        .split(" "))
                                     .then((value) {
                                   result = command.dealWithData(
                                       Constants.ADB_WIRELESS_CONNECT, value);
@@ -702,12 +703,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             if (Constants.currentDevice.isEmpty) {
                               showLog("请先获取设备");
                             }
-                            command
-                                .execCommand(
-                                    (Constants.ADB_WIRELESS_DISCONNECT +
-                                            " " +
-                                            Constants.currentDevice)
-                                        .split(" "))
+                            runCommand((Constants.ADB_WIRELESS_DISCONNECT +
+                                        " " +
+                                        Constants.currentDevice)
+                                    .split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_WIRELESS_DISCONNECT, value);
@@ -764,8 +763,6 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     focusNode: _wirelessFocus,
                     decoration: InputDecoration(
                       labelText: "输入格式ip:port",
-                      // border: OutlineInputBorder(
-                      //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
                     ),
                   ))
                 ],
@@ -807,8 +804,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: new TextButton(
                         onPressed: () {
-                          command
-                              .execCommand(Constants.ADB_GET_PACKAGE.split(" "))
+                          runCommand(Constants.ADB_GET_PACKAGE.split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_GET_PACKAGE, value);
@@ -828,8 +824,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: new TextButton(
                         onPressed: () {
-                          command
-                              .execCommand(
+                          runCommand(
                                   Constants.ADB_GET_FREEZE_PACKAGE.split(" "))
                               .then((value) {
                             result = command.dealWithData(
@@ -853,8 +848,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () {
-                            command
-                                .execCommand(
+                            runCommand(
                                     Constants.ADB_GET_THIRD_PACKAGE.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
@@ -875,8 +869,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () {
-                            command
-                                .execCommand(
+                            runCommand(
                                     Constants.ADB_GET_SYSTEM_PACKAGE.split(" "))
                                 .then((value) {
                               result = command.dealWithData(
@@ -907,8 +900,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("请先获取包名");
                               return;
                             }
-                            command
-                                .execCommand(Constants.ADB_FREEZE_PACKAGE
+                            runCommand(Constants.ADB_FREEZE_PACKAGE
                                     .replaceAll(
                                         "package", Constants.currentPackageName)
                                     .split(" "))
@@ -928,8 +920,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("请先获取包名");
                               return;
                             }
-                            command
-                                .execCommand(Constants.ADB_NOT_FREEZE_PACKAGE
+                            runCommand(Constants.ADB_NOT_FREEZE_PACKAGE
                                     .replaceAll(
                                         "package", Constants.currentPackageName)
                                     .split(" "))
@@ -957,10 +948,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("未选择apk");
                               return;
                             }
-                            command.execCommand([
-                              Constants.ADB_INSTALL_APK,
-                              apkPath
-                            ]).then((value) {
+                            runCommand([Constants.ADB_INSTALL_APK, apkPath])
+                                .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_INSTALL_APK, value);
                               showLog(result.mResult);
@@ -976,8 +965,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("请先获取包名");
                               return;
                             }
-                            command
-                                .execCommand(Constants.ADB_UNINSTALL_APK
+                            runCommand(Constants.ADB_UNINSTALL_APK
                                     .replaceAll(
                                         "package", Constants.currentPackageName)
                                     .split(" "))
@@ -1000,8 +988,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             showLog("请先获取包名");
                             return;
                           }
-                          command
-                              .execCommand((Constants
+                          runCommand((Constants
                                       .ADB_GET_PACKAGE_INFO_MAIN_ACTIVITY
                                       .replaceAll("package",
                                           "package ${Constants.currentPackageName}"))
@@ -1019,9 +1006,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: new TextButton(
                         onPressed: () {
-                          command
-                              .execCommand(
-                                  Constants.ADB_CURRENT_ACTIVITY.split(" "))
+                          runCommand(Constants.ADB_CURRENT_ACTIVITY.split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_CURRENT_ACTIVITY, value);
@@ -1040,30 +1025,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             showLog("请先获取包名");
                             return;
                           }
-                          command
-                              .execCommand((Constants.ADB_GET_PACKAGE_INFO +
-                                      Constants.currentPackageName)
-                                  .split(" "))
-                              .then((value) {
-                            result = command.dealWithData(
-                                Constants.ADB_GET_PACKAGE_INFO, value);
-                            showLog(Constants.currentPackageName +
-                                "包信息：\n" +
-                                result.mResult);
-                          }).catchError((e) {
-                            showLog(e.toString());
-                          });
-                        },
-                        child: new Text("app包信息"))),
-                Expanded(
-                    child: new TextButton(
-                        onPressed: () {
-                          if (Constants.currentPackageName.isEmpty) {
-                            showLog("请先获取包名");
-                            return;
-                          }
-                          command
-                              .execCommand(Constants.ADB_APK_PATH
+                          runCommand(Constants.ADB_APK_PATH
                                   .replaceAll(
                                       "package", Constants.currentPackageName)
                                   .split(" "))
@@ -1083,8 +1045,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             showLog("请先获取包名");
                             return;
                           }
-                          command
-                              .execCommand(Constants.ADB_CLEAR_DATA.split(" ")
+                          runCommand(Constants.ADB_CLEAR_DATA.split(" ")
                                 ..add(Constants.currentPackageName))
                               .then((value) {
                             result = command.dealWithData(
@@ -1240,32 +1201,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 await FileUtils.getMutualAppPath(name),
                                 name);
                             if (resultActivity.isEmpty) {
-                              // if (Constants.currentPackageName.isEmpty) {
-                              //   showLog("当前模式请先获取包名");
-                              //   return;
-                              // }
-                              // if (Constants.currentPackageName.isNotEmpty) {
-                              //   command
-                              //       .execCommand(Constants.ADB_START_ACTIVITY_NO
-                              //           .replaceAll("package",
-                              //               Constants.currentPackageName)
-                              //           .split(" "))
-                              //       .then((value) {
-                              //     result = command.dealWithData(
-                              //         Constants.ADB_START_ACTIVITY_NO, value);
-                              //     if (!result.mError) {
-                              //       showLog("开启Activity成功：" + result.mResult);
-                              //     } else {
-                              //       showLog("开启Activity失败：" + result.mResult);
-                              //     }
-                              //   }).catchError((error) {
-                              //     showLog(error.toString());
-                              //   });
-                              // }
                               showLog("无启动的Activity");
                             } else {
-                              command
-                                  .execCommand((Constants.ADB_START_ACTIVITY +
+                              runCommand((Constants.ADB_START_ACTIVITY +
                                           resultActivity)
                                       .split(" "))
                                   .then((value) {
@@ -1294,11 +1232,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("发送空广播");
                               return;
                             }
-                            command
-                                .execCommand(
-                                    (Constants.ADB_START_BROADCAST_RECEIVER +
-                                            resultReceiver)
-                                        .split(" "))
+                            runCommand((Constants.ADB_START_BROADCAST_RECEIVER +
+                                        resultReceiver)
+                                    .split(" "))
                                 .then((value) {
                               result = command.dealWithData(
                                   Constants.ADB_START_BROADCAST_RECEIVER,
@@ -1329,8 +1265,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("发送空Service");
                               return;
                             }
-                            command
-                                .execCommand((Constants.ADB_START_SERVICE +
+                            runCommand((Constants.ADB_START_SERVICE +
                                         resultService)
                                     .split(" "))
                                 .then((value) {
@@ -1358,8 +1293,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("停止空Service");
                               return;
                             }
-                            command
-                                .execCommand(
+                            runCommand(
                                     (Constants.ADB_STOP_SERVICE + resultService)
                                         .split(" "))
                                 .then((value) {
@@ -1510,8 +1444,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: TextButton(
                         onPressed: () {
-                          command
-                              .execCommand(Constants.ADB_PULL_CRASH.split(" "))
+                          runCommand(Constants.ADB_PULL_CRASH.split(" "))
                               .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_PULL_CRASH, value);
@@ -1529,9 +1462,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: TextButton(
                         onPressed: () {
-                          command.execCommand([Constants.ADB_PULL_ANR],
-                              workingDirectory:
-                                  Constants.desktopPath).then((value) {
+                          runCommand([Constants.ADB_PULL_ANR],
+                                  workingDirectory: Constants.desktopPath)
+                              .then((value) {
                             result = command.dealWithData(
                                 Constants.ADB_PULL_ANR, value);
                             showLog(result.mResult);
@@ -1546,11 +1479,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 children: [
                   Expanded(
                       child: new TextButton(
-                          //todo
                           onPressed: () {
                             isPullCrash = false;
-                            command
-                                .execCommand(Constants.ADB_SEARCH_ALL_FILE_PATH
+                            runCommand(Constants.ADB_SEARCH_ALL_FILE_PATH
                                     .split(" ")
                                   ..addAll([pullController.text]))
                                 .then((value) {
@@ -1662,6 +1593,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     width: 5,
                   ),
                   Expanded(
+                    flex: 3,
                       child: Center(
                           child: Wrap(
                               crossAxisAlignment: WrapCrossAlignment.center,
@@ -1678,6 +1610,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         )
                       ]))),
                   Expanded(
+                    flex: 2,
                       child: TextButton(
                     onPressed: () async {
                       simCommandPath = await _selectFile(context);
@@ -1694,6 +1627,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new Text("添加指令文件"),
                   )),
                   Expanded(
+                    flex: 2,
                       child: TextButton(
                     onPressed: () async {
                       if (simCommandPath == null) {
@@ -2081,8 +2015,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     child: new TextButton(
                         onPressed: () {
                           String pngName = TimeUtils.getCurrentTimeFormat();
-                          command
-                              .execCommand(Constants.ADB_SCREEN_SHOT
+                          runCommand(Constants.ADB_SCREEN_SHOT
                                   .replaceAll("shoot", pngName)
                                   .split(" "))
                               .then((value) {
@@ -2127,8 +2060,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 Constants.ADB_SCREEN_RECORD, value);
                             if (!result.mError) {
                               showLog("录屏结束");
-                              command
-                                  .execCommand(
+                              runCommand(
                                       Constants.ADB_PULL_SCREEN_RECORD
                                           .replaceAll(
                                               "record_screen", recordName)
@@ -2266,11 +2198,6 @@ showSettingDialog(BuildContext context) {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        // return new Scaffold(
-        //   appBar: new AppBar(
-        //     title: new Text(Constants.APP_TITLE_NAME),
-        //   ),
-        //   body:
         return UnconstrainedBox(
           //在Dialog的外层添加一层UnconstrainedBox
           //constrainedAxis: Axis.vertical,
@@ -2855,8 +2782,6 @@ Future<List<String>?> _analyseSimFile(String path) async {
 bool _opRepeat = false;
 
 void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
-  // List<SimOperation> listOps = []..addAll(_simOpList);
-
   _opRepeat = checkRepeat == true;
   List<String> listDevices = [];
   if (checkAllDevice == true) {
@@ -2930,8 +2855,13 @@ Future<String?> _selectFile(BuildContext context,
   return null;
 }
 
+//每次都定位到最后一行
+//移动光标位置到最后
+// _logTextController.selection = TextSelection.fromPosition(
+//     TextPosition(offset: _logTextController.text.length));
+// FocusScope.of(leftPanelState.context).requestFocus(leftPanelFocus);
+// //延迟移除光标闪烁
 void showLog(String msg) {
-  //leftPanelFocus.unfocus();
   if (msg.isEmpty) {
     return;
   }
@@ -2941,15 +2871,14 @@ void showLog(String msg) {
     showLogText = showLogText + "\n" + ">>>>>>>" + msg.trim();
   }
   _logTextController.text = showLogText;
-
-  //移动光标位置到最后
-  _logTextController.selection = TextSelection.fromPosition(
-      TextPosition(offset: _logTextController.text.length));
-  FocusScope.of(navigatorKey.currentState!.overlay!.context)
-      .requestFocus(leftPanelFocus);
-  //延迟移除光标闪烁
-  Future.delayed(Duration(milliseconds: 500), () {
-    leftPanelFocus.unfocus();
+  Future.delayed(Duration(milliseconds: 200), () {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent, //滚动到底部
+      //滚动到底部
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+    //FocusScope.of(leftPanelState.context).requestFocus(leftPanelFocus);
   });
 }
 
@@ -3097,11 +3026,6 @@ void _aaptCommandByApk(String apkPath, String commandStr) async {
       showLog(result.mResult);
     } else {
       showLog(result.mResult);
-      // if (result.mResult.toString().contains("error")) {
-      //   showLog(result.mResult);
-      // } else {
-      //   _aaptCommandByApk(apkPath, commandStr);
-      // }
     }
   }).catchError((e) {
     showLog(e.toString());
@@ -3117,14 +3041,31 @@ void _getAdbVersion() {
   });
 }
 
+Future<ProcessResult> runCommand(List<String> arguments,
+    {String executable = "",
+    String? workingDirectory,
+    bool runInShell = false}) {
+  showLog(
+      "执行命令：${executable.isEmpty ? Constants.adbPath : executable} ${_convertList(arguments)}");
+  return command.execCommand(arguments,
+      executable: executable,
+      workingDirectory: workingDirectory,
+      runInShell: runInShell);
+}
+
+String _convertList(List<String> arguments) {
+  String argu = "";
+  arguments.forEach((element) {
+    argu += element + " ";
+  });
+  return argu;
+}
+
 TextStyle _dropDownTextStyle({double fontTextSize = 12}) {
   return TextStyle(fontSize: fontTextSize, color: Colors.black);
 }
 
 TextStyle _tipTextStyle() {
   return TextStyle(
-      fontSize: 18,
-      color: Colors.red,
-      //decoration: TextDecoration.underline,
-      fontWeight: FontWeight.bold);
+      fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold);
 }
