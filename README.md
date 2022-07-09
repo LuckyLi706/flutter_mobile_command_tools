@@ -4,15 +4,11 @@
 ## 说明
 + 关于Android
   
-  请自行打开手机开发者模式中的USB调试，确保手机和电脑能连接上。确保能使用adb连接上。。本工具Android模块只是将adb的大部分命令进行了懒人模式，有问题欢迎提issues。
+  请自行打开手机开发者模式中的USB调试，确保手机和电脑能连接上。确保能使用adb连接上。。本工具Android模块只是将adb的大部分命令进行了懒人模式，有问题欢迎提issues。[adb命令参考](https://github.com/mzlogin/awesome-adb)
   
 + 关于IOS
   
-  使用[libimobiledevice](https://github.com/libimobiledevice/libimobiledevice)，IOS意义不是很大。就写了几个小功能。用爱思吧。
-
-+ 关于Windows
-
-  [调用Process.start隐藏黑色弹窗](https://github.com/dart-lang/sdk/issues/39945)
+  使用[libimobiledevice](https://github.com/libimobiledevice/libimobiledevice)，IOS意义不是很大。就写了几个小功能。还是爱思比较香。
 
 + 关于配置文件和工具
   
@@ -26,7 +22,8 @@
   
     1. apksigner文件夹（签名文件）
     2. config文件夹（用于保存一些信息）
-    3. tools文件（包含内置的一些文件）
+    3. tools文件（包含adb、反编译一些本地文件）
+    3. SETTING（本地路径的设置文件）
     4. VERSION文件（当前软件的版本号）
   
   如果需要使用反编译，以及获取当前界面的焦点的工具，几个工具太大。保存到了百度云盘，需要的可以放到tools文件夹下面。[链接](https://pan.baidu.com/s/12ns4VdU3xRYYmacXvUIKbw)，提取码：xjwr。
@@ -231,3 +228,7 @@ IOS意义不是很大，简单写了几个命令。要下itunes，还有下面�
 
 + macos (1440*960)
 ![screenshots/macos.png](screenshots/macos.png)
+
+## 其他
+
++ [关于Windows调用Process.start隐藏黑色弹窗](https://github.com/dart-lang/sdk/issues/39945)

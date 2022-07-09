@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
@@ -12,7 +13,6 @@ import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
-import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
 import 'package:flutter_mobile_command_tools/view/IOSRightPanel.dart';
@@ -229,6 +229,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
   bool? _checkPush = false; //推送的复选框
   bool? _checkRepeat = false; //是否重复执行
   bool? _checkAllDevice = false;
+  bool? _lazyRandom = false;
 
   bool? _checkF = false;
   bool? _checkR = false;
@@ -494,13 +495,13 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("请先配置adb路径");
                               return;
                             }
+                            String adbCommandPath =
+                                await FileUtils.getMutualAppPath("adb");
                             String adbCommand = await showMutualAppDialog(
-                                context,
-                                await FileUtils.getMutualAppPath("adb"),
-                                "自定义adb命令",
+                                context, adbCommandPath, "自定义adb命令",
                                 tips: "不需要加前缀adb");
                             if (adbCommand.isNotEmpty) {
-                              showLog("执行命令：$adbCommand");
+                              showLog("执行命令：${Constants.adbPath} $adbCommand");
                               PlatformUtils.runCommand(adbCommand,
                                       workDirectory: Constants.desktopPath,
                                       isAdbCommand: true)
@@ -1329,11 +1330,9 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                         String pushPath = _checkPush == true
                             ? pushController.text
                             : "/data/local/tmp";
-                        command.execCommand([
-                          Constants.ADB_PUSH_FILE,
-                          filePath,
-                          pushPath
-                        ]).then((value) {
+                        runCommand(
+                                [Constants.ADB_PUSH_FILE, filePath, pushPath])
+                            .then((value) {
                           result = command.dealWithData(
                               Constants.ADB_PUSH_FILE, value);
                           showLog(result.mResult);
@@ -1364,7 +1363,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                                 _checkPush = isCheck;
                               });
                             }),
-                        new Text("自定义路径")
+                        new Text(
+                          "自定义路径",
+                          style: TextStyle(fontFamily: "simple"),
+                        )
                       ])),
                   Expanded(
                       child: new TextField(
@@ -1372,10 +1374,14 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     autofocus: false,
                     focusNode: _pushFocus,
                     decoration: InputDecoration(
-                      labelText: "默认路径/data/local/tmp",
-                      // border: OutlineInputBorder(
-                      //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
-                    ),
+                        labelText: "默认路径/data/local/tmp",
+                        labelStyle: TextStyle(
+                            fontFamily: "simple",
+                            color: Colors.grey,
+                            fontSize: 14)
+                        // border: OutlineInputBorder(
+                        //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
+                        ),
                   ))
                 ],
               ),
@@ -1420,7 +1426,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               showLog("请先点击搜索该路径下的文件");
                               return;
                             } else {
-                              command.execCommand(
+                              runCommand(
                                 [
                                   Constants.ADB_PULL_FILE,
                                   currentPullPath + "/" + currentPullFile
@@ -1507,6 +1513,10 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     decoration: InputDecoration(
                       contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
                       hintText: "文件路径",
+                      hintStyle: TextStyle(
+                          fontFamily: "simple",
+                          color: Colors.grey,
+                          fontSize: 14),
                       // border: OutlineInputBorder(
                       //     borderRadius: BorderRadius.circular(5.0), borderSide: BorderSide()),
                     ),
@@ -1593,55 +1603,55 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                     width: 5,
                   ),
                   Expanded(
-                    flex: 3,
+                      flex: 3,
                       child: Center(
                           child: Wrap(
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                        DropdownButton<String?>(
-                          value: Constants.currentSimOpName,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              Constants.currentSimOpName =
-                                  newValue == null ? "" : newValue;
-                            });
-                          },
-                          items: simOpDdmi,
-                        )
-                      ]))),
+                            DropdownButton<String?>(
+                              value: Constants.currentSimOpName,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  Constants.currentSimOpName =
+                                      newValue == null ? "" : newValue;
+                                });
+                              },
+                              items: simOpDdmi,
+                            )
+                          ]))),
                   Expanded(
-                    flex: 2,
+                      flex: 2,
                       child: TextButton(
-                    onPressed: () async {
-                      simCommandPath = await _selectFile(context);
-                      if (simCommandPath == null) {
-                        showLog("未选择指令文件");
-                      } else {
-                        List<String>? commandsName =
-                            await _analyseSimFile(simCommandPath!);
-                        if (commandsName != null) {
-                          updateSimOpName(commandsName);
-                        }
-                      }
-                    },
-                    child: new Text("添加指令文件"),
-                  )),
+                        onPressed: () async {
+                          simCommandPath = await _selectFile(context);
+                          if (simCommandPath == null) {
+                            showLog("未选择指令文件");
+                          } else {
+                            List<String>? commandsName =
+                                await _analyseSimFile(simCommandPath!);
+                            if (commandsName != null) {
+                              updateSimOpName(commandsName);
+                            }
+                          }
+                        },
+                        child: new Text("添加指令文件"),
+                      )),
                   Expanded(
-                    flex: 2,
+                      flex: 2,
                       child: TextButton(
-                    onPressed: () async {
-                      if (simCommandPath == null) {
-                        showLog("刷新失败");
-                      } else {
-                        List<String>? commandsName =
-                            await _analyseSimFile(simCommandPath!);
-                        if (commandsName != null) {
-                          updateSimOpName(commandsName);
-                        }
-                      }
-                    },
-                    child: new Text("刷新指令文件"),
-                  )),
+                        onPressed: () async {
+                          if (simCommandPath == null) {
+                            showLog("刷新失败");
+                          } else {
+                            List<String>? commandsName =
+                                await _analyseSimFile(simCommandPath!);
+                            if (commandsName != null) {
+                              updateSimOpName(commandsName);
+                            }
+                          }
+                        },
+                        child: new Text("刷新指令文件"),
+                      )),
                   SizedBox(
                     width: 5,
                   ),
@@ -1662,6 +1672,23 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               });
                             }),
                         new Text("是否循环")
+                      ])),
+                  Expanded(
+                      child: new Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                        new Checkbox(
+                            value: _lazyRandom,
+                            activeColor: Colors.red,
+                            onChanged: (isCheck) {
+                              if (isCheck!) {
+                                showLog("每条指令的时间采用设置时间的随机值");
+                              }
+                              setState(() {
+                                _lazyRandom = isCheck;
+                              });
+                            }),
+                        new Text("延迟随机")
                       ])),
                   Expanded(
                       child: new Row(
@@ -1689,17 +1716,19 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: TextButton(
                     onPressed: () async {
+                      _stopSimOperation();
                       if (Constants.currentSimOpName.isEmpty) {
                         showLog("请先添加模拟指令文件");
                         return;
                       }
-                      if (Constants.currentSimType == 0) {
+                      if (_checkRepeat! || Constants.currentSimType == 0) {
                         String? times = await showSimDelayTimes(context);
                         if (times.isEmpty) {
                           return; //如果值为空，延迟默认为1s
                         }
                       }
-                      _startSimOperation(_checkAllDevice, _checkRepeat);
+                      _startSimOperation(
+                          _checkAllDevice, _checkRepeat, _lazyRandom);
                     },
                     child: Text("执行命令"),
                   )),
@@ -1727,6 +1756,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: new TextButton(
                         onPressed: () async {
+                          showLog(" -f  强制覆盖存在  -r 不反编译资源文件  -s 不反编译代码");
                           String apkToolPath = await FileUtils.getApkToolPath();
                           if (!await FileUtils.isExistFile(apkToolPath)) {
                             showLog("$apkToolPath不存在,请手动配置");
@@ -1780,6 +1810,8 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                 Expanded(
                     child: new TextButton(
                         onPressed: () async {
+                          showLog(
+                              " -f  强制覆盖存在  -d 添加debuggable=\"true\"到AndroidManifest文件");
                           String apkToolPath = await FileUtils.getApkToolPath();
                           if (!await FileUtils.isExistFile(apkToolPath)) {
                             showLog("$apkToolPath不存在,请手动配置");
@@ -1959,7 +1991,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                   Expanded(
                       child: new TextButton(
                           onPressed: () async {
-                            command.execCommand([
+                            runCommand([
                               Constants.ADB_REBOOT,
                             ]).then((value) {
                               result = command.dealWithData(
@@ -2050,8 +2082,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                             return;
                           }
                           String recordName = TimeUtils.getCurrentTimeFormat();
-                          command
-                              .execCommand(Constants.ADB_SCREEN_RECORD
+                          runCommand(Constants.ADB_SCREEN_RECORD
                                   .replaceAll("times", times)
                                   .replaceAll("record_screen", recordName)
                                   .split(" "))
@@ -2510,8 +2541,20 @@ Future<bool> showEditor(BuildContext context, String path, String name) async {
                 TextButton(
                   child: Text('确定'),
                   onPressed: () async {
-                    await FileUtils.writeFile(
-                        editorController.text, File(path));
+                    Set<String> textSet = {};
+                    String value = "";
+                    if (editorController.text.isNotEmpty &&
+                        editorController.text != content) {
+                      List<String> text = editorController.text.split("\n");
+                      text.insert(0, text[text.length - 1]);
+                      text.removeAt(text.length - 1);
+                      textSet = text.toSet();
+                      textSet.forEach((element) {
+                        value += element +
+                            "${element == text[text.length - 1] ? "" : "\n"}";
+                      });
+                      await FileUtils.writeFile(value, File(path));
+                    }
                     Navigator.of(context).pop(true);
                   },
                 ),
@@ -2737,7 +2780,8 @@ Future<List<String>?> _analyseSimFile(String path) async {
             commandSwipe[4]);
         simCommandName.add(commandSwipe[5]);
       } else {
-        showLog("滑动格式不对");
+        showLog("滑动指令格式不对,正确格式swipe x1 y1 x2 y2 name");
+        return null;
       }
     } else if (commands[i].startsWith("tap")) {
       List<String> commandTap = commands[i].split(" ");
@@ -2746,7 +2790,8 @@ Future<List<String>?> _analyseSimFile(String path) async {
             Constants.ADB_SIM_TAP + " " + commandTap[1] + " " + commandTap[2]);
         simCommandName.add(commandTap[3]);
       } else {
-        showLog("点击格式不对");
+        showLog("点击指令格式不对,正确格式tap x1 y1 name");
+        return null;
       }
     } else if (commands[i].startsWith("text")) {
       List<String> commandText = commands[i].split(" ");
@@ -2754,24 +2799,63 @@ Future<List<String>?> _analyseSimFile(String path) async {
         simCommand.add(Constants.ADB_SIM_INPUT + " " + commandText[1]);
         simCommandName.add(commandText[2]);
       } else {
-        showLog("输入文字格式不对");
+        showLog("输入文字指令格式不对,正确格式text 文本内容 name");
+        return null;
       }
-    } else {
+    } else if (commands[i].startsWith("event")) {
       //输入的是键值
       List<String> commandKeyCode = commands[i].split(" ");
-      if (commandKeyCode.length >= 2) {
-        simCommand.add(Constants.ADB_SIM_KEY_EVENT + " " + commandKeyCode[0]);
-        simCommandName.add(commandKeyCode[1].toLowerCase());
+      if (commandKeyCode.length >= 3) {
+        simCommand.add(Constants.ADB_SIM_KEY_EVENT + " " + commandKeyCode[1]);
+        simCommandName.add(commandKeyCode[2].toLowerCase());
       } else {
-        showLog("键值格式不对");
+        showLog("键值指令格式不对,正确格式event 键值 name");
+        return null;
       }
+    } else if (commands[i].startsWith("adb")) {
+      //其他adb指令
+      List<String> commandKeyCode = commands[i].split(" ");
+      if (commandKeyCode.length >= 3) {
+        String command = "";
+        for (int i = 0; i < commandKeyCode.length; i++) {
+          if (i != 0 && i != commandKeyCode.length - 1) {
+            command += commandKeyCode[i] + " ";
+          }
+        }
+        simCommand.add(command.trim());
+        simCommandName
+            .add(commandKeyCode[commandKeyCode.length - 1].toLowerCase());
+      } else {
+        showLog("其他adb指令格式不对,,正确格式adb 指令 name");
+        return null;
+      }
+    } else if (commands[i].startsWith("other")) {
+      //其他adb指令
+      List<String> commandKeyCode = commands[i].split(" ");
+      if (commandKeyCode.length >= 3) {
+        String command = "";
+        for (int i = 0; i < commandKeyCode.length; i++) {
+          if (i != 0 && i != commandKeyCode.length - 1) {
+            command += commandKeyCode[i] + " ";
+          }
+        }
+        simCommand.add(command.trim());
+        simCommandName.add(
+            "other_" + commandKeyCode[commandKeyCode.length - 1].toLowerCase());
+      } else {
+        showLog("非adb指令格式不对,,正确格式other 指令 name");
+        return null;
+      }
+    } else {
+      showLog("当前指令不支持，不满足条件");
+      return null;
     }
   }
   if (commands[0] == "0") {
     Constants.currentSimType = 0;
-    simCommandName.clear();
-    simCommandName.add(path.split(PlatformUtils.getSeparator()).last);
-    return simCommandName;
+    //simCommandName.clear();
+    //simCommandName.add(path.split(PlatformUtils.getSeparator()).last);
+    return [path.split(PlatformUtils.getSeparator()).last];
   } else if (commands[0] == "1") {
     Constants.currentSimType = 1;
     return simCommandName;
@@ -2780,9 +2864,12 @@ Future<List<String>?> _analyseSimFile(String path) async {
 }
 
 bool _opRepeat = false;
+bool _lazyRandom = false;
 
-void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
+void _startSimOperation(
+    bool? checkAllDevice, bool? checkRepeat, bool? lazyRandom) {
   _opRepeat = checkRepeat == true;
+  _lazyRandom = lazyRandom == true;
   List<String> listDevices = [];
   if (checkAllDevice == true) {
     if (currentAllDevice.length == 0) {
@@ -2810,28 +2897,53 @@ void _startSimOperation(bool? checkAllDevice, bool? checkRepeat) {
   //});
 }
 
+int getRandom(int min, int max) {
+  int random = min + Random().nextInt(max - min);
+  return random;
+}
+
 _runCommand(List<String> listOps, String device) {
   List<Future> futureList = [];
+  int delay = int.parse(simOpTimeController.text);
   for (int i = 0; i < listOps.length; i++) {
-    futureList.add(Future.delayed(
-        Duration(milliseconds: int.parse(simOpTimeController.text) * (i + 1)),
-        () {
+    int randomTime = 0;
+    //2种情况不随机延迟
+    //1、当前是单条指令并且不重复
+    //2、未开启指令随机
+    if (Constants.currentSimType == 1 && !_opRepeat || !_lazyRandom) {
+      randomTime = delay * (i + 1);
+    } else {
+      randomTime = getRandom(delay * i, delay * (i + 1));
+    }
+    futureList.add(Future.delayed(Duration(milliseconds: randomTime), () {
       List<String> arguments = listOps[i].split(" ");
-      if (device.isNotEmpty) {
-        arguments = ["-s", device]..addAll(arguments);
+      showLog("延迟时间：${randomTime - delay * i}ms");
+      if (!simCommandName[simCommand.indexOf(listOps[i])].startsWith("other")) {
+        if (device.isNotEmpty) {
+          arguments = ["-s", device]..addAll(arguments);
+        }
+        showLog("执行指令：adb:${Constants.adbPath},arguments:$arguments");
+        Process.run(Constants.adbPath, arguments).then((value) {
+          showLog("执行结束：" + value.stdout + value.stderr);
+        }).catchError((e) {
+          showLog("执行出错：");
+        });
+      } else {
+        showLog("执行指令：arguments:$arguments");
+        PlatformUtils.runCommand(listOps[i]).then((value) {
+          showLog("执行结束：" + value.stdout + value.stderr);
+        }).catchError((e) {
+          showLog("执行出错：");
+        });
       }
-      showLog("执行指令：adb:${Constants.adbPath},arguments:$arguments");
-      Process.run(Constants.adbPath, arguments).then((value) {
-        showLog("执行结束：" + value.stdout + value.stderr);
-      }).catchError((e) {
-        showLog("执行出错：");
-      });
     }));
   }
 
   Future.wait(futureList).then((value) {
     if (_opRepeat) {
       _runCommand(listOps, device);
+    } else {
+      showLog("停止模拟指令");
     }
   });
 }
@@ -2984,14 +3096,13 @@ void _aaptCommandByPackageName(String apkPath, String commandStr) {
   if (commandStr.contains("grep")) {
     commandStr = commandStr.replaceAll("grep", PlatformUtils.grepFindStr());
   }
-  command
-      .execCommand(Constants.ADB_APK_PATH
+  runCommand(Constants.ADB_APK_PATH
           .replaceAll("package", Constants.currentPackageName)
           .split(" "))
       .then((value) {
     result = command.dealWithData(Constants.ADB_APK_PATH, value);
     String apkInnerPath = result.mResult;
-    command.execCommand(
+    runCommand(
       [Constants.ADB_PULL_FILE, apkInnerPath, apkPath],
     ).then((value) {
       result = command.dealWithData(Constants.ADB_PULL_FILE, value);
@@ -3033,7 +3144,7 @@ void _aaptCommandByApk(String apkPath, String commandStr) async {
 }
 
 void _getAdbVersion() {
-  command.execCommand([Constants.ADB_VERSION]).then((value) {
+  runCommand([Constants.ADB_VERSION]).then((value) {
     result = command.dealWithData(Constants.ADB_VERSION, value);
     showLog(result.mResult);
   }).catchError((error) {
@@ -3046,7 +3157,7 @@ Future<ProcessResult> runCommand(List<String> arguments,
     String? workingDirectory,
     bool runInShell = false}) {
   showLog(
-      "执行命令：${executable.isEmpty ? Constants.adbPath : executable} ${_convertList(arguments)}");
+      "执行命令：${executable.isEmpty ? Constants.adbPath : executable} ${Constants.currentDevice.isNotEmpty ? "-s ${Constants.currentDevice}" : ""} ${_convertList(arguments)}");
   return command.execCommand(arguments,
       executable: executable,
       workingDirectory: workingDirectory,
