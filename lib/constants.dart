@@ -7,7 +7,7 @@ class Constants {
   static String APP_TITLE_NAME = APP_NAME + "_" + APP_VERSION;
 
   static const String APP_NAME = "MobileTools";
-  static const String APP_VERSION = "3.1";
+  static const String APP_VERSION = "4.0";
 
   static const String TOOLS_DIRECTORY_NAME = "tools"; //tools directory name
   static const String CONFIG_DIRECTORY_NAME = "config"; //tools directory name
