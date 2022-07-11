@@ -1,10 +1,12 @@
 # MobileTool
 超级方便的adb命令工具，支持所有桌面端，不管你是开发还是测试，都可以试试看。
++ [录制在b站的讲解视频](https://www.bilibili.com/video/BV1vY4y1J788?vd_source=62e17be4df670ba78219421e89af9bc9)
 
 ## 说明
 + 关于Android
   
   请自行打开手机开发者模式中的USB调试，确保手机和电脑能连接上。确保能使用adb连接上。。本工具Android模块只是将adb的大部分命令进行了懒人模式，有问题欢迎提issues。[adb命令参考](https://github.com/mzlogin/awesome-adb)
+  + [安卓手机开启开发者选项](https://jingyan.baidu.com/article/642c9d34e8a0d4254a46f7f8.html)
   
 + 关于IOS
   
