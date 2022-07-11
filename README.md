@@ -19,14 +19,16 @@
     1. Windows：C:\Users\用户名\Documents\MobileTools 
     2. Linux：/home/用户名/Documents/MobileTools  
     3. Windows：/Users/用户名/Documents/MobileTools
-  
   - MobileTools的目录结构
   
     1. apksigner文件夹（签名文件）
     2. config文件夹（用于保存一些信息）
-    3. tools文件（包含adb、反编译一些本地文件）
-    3. SETTING（本地路径的设置文件）
-    4. VERSION文件（当前软件的版本号）
+    3. tools文件夹（包含adb、反编译一些本地文件）
+       + apktool文件夹（存放apktool.jar文件和FakerAndroid.jar，去云盘取）
+       + uiautomatorviewer文件夹（存放获取焦点工具，去云盘取）
+       + 一些adb以及fastboot文件
+    4. SETTING（本地路径的设置文件）
+    5. VERSION文件（当前软件的版本号）
   
   如果需要使用反编译，以及获取当前界面的焦点的工具，几个工具太大。保存到了百度云盘，需要的可以放到tools文件夹下面。[链接](https://pan.baidu.com/s/12ns4VdU3xRYYmacXvUIKbw)，提取码：xjwr。
 ## 功能
