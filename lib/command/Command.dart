@@ -117,7 +117,8 @@ class AndroidCommand {
         for (int i = 0; i < values.length; i++) {
           //处理9.0版本手机顶级activity信息过滤改为mResumedActivity
           if (values[i].contains("mFocusedActivity") ||
-              values[i].contains("mResumedActivity")) {
+              values[i].contains("mResumedActivity") ||
+              values[i].contains("mCurrentFocus")) {
             int a = values[i].indexOf("u0");
             int b = values[i].indexOf('/');
             String packageName = values[i].substring(a + 3, b);
