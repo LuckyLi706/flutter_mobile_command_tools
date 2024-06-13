@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: '>=3.0.5 <4.0.0'
 
 dependencies:
   flutter:
@@ -37,6 +37,11 @@ dependencies:
   file_selector_macos: ^0.0.3
   file_selector_linux: ^0.0.2
   fast_gbk: ^1.0.0
+  provider: ^6.1.2
+  shared_preferences: ^2.2.3
+
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   test_process: ^2.0.2
@@ -93,3 +98,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+flutter_intl:
+  enabled: true
+  class_name: S # 可选。 Default: S
+  main_locale: en # 可选。可以改成 zh_CN 中文简体，这关系到默认生成的arb文件的名字。Default: en

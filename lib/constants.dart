@@ -3,7 +3,15 @@ import 'dart:core';
 
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+
 class Constants {
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
+  static final String THEME_INDEX_KEY = "theme_index_key";
+  static final String LOCALE_INDEX_KEY = "locale_index_key";
+
   static String APP_TITLE_NAME = APP_NAME + "_" + APP_VERSION;
 
   static const String APP_NAME = "MobileTools";

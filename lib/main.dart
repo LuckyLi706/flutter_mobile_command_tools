@@ -5,17 +5,25 @@ import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_mobile_command_tools/command/Command.dart';
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
+import 'package:flutter_mobile_command_tools/notifier/global/locale_change_notifier.dart';
+import 'package:flutter_mobile_command_tools/route/route_helper.dart';
+import 'package:flutter_mobile_command_tools/route/route_listener.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
-import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/init_util.dart';
+import 'package:flutter_mobile_command_tools/utils/sp_util.dart';
 import 'package:flutter_mobile_command_tools/view/IOSRightPanel.dart';
+import 'package:provider/provider.dart';
+
+import 'generated/l10n.dart';
+import 'notifier/global/theme_change_notifier.dart';
 
 var _width = 0.0;
 var _height = 0.0;
@@ -55,17 +63,48 @@ String? simCommandPath;
 void main() async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
     WidgetsFlutterBinding.ensureInitialized();
-    await InitUtils.init(_settings); //等待配置初始化完成
+    await SpUtil.getInstance().initSp();
+    await InitUtil.init(_settings); //等待配置初始化完成
     _initAllWireLessDevice();
     _initAllPhoneInfo();
     Future.delayed(Duration(milliseconds: 50), () {
-      runApp(new MaterialApp(
-        navigatorKey: navigatorKey,
-        home: MyApp(),
-      ));
+      runApp(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => ThemeChangeNotifier()),
+            ChangeNotifierProvider(create: (_) => LocaleChangeNotifier())
+          ],
+          child: _MyApp(),
+        ),
+      );
     });
   } else {
     print("不支持当前平台");
+  }
+}
+
+class _MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      localizationsDelegates: [
+        S.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      // onGenerateTitle: (context) {
+      //   return S.of(context).setting;
+      // },
+      navigatorObservers: [RouteListener()],
+      supportedLocales: S.delegate.supportedLocales,
+      debugShowCheckedModeBanner: false,
+      navigatorKey: Constants.navigatorKey,
+      routes: RouteHelper.routes,
+      onGenerateRoute: RouteHelper.onGenerateRoute,
+      theme: Provider.of<ThemeChangeNotifier>(context).themeData,
+      locale: Provider.of<LocaleChangeNotifier>(context).locale,
+    );
   }
 }
 
