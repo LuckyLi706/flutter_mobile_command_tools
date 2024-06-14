@@ -11,14 +11,14 @@ import 'FileUtils.dart';
 class InitUtil {
   static Future init(Map<String, dynamic> map) async {
     await _initSetting(map);
-    _initDesktop();
+    _initDesktopPath();
     _initApkSigner();
     _initInnerAdb();
     _initMutualAppFile();
   }
 
   //获取桌面路径
-  static void _initDesktop() async {
+  static void _initDesktopPath() async {
     if (Platform.isWindows) {
       Process.run(r"echo %USERPROFILE%", [], runInShell: true)
           .then((value) async {
@@ -176,57 +176,11 @@ class InitUtil {
       FileUtils.createFile(
           await FileUtils.getMutualAppPath("BroadcastReceiver"));
       String content = "";
-      broadcastReceiver.forEach((element) {
+      Constants.ANDROID_RECEIVER.forEach((element) {
         content = content + element + PlatformUtils.getLineBreak();
       });
       FileUtils.writeFile(
           content, File(await FileUtils.getMutualAppPath("BroadcastReceiver")));
     }
   }
-
-  static List<String> broadcastReceiver = [
-    "android.net.conn.CONNECTIVITY_CHANGE",
-    //网络连接发生变化
-    "android.intent.action.SCREEN_ON",
-    //屏幕点亮
-    "android.intent.action.SCREEN_OFF",
-    //屏幕熄灭
-    "android.intent.action.BATTERY_LOW",
-    //电量低，会弹出电量低提示框
-    "android.intent.action.BATTERY_OKAY",
-    //电量恢复了
-    "android.intent.action.BOOT_COMPLETED",
-    //设备启动完毕
-    "android.intent.action.DEVICE_STORAGE_LOW",
-    //存储空间过低
-    "android.intent.action.DEVICE_STORAGE_OK",
-    //存储空间恢复
-    "android.intent.action.PACKAGE_ADDED",
-    //安装了新的应用
-    "android.net.wifi.STATE_CHANGE",
-    //WiFi 连接状态发生变化
-    "android.net.wifi.WIFI_STATE_CHANGED",
-    //WiFi 状态变为启用/关闭/正在启动/正在关闭/未知
-    "android.intent.action.BATTERY_CHANGED",
-    //电池电量发生变化
-    "android.intent.action.INPUT_METHOD_CHANGED",
-    //系统输入法发生变化
-    "android.intent.action.ACTION_POWER_CONNECTED",
-    //外部电源连接
-    "android.intent.action.ACTION_POWER_DISCONNECTED",
-    //外部电源断开连接
-    "android.intent.action.DREAMING_STARTED",
-    //系统开始休眠
-    "android.intent.action.DREAMING_STOPPED",
-    //系统停止休眠
-    "android.intent.action.WALLPAPER_CHANGED",
-    //壁纸发生变化
-    "android.intent.action.HEADSET_PLUG",
-    //插入耳机
-    "android.intent.action.MEDIA_UNMOUNTED",
-    //卸载外部介质
-    "android.intent.action.MEDIA_MOUNTED",
-    //挂载外部介质
-    "android.os.action.POWER_SAVE_MODE_CHANGED",
-  ];
 }
