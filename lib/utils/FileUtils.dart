@@ -127,9 +127,9 @@ class FileUtils {
     return writeFile(data, await localFile("SETTING"));
   }
 
-  static Future<bool> isExistFile(String filePath) async {
+  static bool isExistFile(String filePath) {
     File file = new File(filePath);
-    return await file.exists();
+    return file.existsSync();
     //return isExist;
   }
 
