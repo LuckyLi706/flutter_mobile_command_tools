@@ -21,14 +21,15 @@ class ButtonWidget extends StatelessWidget {
 
 class PullDownWidget extends StatelessWidget {
   final List<String> dropDownListText;
+  final int selectIndex;
   final Function(int index) onTapIndex;
 
-  PullDownWidget(this.dropDownListText, this.onTapIndex);
+  PullDownWidget(this.dropDownListText, this.onTapIndex, this.selectIndex);
 
   @override
   Widget build(BuildContext context) {
     return MacosPulldownButton(
-      title: '',
+      title: dropDownListText.length > 0 ? dropDownListText[selectIndex] : "",
       items: dropDownListText.map((text) {
         return MacosPulldownMenuItem(
           title: Text(text),

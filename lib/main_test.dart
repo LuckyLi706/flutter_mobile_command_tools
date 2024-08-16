@@ -11,7 +11,7 @@ import 'package:flutter_mobile_command_tools/command/Command.dart';
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
 import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
-import 'package:flutter_mobile_command_tools/utils/InitUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/init_utils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
 
@@ -135,7 +135,6 @@ class LeftPanel extends StatefulWidget {
 TextEditingController _logTextController = TextEditingController();
 FocusNode leftPanelFocus = FocusNode();
 
-final GlobalKey<NavigatorState> navigatorKey = new GlobalKey<NavigatorState>();
 final ScrollController _scrollController = ScrollController();
 
 class LeftPanelState extends State<LeftPanel> {

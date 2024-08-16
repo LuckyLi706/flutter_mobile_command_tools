@@ -44,16 +44,12 @@ class _MainMacosWidgetState extends State<MainMacosWidget> with MixinMain {
               itemSize: SidebarItemSize.large,
               items: [
                 SidebarItem(
-                  leading: MacosIcon(CupertinoIcons.arrow_counterclockwise),
-                  label: Text('连接'),
-                ),
-                SidebarItem(
                   leading: MacosIcon(CupertinoIcons.device_phone_portrait),
                   label: Text('设备'),
                 ),
                 SidebarItem(
-                  leading: MacosIcon(CupertinoIcons.textformat_size),
-                  label: Text('Typography'),
+                  leading: MacosIcon(CupertinoIcons.arrow_counterclockwise),
+                  label: Text('连接'),
                 ),
               ],
             );

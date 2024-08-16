@@ -2,22 +2,64 @@ import 'dart:io';
 
 import 'package:flutter_mobile_command_tools/base/base_command.dart';
 import 'package:flutter_mobile_command_tools/constants.dart';
-import 'package:flutter_mobile_command_tools/global.dart';
-import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
+import 'package:flutter_mobile_command_tools/model/command_result_model.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 class AdbCommand extends BaseCommand {
-  CommandResult dealWithData(String arguments, ProcessResult processResult) {
+  ///检测adb的路径
+  @override
+  bool checkCommandPath(String executable) {
+    if (Constants.adbPath == "") {
+      return false;
+    }
+    return super.checkCommandPath(executable);
+  }
+
+  @override
+  Future<CommandResultModel> runCommand(String command,
+      {String executable = "",
+      String? workingDirectory,
+      bool runInShell = false}) {
+    return super.runCommand(command,
+        executable: Constants.adbPath,
+        workingDirectory: workingDirectory,
+        runInShell: runInShell);
+  }
+
+  @override
+  CommandResultModel runCommandSync(String command,
+      {String executable = "", String? workingDirectory}) {
+    return super.runCommandSync(command,
+        executable: Constants.adbPath, workingDirectory: workingDirectory);
+  }
+
+  /// 核实参数
+  @override
+  List<String> checkArguments(List<String> arguments) {
+    if (Constants.currentDevice.isNotEmpty) {
+      if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
+          arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
+          arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
+          arguments[0] != Constants.ADB_VERSION) {
+        arguments = ["-s", Constants.currentDevice]..addAll(arguments);
+      }
+    }
+    return arguments;
+  }
+
+  ///解析数据
+  @override
+  CommandResultModel parseData(String command, ProcessResult processResult) {
     if (processResult.stderr != "") {
       if (processResult.stderr
           .toString()
           .contains("more than one device/emulator")) {
-        return getProcessResult(true, "当前设备大于等于两个,请先手动获取设备");
+        return CommandResultModel(false, "当前设备大于等于两个,请先手动获取设备");
       }
-      return getProcessResult(true, processResult.stderr);
+      return CommandResultModel(false, processResult.stderr);
     }
     String data = processResult.stdout;
-    switch (arguments) {
+    switch (command) {
       case Constants.ADB_CONNECT_DEVICES:
         if (data.contains("List of devices attached")) {
           List<String> devices = data.split(PlatformUtils.getLineBreak());
@@ -33,12 +75,12 @@ class AdbCommand extends BaseCommand {
             }
           });
           if (currentDevices.length > 0) {
-            return getProcessResult(false, currentDevices);
+            return CommandResultModel(true, currentDevices);
           } else {
-            return getProcessResult(true, "无设备连接");
+            return CommandResultModel(false, "无设备连接");
           }
         } else {
-          return getProcessResult(true, data);
+          return CommandResultModel(false, data);
         }
       case Constants.ADB_GET_PACKAGE:
         List<String> values = data.split('\n');
@@ -50,13 +92,13 @@ class AdbCommand extends BaseCommand {
             int a = values[i].indexOf("u0");
             int b = values[i].indexOf('/');
             String packageName = values[i].substring(a + 3, b);
-            return getProcessResult(false, packageName);
+            return CommandResultModel(true, packageName);
           }
           if (values[i].contains("error:")) {
-            return getProcessResult(true, values[i]);
+            return CommandResultModel(false, values[i]);
           }
         }
-        return getProcessResult(true, "无信息");
+        return CommandResultModel(false, "无信息");
       case Constants.ADB_GET_THIRD_PACKAGE:
       case Constants.ADB_GET_SYSTEM_PACKAGE:
       case Constants.ADB_GET_FREEZE_PACKAGE:
@@ -67,7 +109,7 @@ class AdbCommand extends BaseCommand {
             packageNameFilter.add(element.replaceAll("package:", ""));
           }
         });
-        return getProcessResult(false, packageNameFilter);
+        return CommandResultModel(true, packageNameFilter);
       case Constants.ADB_CURRENT_ACTIVITY:
         List<String> values = data.split('\n');
         for (int i = 0; i < values.length; i++) {
@@ -75,36 +117,36 @@ class AdbCommand extends BaseCommand {
           if (values[i].contains("mFocusedActivity") ||
               values[i].contains("mResumedActivity")) {
             List<String> listActivity = values[i].split(" ");
-            return getProcessResult(
-                false, listActivity[listActivity.length - 2].trim());
+            return CommandResultModel(
+                true, listActivity[listActivity.length - 2].trim());
           }
           if (values[i].contains("error:")) {
-            return getProcessResult(true, values[i]);
+            return CommandResultModel(false, values[i]);
           }
         }
-        break;
+        return CommandResultModel(false, "无信息");
       case Constants.ADB_IP:
         String ip = data.split(":")[1].split(" ")[0];
-        return getProcessResult(false, ip);
+        return CommandResultModel(true, ip);
       case Constants.ADB_WIRELESS_CONNECT:
         if (data.contains("already") ||
             data.contains("failed") ||
             data.contains("cannot")) {
           //表示已经连接上了
-          return getProcessResult(true, data);
+          return CommandResultModel(false, data);
         } else {
-          return getProcessResult(
-              false, data.replaceAll("connected to ", "").trim()); //移除换行符号
+          return CommandResultModel(
+              true, data.replaceAll("connected to ", "").trim()); //移除换行符号
         }
       case Constants.ADB_WIRELESS_DISCONNECT:
         if (data.contains("error")) {
-          return getProcessResult(true, data);
+          return CommandResultModel(false, data);
         }
-        return getProcessResult(
-            false, data.replaceAll("disconnected ", "").trim());
+        return CommandResultModel(
+            true, data.replaceAll("disconnected ", "").trim());
       case Constants.ADB_PULL_CRASH:
         if (data.isEmpty) {
-          return getProcessResult(true, "无crash日志");
+          return CommandResultModel(false, "无crash日志");
         } else {
           List<String> crashList = data.split(PlatformUtils.getLineBreak());
           List<String> times = [];
@@ -114,16 +156,16 @@ class AdbCommand extends BaseCommand {
             }
           });
           if (times.length > 0) {
-            return getProcessResult(false, times);
+            return CommandResultModel(true, times);
           }
-          return getProcessResult(true, "无app crash日志");
+          return CommandResultModel(false, "无app crash日志");
         }
       case Constants.ADB_SEARCH_ALL_FILE_PATH:
         if (data.isEmpty) {
-          return getProcessResult(true, "该目录无文件或者当前就是文件");
+          return CommandResultModel(false, "该目录无文件或者当前就是文件");
         } else {
           if (data.contains("No such file or directory")) {
-            return getProcessResult(true, data);
+            return CommandResultModel(false, data);
           }
           List<String> crashList = data.split(PlatformUtils.getLineBreak());
           List<String> times = [];
@@ -133,13 +175,13 @@ class AdbCommand extends BaseCommand {
             }
           });
           if (times.length > 0) {
-            return getProcessResult(false, times);
+            return CommandResultModel(true, times);
           }
-          return getProcessResult(true, "该目录无文件或者当前就是文件");
+          return CommandResultModel(false, "该目录无文件或者当前就是文件");
         }
       case Constants.ADB_APK_PATH:
-        return getProcessResult(
-            false,
+        return CommandResultModel(
+            true,
             data
                 .replaceAll("package:", "")
                 .replaceAll(PlatformUtils.getLineBreak(), ""));
@@ -165,43 +207,14 @@ class AdbCommand extends BaseCommand {
             continue;
           }
         }
-        return getProcessResult(false, value);
+        return CommandResultModel(true, value);
       case Constants.ADB_GET_PACKAGE_INFO_MAIN_ACTIVITY:
         List<String> line =
             data.replaceAll("\'", "").split(PlatformUtils.getLineBreak());
         int index = line.indexOf("      android.intent.action.MAIN:");
         String value = line[index + 1].trim().split(" ")[1];
-        return getProcessResult(false, value);
+        return CommandResultModel(true, value);
     }
-    return getProcessResult(false, data);
+    return CommandResultModel(true, data);
   }
-
-  ///检测adb的路径
-  @override
-  bool checkCommandPath() {
-    if (Global.adbPath == "") {
-      return false;
-    }
-    return true;
-  }
-
-  @override
-  List<String> checkArguments(List<String> arguments) {
-    if (Constants.currentDevice.isNotEmpty) {
-      if (arguments[0] != Constants.ADB_CONNECT_DEVICES &&
-          arguments[0] != Constants.ADB_WIRELESS_DISCONNECT &&
-          arguments[0] != Constants.ADB_WIRELESS_CONNECT &&
-          arguments[0] != Constants.ADB_VERSION) {
-        arguments = ["-s", Constants.currentDevice]..addAll(arguments);
-      }
-    }
-    return arguments;
-  }
-}
-
-CommandResult getProcessResult(bool error, dynamic result) {
-  CommandResult commandResult = CommandResult();
-  commandResult.mError = error;
-  commandResult.mResult = result;
-  return commandResult;
 }

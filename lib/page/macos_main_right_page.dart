@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/text_field_model.dart';
+import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
 import 'package:flutter_mobile_command_tools/widgets/log_widget.dart';
 import 'package:macos_ui/macos_ui.dart';
 
@@ -56,10 +57,12 @@ class _MacosMainRightPageState extends State<MacosMainRightPage> {
         ContentArea(
           builder: (_, __) {
             return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 100,
+                  width: 200,
                   margin: EdgeInsets.all(10),
+                  child: widget.centerWidget,
                 ),
                 Expanded(child: LogWidget())
               ],
