@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_mobile_command_tools/base/base_command.dart';
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/command_result_model.dart';
+import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 
 class AdbCommand extends BaseCommand {
@@ -84,7 +85,7 @@ class AdbCommand extends BaseCommand {
         }
       case Constants.ADB_GET_PACKAGE:
         List<String> values = data.split('\n');
-        for (int i = 0; i < values.length; i++) {
+        for (int i = values.length - 1; i > 0; i--) {
           //处理9.0版本手机顶级activity信息过滤改为mResumedActivity
           if (values[i].contains("mFocusedActivity") ||
               values[i].contains("mResumedActivity") ||
@@ -92,6 +93,7 @@ class AdbCommand extends BaseCommand {
             int a = values[i].indexOf("u0");
             int b = values[i].indexOf('/');
             String packageName = values[i].substring(a + 3, b);
+            LogUtils.printLog(packageName);
             return CommandResultModel(true, packageName);
           }
           if (values[i].contains("error:")) {
@@ -112,7 +114,7 @@ class AdbCommand extends BaseCommand {
         return CommandResultModel(true, packageNameFilter);
       case Constants.ADB_CURRENT_ACTIVITY:
         List<String> values = data.split('\n');
-        for (int i = 0; i < values.length; i++) {
+        for (int i = values.length - 1; i > 0; i--) {
           //处理9.0版本手机顶级activity信息过滤改为mResumedActivity
           if (values[i].contains("mFocusedActivity") ||
               values[i].contains("mResumedActivity")) {

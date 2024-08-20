@@ -41,7 +41,7 @@ class MainWidget extends StatelessWidget {
       title: Constants.APP_NAME,
       navigatorKey: Global.navigatorKey,
 
-      ///themeMode: appTheme.mode,
+      themeMode: ThemeMode.dark,
       debugShowCheckedModeBanner: false,
       home: MainMacosWidget(),
     );
