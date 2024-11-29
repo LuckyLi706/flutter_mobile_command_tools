@@ -1,10 +1,6 @@
-import 'dart:io';
-
-import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobile_command_tools/notifier/center_widget_change_notifier.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 import '../platform_menus.dart';
 import '../widgets/hover_widget.dart';
@@ -19,7 +15,7 @@ class MainPage extends StatefulWidget {
   }
 }
 
-class _MainPageState extends State<MainPage>{
+class _MainPageState extends State<MainPage> {
   int pageIndex = 0;
 
   @override
@@ -31,21 +27,7 @@ class _MainPageState extends State<MainPage>{
   Widget build(BuildContext context) {
     return PlatformMenuBar(
       menus: menuBarItems(),
-      child: Platform.isMacOS
-          ? MacosWindow(
-              titleBar: TitleBar(
-                decoration: BoxDecoration(
-                    color: MacosColors.controlBackgroundColor.withOpacity(0.8)),
-                height: 45,
-                title: Text(
-                  '工具',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-              child: _mainWidget())
-          : NavigationView(
-              content: _mainWidget(),
-            ),
+      child: Scaffold(body: _mainWidget()),
     );
   }
 
@@ -101,10 +83,4 @@ class _MainPageState extends State<MainPage>{
         ),
         label: Text("命令")),
   ];
-
-  void _onDestinationSelected(int value) {
-    setState(() {
-      pageIndex = value;
-    });
-  }
 }

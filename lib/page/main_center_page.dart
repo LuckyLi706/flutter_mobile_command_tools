@@ -1,21 +1,13 @@
-import 'dart:io';
-
-import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_mobile_command_tools/command/adb_command.dart';
+import 'package:flutter_mobile_command_tools/command/adb_run_command.dart';
 import 'package:flutter_mobile_command_tools/notifier/devices_notifier.dart';
-import 'package:flutter_mobile_command_tools/theme.dart';
+import 'package:flutter_mobile_command_tools/utils/command_utils.dart';
 import 'package:flutter_mobile_command_tools/widgets/hover_widget.dart';
 import 'package:provider/provider.dart';
-import '../constants.dart';
-import '../widgets/button_widget.dart';
-import 'package:fluent_ui/src/controls/utils/divider.dart' as ListDivide;
 
 import '../widgets/vertical_app_bar.dart';
 
 class DeviceCenterPage extends StatelessWidget {
-  AppTheme appTheme = AppTheme();
-
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -26,19 +18,22 @@ class DeviceCenterPage extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: ButtonWidget('获取所有设备', () {
-                    AdbCommand command = AdbCommand();
-                    command
-                        .runCommand(Constants.ADB_CONNECT_DEVICES)
-                        .then((value) {
-                      if (value.data is List) {
-                        if (value.data.length != 0) {
-                          context.read<DevicesChangeNotifier>().deviceList =
-                              value.data;
-                        }
-                      }
-                    });
-                  }),
+                  child: TextButton(
+
+                      child: Text('获取所有设备'),
+                      onPressed: () {
+                        AdbRunCommand command = AdbRunCommand();
+                        command
+                            .runCommand(CommandUtils.getAndroidDevices())
+                            .then((value) {
+                          if (value.data is List) {
+                            if (value.data.length != 0) {
+                              context.read<DevicesChangeNotifier>().deviceList =
+                                  value.data;
+                            }
+                          }
+                        });
+                      }),
                 ),
               ],
             ),
@@ -57,24 +52,24 @@ class DeviceCenterPage extends StatelessWidget {
                         children: [
                           Expanded(
                               child: Stack(
-                                children: [
-                                  Text(devices.deviceList[index]),
-                                  Visibility(
-                                    child: Positioned(
-                                      child: Icon(Icons.check),
-                                      right: 0,
-                                    ),
-                                    visible: devices.checkDeviceList[index],
-                                  )
-                                ],
-                              ))
+                            children: [
+                              Text(devices.deviceList[index]),
+                              Visibility(
+                                child: Positioned(
+                                  child: Icon(Icons.check),
+                                  right: 0,
+                                ),
+                                visible: devices.checkDeviceList[index],
+                              )
+                            ],
+                          ))
                         ],
                       ),
                     );
                   },
                   itemCount: devices.deviceList.length,
                   separatorBuilder: (BuildContext context, int index) {
-                    return ListDivide.Divider();
+                    return Divider();
                   },
                 );
               }),
@@ -91,18 +86,18 @@ class DeviceCommandPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ButtonWidget('当前Activity', () {
-          ///context.read<LogChangeNotifier>().addLog("Hello,World");
-
-          AdbCommand command = AdbCommand();
-          command.runCommand(Constants.ADB_CURRENT_ACTIVITY);
-        }),
-        ButtonWidget('当前Fragment', () {
-          ///context.read<LogChangeNotifier>().addLog("Hello,World");
-
-          AdbCommand command = AdbCommand();
-          command.runCommand(Constants.ADB_CURRENT_FRAGMENT);
-        }),
+        InkWell(
+            child: Text('当前Activity'),
+            onTap: () {
+              AdbRunCommand command = AdbRunCommand();
+              command.runCommand(CommandUtils.getCurrentActivity());
+            }),
+        InkWell(
+            child: Text('当前Fragment'),
+            onTap: () {
+              AdbRunCommand command = AdbRunCommand();
+              command.runCommand(CommandUtils.getCurrentFragment());
+            }),
       ],
     );
   }

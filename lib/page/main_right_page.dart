@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobile_command_tools/notifier/center_widget_change_notifier.dart';
 import 'package:flutter_mobile_command_tools/widgets/log_widget.dart';
-import 'package:macos_ui/macos_ui.dart';
 import 'package:provider/provider.dart';
 
 class MainRightPage extends StatefulWidget {
@@ -47,9 +46,7 @@ class _MainRightPageState extends State<MainRightPage> {
                           Container(
                             child: Column(),
                             width: 2,
-                            color: notifier.isClick
-                                ? MacosColors.linkColor
-                                : MacosColors.quaternaryLabelColor,
+                            color: Colors.amber
                           )
                         ],
                       )),
