@@ -15,6 +15,8 @@ import 'package:flutter_mobile_command_tools/utils/init_utils.dart';
 import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
 
+import 'global.dart';
+
 var _width = 0.0;
 var _height = 0.0;
 
@@ -58,7 +60,7 @@ void main() async {
     _initAllPhoneInfo();
     Future.delayed(Duration(milliseconds: 50), () {
       runApp(new MaterialApp(
-        navigatorKey: navigatorKey,
+        navigatorKey: Global.navigatorKey,
         home: MyApp(),
       ));
     });

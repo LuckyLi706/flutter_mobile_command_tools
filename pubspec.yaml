@@ -28,18 +28,21 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  macos_ui: ^2.0.8
   provider: ^6.1.2
 
   path_provider: ^2.0.2
   file_picker: ^4.2.4
   archive: ^3.1.2
   date_format: ^2.0.4
-  file_selector: ^0.8.2
-  file_selector_windows: ^0.0.2
-  file_selector_macos: ^0.9.4
-  file_selector_linux: ^0.0.2
+  file_selector: ^1.0.3
+  file_selector_windows: ^0.9.3+4
+  file_selector_macos: ^0.9.4+2
+  file_selector_linux: ^0.9.3+2
   fast_gbk: ^1.0.0
+  fluent_ui: ^4.11.2
+  window_manager: ^0.3.0
+  flutter_acrylic: ^1.1.4
+  system_theme: ^2.3.1
 
 dev_dependencies:
   test_process: ^2.0.2

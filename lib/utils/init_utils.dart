@@ -19,7 +19,7 @@ class InitUtils {
   //获取桌面路径
   static void _initDesktop() async {
     if (Platform.isWindows) {
-      Process.run(r"echo %USERPROFILE%", [], runInShell: true)
+      await Process.run(r"echo %USERPROFILE%", [], runInShell: true)
           .then((value) async {
         if (value.stdout != "") {
           Constants.userPath =
@@ -34,7 +34,7 @@ class InitUtils {
         }
       });
     } else if (Platform.isMacOS) {
-      Process.run(r"id", ["-un"], runInShell: true).then((value) async {
+      await Process.run(r"id", ["-un"], runInShell: true).then((value) async {
         if (value.stdout != "") {
           Constants.userPath = "/Users/" +
               value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
@@ -49,7 +49,7 @@ class InitUtils {
         }
       });
     } else if (Platform.isLinux) {
-      Process.run(r"id", ["-un"], runInShell: true).then((value) async {
+      await Process.run(r"id", ["-un"], runInShell: true).then((value) async {
         if (value.stdout != "") {
           Constants.userPath = "/home/" +
               value.stdout.toString().split(PlatformUtils.getLineBreak())[0];

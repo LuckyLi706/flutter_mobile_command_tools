@@ -24,10 +24,11 @@ abstract class BaseCommand {
     return arguments;
   }
 
-  CommandResultModel parseData(String command, ProcessResult processResult);
+  CommandResultModel<T> parseData<T>(
+      String command, ProcessResult processResult);
 
   ///异步执行命令
-  Future<CommandResultModel> runCommand(String command,
+  Future<CommandResultModel<T>?> runCommand<T>(String command,
       {String executable = "",
       String? workingDirectory,
       bool runInShell = false}) async {
@@ -37,25 +38,30 @@ abstract class BaseCommand {
 
       Provider.of<LogChangeNotifier>(Global.navigatorKey.currentContext!,
               listen: false)
-          .addLog("${executable} ${arguments.join(" ")}");
+          .addLog(">>>>>> 执行命令：${executable} ${arguments.join(" ")}");
 
       ProcessResult processResult = await Process.run(executable, arguments,
           workingDirectory: workingDirectory,
           runInShell: runInShell,
           stdoutEncoding: Encoding.getByName("utf-8"));
-      CommandResultModel commandResultModel = parseData(command, processResult);
+      CommandResultModel<T>? commandResultModel =
+          parseData<T>(command, processResult);
       if (commandResultModel.isSuccess) {
         Provider.of<LogChangeNotifier>(Global.navigatorKey.currentContext!,
                 listen: false)
-            .addLog(commandResultModel.data);
+            .addLog(">>>>>> 成功：${commandResultModel.data}");
+        return commandResultModel;
       } else {
         Provider.of<LogChangeNotifier>(Global.navigatorKey.currentContext!,
                 listen: false)
-            .addLog("错误信息：${commandResultModel.data}");
+            .addLog(">>>>>> 失败：${commandResultModel.error}");
+        return null;
       }
-      return commandResultModel;
     } else {
-      throw "命令路径不存在";
+      Provider.of<LogChangeNotifier>(Global.navigatorKey.currentContext!,
+              listen: false)
+          .addLog(">>>>>> 失败：路径不存在");
+      return null;
     }
   }
 
@@ -85,7 +91,7 @@ abstract class BaseCommand {
       }
       return commandResultModel;
     } else {
-      throw "命令路径不存在";
+      return CommandResultModel.error(false, null, '路径不存在');
     }
   }
 }
