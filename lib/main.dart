@@ -3,9 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' as flutter_material;
 import 'package:flutter_mobile_command_tools/notifier/log_change_notifier.dart';
 import 'package:flutter_mobile_command_tools/notifier/panel/android_panel_notifier.dart';
-import 'package:flutter_mobile_command_tools/pages/widgets/android_panel.dart';
+import 'package:flutter_mobile_command_tools/widgets/android_panel.dart';
 import 'package:flutter_mobile_command_tools/theme.dart';
 import 'package:flutter_mobile_command_tools/utils/init_utils.dart';
+import 'package:flutter_mobile_command_tools/widgets/dialog/android_sim_script_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
@@ -216,7 +217,31 @@ class _MyAppState extends State<Main> {
                     onChanged: (bool value) {}),
               ]),
               MenuBarItem(title: '模拟指令', items: [
-                MenuFlyoutItem(text: const Text('新建脚本'), onPressed: () {}),
+                MenuFlyoutItem(
+                    text: const Text('新建脚本'),
+                    onPressed: () async {
+                      final result = await showDialog<String>(
+                        context: context,
+                        builder: (context) => ContentDialog(
+                          title: const Text('新建模拟操作脚本'),
+                          content: AndroidSimScriptDialog(),
+                          actions: [
+                            Button(
+                              child: const Text('取消'),
+                              onPressed: () {
+                                Navigator.pop(context, 'User deleted file');
+                                // Delete file here
+                              },
+                            ),
+                            FilledButton(
+                              child: const Text('保存'),
+                              onPressed: () => Navigator.pop(
+                                  context, 'User canceled dialog'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
               ]),
               MenuBarItem(title: '拉取和推送', items: [
                 MenuFlyoutItem(text: const Text('拉取'), onPressed: () {}),
