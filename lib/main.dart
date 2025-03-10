@@ -159,103 +159,101 @@ class _MyAppState extends State<Main> {
 
   @override
   Widget build(BuildContext context) {
-    return ScaffoldPage(
-      content: NavigationView(
-        key: Global.scaffoldKey,
-        pane: NavigationPane(
-            selected: selectId,
-            footerItems: this.footerItems,
-            onChanged: (index) {
-              selectId = index;
-              setState(() {});
-            },
-            header: null,
-            items: items,
-            displayMode: PaneDisplayMode.compact),
-        appBar: NavigationAppBar(
-          height: 40,
-          backgroundColor: Colors.grey.withAlpha(50),
-          title: () {
-            return DragToMoveArea(
-                child: MenuBar(
-              items: [
-                MenuBarItem(title: '连接', items: [
-                  MenuFlyoutItem(
-                      text: const Text(
-                        '无线连接',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      onPressed: () {}),
-                  MenuFlyoutItem(
-                      text: const Text(
-                        '刷新设备',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      onPressed: () {
-                        AndroidCommandUtils.sendConnectDeviceOrder();
-                      }),
-                ]),
-                MenuBarItem(title: '应用交互', items: [
-                  MenuFlyoutItem(
-                      text: const Text('Activity'), onPressed: () {}),
-                  MenuFlyoutItem(text: const Text('Service'), onPressed: () {}),
-                  MenuFlyoutItem(
-                      text: const Text('BroadCastReceiver'), onPressed: () {}),
-                ]),
-                MenuBarItem(title: '逆向', items: [
-                  MenuFlyoutItem(text: const Text('签名'), onPressed: () {}),
-                  MenuFlyoutItem(text: const Text('签名校验'), onPressed: () {}),
-                  const MenuFlyoutSeparator(),
-                  ToggleMenuFlyoutItem(
-                      text: const Text('-f'),
-                      value: true,
-                      onChanged: (bool value) {}),
-                  ToggleMenuFlyoutItem(
-                      text: const Text('-r'),
-                      value: true,
-                      onChanged: (bool value) {}),
-                  const MenuFlyoutSeparator(),
-                  ToggleMenuFlyoutItem(
-                      text: const Text('-s'),
-                      value: true,
-                      onChanged: (bool value) {}),
-                  ToggleMenuFlyoutItem(
-                      text: const Text('-d'),
-                      value: true,
-                      onChanged: (bool value) {}),
-                ]),
-                MenuBarItem(title: '模拟指令', items: [
-                  MenuFlyoutItem(
-                      text: const Text('新建脚本'),
-                      onPressed: () async {
-                        DialogUtils.showCommonDialog<String>(
-                            AndroidSimScriptDialog(),
-                            title: "新建模拟脚本",
-                            confirmText: "保存");
-                      }),
-                ]),
-                MenuBarItem(title: '拉取和推送', items: [
-                  MenuFlyoutItem(text: const Text('拉取'), onPressed: () {}),
-                  const MenuFlyoutSeparator(),
-                  MenuFlyoutItem(text: const Text('推送'), onPressed: () {}),
-                ]),
-                MenuBarItem(title: '其他', items: [
-                  MenuFlyoutItem(text: const Text('截屏'), onPressed: () {}),
-                  MenuFlyoutItem(text: const Text('录屏'), onPressed: () {}),
-                  const MenuFlyoutSeparator(),
-                  MenuFlyoutItem(
-                      text: const Text('进入fastboot'), onPressed: () {}),
-                  MenuFlyoutItem(
-                      text: const Text('进入recovery'), onPressed: () {}),
-                  MenuFlyoutItem(text: const Text('重启手机'), onPressed: () {}),
-                ]),
-              ],
-            ));
-          }(),
-          leading: IconButton(
-            icon: const Icon(FluentIcons.accounts),
-            onPressed: () => {},
-          ),
+    return NavigationView(
+      key: Global.scaffoldKey,
+      pane: NavigationPane(
+          selected: selectId,
+          footerItems: this.footerItems,
+          onChanged: (index) {
+            selectId = index;
+            setState(() {});
+          },
+          header: null,
+          items: items,
+          displayMode: PaneDisplayMode.compact),
+      appBar: NavigationAppBar(
+        height: 40,
+        backgroundColor: Colors.grey.withAlpha(50),
+        title: () {
+          return DragToMoveArea(
+              child: MenuBar(
+                items: [
+                  MenuBarItem(title: '连接', items: [
+                    MenuFlyoutItem(
+                        text: const Text(
+                          '无线连接',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        onPressed: () {}),
+                    MenuFlyoutItem(
+                        text: const Text(
+                          '刷新设备',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        onPressed: () {
+                          AndroidCommandUtils.sendConnectDeviceOrder();
+                        }),
+                  ]),
+                  MenuBarItem(title: '应用交互', items: [
+                    MenuFlyoutItem(
+                        text: const Text('Activity'), onPressed: () {}),
+                    MenuFlyoutItem(text: const Text('Service'), onPressed: () {}),
+                    MenuFlyoutItem(
+                        text: const Text('BroadCastReceiver'), onPressed: () {}),
+                  ]),
+                  MenuBarItem(title: '逆向', items: [
+                    MenuFlyoutItem(text: const Text('签名'), onPressed: () {}),
+                    MenuFlyoutItem(text: const Text('签名校验'), onPressed: () {}),
+                    const MenuFlyoutSeparator(),
+                    ToggleMenuFlyoutItem(
+                        text: const Text('-f'),
+                        value: true,
+                        onChanged: (bool value) {}),
+                    ToggleMenuFlyoutItem(
+                        text: const Text('-r'),
+                        value: true,
+                        onChanged: (bool value) {}),
+                    const MenuFlyoutSeparator(),
+                    ToggleMenuFlyoutItem(
+                        text: const Text('-s'),
+                        value: true,
+                        onChanged: (bool value) {}),
+                    ToggleMenuFlyoutItem(
+                        text: const Text('-d'),
+                        value: true,
+                        onChanged: (bool value) {}),
+                  ]),
+                  MenuBarItem(title: '模拟指令', items: [
+                    MenuFlyoutItem(
+                        text: const Text('新建脚本'),
+                        onPressed: () async {
+                          DialogUtils.showCommonDialog<String>(
+                              AndroidSimScriptDialog(),
+                              title: "新建模拟脚本",
+                              confirmText: "保存");
+                        }),
+                  ]),
+                  MenuBarItem(title: '拉取和推送', items: [
+                    MenuFlyoutItem(text: const Text('拉取'), onPressed: () {}),
+                    const MenuFlyoutSeparator(),
+                    MenuFlyoutItem(text: const Text('推送'), onPressed: () {}),
+                  ]),
+                  MenuBarItem(title: '其他', items: [
+                    MenuFlyoutItem(text: const Text('截屏'), onPressed: () {}),
+                    MenuFlyoutItem(text: const Text('录屏'), onPressed: () {}),
+                    const MenuFlyoutSeparator(),
+                    MenuFlyoutItem(
+                        text: const Text('进入fastboot'), onPressed: () {}),
+                    MenuFlyoutItem(
+                        text: const Text('进入recovery'), onPressed: () {}),
+                    MenuFlyoutItem(text: const Text('重启手机'), onPressed: () {}),
+                  ]),
+                ],
+              ));
+        }(),
+        leading: IconButton(
+          icon: const Icon(FluentIcons.accounts),
+          onPressed: () => {},
         ),
       ),
     );
