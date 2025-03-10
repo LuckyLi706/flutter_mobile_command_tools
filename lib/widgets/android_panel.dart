@@ -20,23 +20,9 @@ class _AndroidPanelState extends State<AndroidPanel>
   void initState() {
     super.initState();
 
-    Future.delayed(
-        Duration(milliseconds: 1000),
-        () => {
-              CommandUtils.getAdbCommand()
-                  .runCommand<List<String>>(
-                      AdbCommandType.ADB_CONNECT_DEVICES.value)
-                  .then((value) {
-                if (value != null) {
-                  if (value.isSuccess) {
-                    Provider.of<AndroidPanelNotifier>(
-                            Global.navigatorKey.currentContext!,
-                            listen: false)
-                        .deviceList = value.data!;
-                  }
-                }
-              })
-            });
+    /// 首次去获取一下设备列表
+    Future.delayed(Duration(milliseconds: 1000),
+        () => {AndroidCommandUtils.sendConnectDeviceOrder()});
   }
 
   @override

@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' as flutter_material;
 import 'package:flutter_mobile_command_tools/notifier/log_change_notifier.dart';
 import 'package:flutter_mobile_command_tools/notifier/panel/android_panel_notifier.dart';
+import 'package:flutter_mobile_command_tools/utils/command_utils.dart';
+import 'package:flutter_mobile_command_tools/utils/dialog_utils.dart';
 import 'package:flutter_mobile_command_tools/widgets/android_panel.dart';
 import 'package:flutter_mobile_command_tools/theme.dart';
 import 'package:flutter_mobile_command_tools/utils/init_utils.dart';
@@ -12,6 +14,7 @@ import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
 
+import 'enum/adb_command_type.dart';
 import 'global.dart';
 
 /// Checks if the current environment is a desktop environment.
@@ -156,114 +159,103 @@ class _MyAppState extends State<Main> {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationView(
-      pane: NavigationPane(
-          selected: selectId,
-          footerItems: this.footerItems,
-          onChanged: (index) {
-            selectId = index;
-            setState(() {});
-          },
-          header: null,
-          items: items,
-          displayMode: PaneDisplayMode.compact),
-      appBar: NavigationAppBar(
-        height: 40,
-        backgroundColor: Colors.grey.withAlpha(50),
-        title: () {
-          return DragToMoveArea(
-              child: MenuBar(
-            items: [
-              MenuBarItem(title: '连接', items: [
-                MenuFlyoutItem(
-                    text: const Text(
-                      '无线连接',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    onPressed: () {}),
-                MenuFlyoutItem(
-                    text: const Text(
-                      '刷新设备',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    onPressed: () {}),
-              ]),
-              MenuBarItem(title: '应用交互', items: [
-                MenuFlyoutItem(text: const Text('Activity'), onPressed: () {}),
-                MenuFlyoutItem(text: const Text('Service'), onPressed: () {}),
-                MenuFlyoutItem(
-                    text: const Text('BroadCastReceiver'), onPressed: () {}),
-              ]),
-              MenuBarItem(title: '逆向', items: [
-                MenuFlyoutItem(text: const Text('签名'), onPressed: () {}),
-                MenuFlyoutItem(text: const Text('签名校验'), onPressed: () {}),
-                const MenuFlyoutSeparator(),
-                ToggleMenuFlyoutItem(
-                    text: const Text('-f'),
-                    value: true,
-                    onChanged: (bool value) {}),
-                ToggleMenuFlyoutItem(
-                    text: const Text('-r'),
-                    value: true,
-                    onChanged: (bool value) {}),
-                const MenuFlyoutSeparator(),
-                ToggleMenuFlyoutItem(
-                    text: const Text('-s'),
-                    value: true,
-                    onChanged: (bool value) {}),
-                ToggleMenuFlyoutItem(
-                    text: const Text('-d'),
-                    value: true,
-                    onChanged: (bool value) {}),
-              ]),
-              MenuBarItem(title: '模拟指令', items: [
-                MenuFlyoutItem(
-                    text: const Text('新建脚本'),
-                    onPressed: () async {
-                      final result = await showDialog<String>(
-                        context: context,
-                        builder: (context) => ContentDialog(
-                          title: const Text('新建模拟操作脚本'),
-                          content: AndroidSimScriptDialog(),
-                          actions: [
-                            Button(
-                              child: const Text('取消'),
-                              onPressed: () {
-                                Navigator.pop(context, 'User deleted file');
-                                // Delete file here
-                              },
-                            ),
-                            FilledButton(
-                              child: const Text('保存'),
-                              onPressed: () => Navigator.pop(
-                                  context, 'User canceled dialog'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-              ]),
-              MenuBarItem(title: '拉取和推送', items: [
-                MenuFlyoutItem(text: const Text('拉取'), onPressed: () {}),
-                const MenuFlyoutSeparator(),
-                MenuFlyoutItem(text: const Text('推送'), onPressed: () {}),
-              ]),
-              MenuBarItem(title: '其他', items: [
-                MenuFlyoutItem(text: const Text('截屏'), onPressed: () {}),
-                MenuFlyoutItem(text: const Text('录屏'), onPressed: () {}),
-                const MenuFlyoutSeparator(),
-                MenuFlyoutItem(
-                    text: const Text('进入fastboot'), onPressed: () {}),
-                MenuFlyoutItem(
-                    text: const Text('进入recovery'), onPressed: () {}),
-                MenuFlyoutItem(text: const Text('重启手机'), onPressed: () {}),
-              ]),
-            ],
-          ));
-        }(),
-        leading: IconButton(
-          icon: const Icon(FluentIcons.accounts),
-          onPressed: () => {},
+    return ScaffoldPage(
+      content: NavigationView(
+        key: Global.scaffoldKey,
+        pane: NavigationPane(
+            selected: selectId,
+            footerItems: this.footerItems,
+            onChanged: (index) {
+              selectId = index;
+              setState(() {});
+            },
+            header: null,
+            items: items,
+            displayMode: PaneDisplayMode.compact),
+        appBar: NavigationAppBar(
+          height: 40,
+          backgroundColor: Colors.grey.withAlpha(50),
+          title: () {
+            return DragToMoveArea(
+                child: MenuBar(
+              items: [
+                MenuBarItem(title: '连接', items: [
+                  MenuFlyoutItem(
+                      text: const Text(
+                        '无线连接',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onPressed: () {}),
+                  MenuFlyoutItem(
+                      text: const Text(
+                        '刷新设备',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onPressed: () {
+                        AndroidCommandUtils.sendConnectDeviceOrder();
+                      }),
+                ]),
+                MenuBarItem(title: '应用交互', items: [
+                  MenuFlyoutItem(
+                      text: const Text('Activity'), onPressed: () {}),
+                  MenuFlyoutItem(text: const Text('Service'), onPressed: () {}),
+                  MenuFlyoutItem(
+                      text: const Text('BroadCastReceiver'), onPressed: () {}),
+                ]),
+                MenuBarItem(title: '逆向', items: [
+                  MenuFlyoutItem(text: const Text('签名'), onPressed: () {}),
+                  MenuFlyoutItem(text: const Text('签名校验'), onPressed: () {}),
+                  const MenuFlyoutSeparator(),
+                  ToggleMenuFlyoutItem(
+                      text: const Text('-f'),
+                      value: true,
+                      onChanged: (bool value) {}),
+                  ToggleMenuFlyoutItem(
+                      text: const Text('-r'),
+                      value: true,
+                      onChanged: (bool value) {}),
+                  const MenuFlyoutSeparator(),
+                  ToggleMenuFlyoutItem(
+                      text: const Text('-s'),
+                      value: true,
+                      onChanged: (bool value) {}),
+                  ToggleMenuFlyoutItem(
+                      text: const Text('-d'),
+                      value: true,
+                      onChanged: (bool value) {}),
+                ]),
+                MenuBarItem(title: '模拟指令', items: [
+                  MenuFlyoutItem(
+                      text: const Text('新建脚本'),
+                      onPressed: () async {
+                        DialogUtils.showCommonDialog<String>(
+                            AndroidSimScriptDialog(),
+                            title: "新建模拟脚本",
+                            confirmText: "保存");
+                      }),
+                ]),
+                MenuBarItem(title: '拉取和推送', items: [
+                  MenuFlyoutItem(text: const Text('拉取'), onPressed: () {}),
+                  const MenuFlyoutSeparator(),
+                  MenuFlyoutItem(text: const Text('推送'), onPressed: () {}),
+                ]),
+                MenuBarItem(title: '其他', items: [
+                  MenuFlyoutItem(text: const Text('截屏'), onPressed: () {}),
+                  MenuFlyoutItem(text: const Text('录屏'), onPressed: () {}),
+                  const MenuFlyoutSeparator(),
+                  MenuFlyoutItem(
+                      text: const Text('进入fastboot'), onPressed: () {}),
+                  MenuFlyoutItem(
+                      text: const Text('进入recovery'), onPressed: () {}),
+                  MenuFlyoutItem(text: const Text('重启手机'), onPressed: () {}),
+                ]),
+              ],
+            ));
+          }(),
+          leading: IconButton(
+            icon: const Icon(FluentIcons.accounts),
+            onPressed: () => {},
+          ),
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class Global {
@@ -5,4 +6,7 @@ class Global {
 
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+
+  static final GlobalKey<ScaffoldState> scaffoldKey =
+  GlobalKey<ScaffoldState>();
 }
