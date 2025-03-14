@@ -10,9 +10,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_mobile_command_tools/command/Command.dart';
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/model/CommandResult.dart';
-import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/file_utils.dart';
 import 'package:flutter_mobile_command_tools/utils/init_utils.dart';
-import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/platform_utils.dart';
 import 'package:flutter_mobile_command_tools/utils/TimeUtils.dart';
 
 import 'global.dart';
@@ -1124,7 +1124,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               String apkName =
                                   "${Constants.currentPackageName}.apk";
                               String apkPath = Constants.desktopPath +
-                                  PlatformUtils.getSeparator() +
+                                  PlatformUtils.getPathSeparator() +
                                   apkName;
                               if (!await FileUtils.isExistFile(apkPath)) {
                                 _aaptCommandByPackageName(
@@ -1162,7 +1162,7 @@ class AndroidRightPanelState extends State<AndroidRightPanel> {
                               String apkName =
                                   "${Constants.currentPackageName}.apk";
                               String apkPath = Constants.desktopPath +
-                                  PlatformUtils.getSeparator() +
+                                  PlatformUtils.getPathSeparator() +
                                   apkName;
                               if (!await FileUtils.isExistFile(apkPath)) {
                                 _aaptCommandByPackageName(
@@ -2853,8 +2853,8 @@ Future<List<String>?> _analyseSimFile(String path) async {
   if (commands[0] == "0") {
     Constants.currentSimType = 0;
     //simCommandName.clear();
-    //simCommandName.add(path.split(PlatformUtils.getSeparator()).last);
-    return [path.split(PlatformUtils.getSeparator()).last];
+    //simCommandName.add(path.split(PlatformUtils.getPathSeparator()).last);
+    return [path.split(PlatformUtils.getPathSeparator()).last];
   } else if (commands[0] == "1") {
     Constants.currentSimType = 1;
     return simCommandName;

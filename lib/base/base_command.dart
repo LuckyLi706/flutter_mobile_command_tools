@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_mobile_command_tools/model/command_result_model.dart';
-import 'package:flutter_mobile_command_tools/utils/FileUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/file_utils.dart';
 import 'package:provider/provider.dart';
 
 import '../global.dart';

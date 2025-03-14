@@ -14,6 +14,20 @@ class PlatformUtils {
     }
   }
 
+  static String getPathSeparator() {
+    if (Platform.isWindows) {
+      return r"\";
+    }
+    return r"/";
+  }
+
+  static String grepFindStr() {
+    if (Platform.isWindows) {
+      return "findstr";
+    }
+    return "grep";
+  }
+
   ///windows和linux系统的命令行指令不一样
   ///使用run命令拿到的输出结果总是在运行完成了才全部输出
   static Future<ProcessResult> runCommand(String commandStr,
@@ -38,13 +52,6 @@ class PlatformUtils {
           workingDirectory: workDirectory,
           stdoutEncoding: Encoding.getByName("utf-8"));
     }
-  }
-
-  static String grepFindStr() {
-    if (Platform.isWindows) {
-      return "findstr";
-    }
-    return "grep";
   }
 
   /// ProcessStartMode 可以设置开启进程模式，但是我测试没成功，没法重定向输出流到我的文本上面来
@@ -106,12 +113,5 @@ class PlatformUtils {
       return command.replaceFirst("adb", Constants.adbPath);
     }
     return command;
-  }
-
-  static String getSeparator() {
-    if (Platform.isWindows) {
-      return r"\";
-    }
-    return r"/";
   }
 }

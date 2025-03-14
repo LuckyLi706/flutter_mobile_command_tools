@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_mobile_command_tools/global.dart';
+import 'package:flutter_mobile_command_tools/utils/style_utils.dart';
 
 /**
  * @FileName : dialog_utils
@@ -21,7 +22,7 @@ class DialogUtils {
             ? null
             : Text(
                 title,
-                style: TextStyle(fontSize: 16),
+                style: getDialogTitleStyle(),
               ),
         content: content,
         actions: [
@@ -35,6 +36,35 @@ class DialogUtils {
           FilledButton(
             child: Text(confirmText),
             onPressed: () => Navigator.pop(context, 'User canceled dialog'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Future<bool?> showConfirmOrCancelDialog<bool>(Widget? contentWidget,
+      {String contentText = "",
+      String cancelText = "取消",
+      String confirmText = "确定"}) async {
+    return await showDialog<bool>(
+      context: Global.scaffoldKey.currentContext!,
+      builder: (context) => ContentDialog(
+        title: null,
+        content: contentWidget ??
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [Text(contentText)],
+            ),
+        actions: [
+          Button(
+            child: Text(cancelText),
+            onPressed: () {
+              Navigator.pop(context, false);
+            },
+          ),
+          FilledButton(
+            child: Text(confirmText),
+            onPressed: () => Navigator.pop(context, true),
           ),
         ],
       ),

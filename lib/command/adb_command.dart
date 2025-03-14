@@ -5,7 +5,7 @@ import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/enum/adb_command_type.dart';
 import 'package:flutter_mobile_command_tools/model/command_result_model.dart';
 import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
-import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/platform_utils.dart';
 
 class AdbCommand extends BaseCommand {
   ///检测adb的路径
@@ -57,9 +57,9 @@ class AdbCommand extends BaseCommand {
       if (processResult.stderr
           .toString()
           .contains("more than one device/emulator")) {
-        return CommandResultModel(false, "当前设备大于等于两个,请先手动获取设备" as T);
+        return CommandResultModel.error(false, null, "当前设备大于等于两个,请先手动获取设备");
       }
-      return CommandResultModel(false, processResult.stderr);
+      return CommandResultModel.error(false, null, processResult.stderr);
     }
     String data = processResult.stdout;
 
@@ -102,10 +102,20 @@ class AdbCommand extends BaseCommand {
           return CommandResultModel(true, packageName as T);
         }
         if (values[i].contains("error:")) {
-          return CommandResultModel(false, values[i] as T);
+          return CommandResultModel.error(false, null, values[i]);
         }
       }
       return CommandResultModel.error(false, null, "无信息");
+    } else if (command == AdbCommandType.ADB_WIRELESS_CONNECT.value) {
+      if (data.contains("already") ||
+          data.contains("failed") ||
+          data.contains("cannot")) {
+        //表示已经连接上了
+        return CommandResultModel.error(false, null, data);
+      } else {
+        return CommandResultModel(
+            true, data.replaceAll("connected to ", "").trim() as T); //移除换行符号
+      }
     }
     // switch (command) {
     //   case Constants.ADB_GET_THIRD_PACKAGE:

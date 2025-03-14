@@ -32,6 +32,12 @@ enum AdbCommandType {
 
   /// 解冻app
   ADB_NOT_FREEZE_PACKAGE,
+
+  /// 无线连接
+  ADB_WIRELESS_CONNECT,
+
+  /// 断开连接
+  ADB_WIRELESS_DISCONNECT
 }
 
 extension AdbCommandTypeValue on AdbCommandType {
@@ -70,6 +76,12 @@ extension AdbCommandTypeValue on AdbCommandType {
         break;
       case AdbCommandType.ADB_NOT_FREEZE_PACKAGE:
         _value = 'shell pm enable package';
+        break;
+      case AdbCommandType.ADB_WIRELESS_CONNECT:
+        _value = 'connect';
+        break;
+      case AdbCommandType.ADB_WIRELESS_DISCONNECT:
+        _value = 'disconnect';
         break;
       default:
     }

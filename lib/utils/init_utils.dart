@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_mobile_command_tools/utils/PlatformUtils.dart';
+import 'package:flutter_mobile_command_tools/enum/dir_type.dart';
+import 'package:flutter_mobile_command_tools/utils/platform_utils.dart';
 
 import '../constants.dart';
-import 'FileUtils.dart';
+import 'file_utils.dart';
 
 class InitUtils {
   static Future init(Map<String, dynamic> map) async {
@@ -40,7 +41,7 @@ class InitUtils {
               value.stdout.toString().split(PlatformUtils.getLineBreak())[0];
           Constants.desktopPath = Constants.userPath + r"/Desktop";
           if (!await FileUtils.isExistFolder(Constants.userPath)) {
-            String? path = await FileUtils.localPath(dir: FileUtils.TEMP_DIR);
+            String? path = await FileUtils.localPath(dirType: DirType.TEMP_DIR);
             Constants.desktopPath = path == null ? "" : path;
           }
           _initAdbPath();
@@ -143,7 +144,7 @@ class InitUtils {
   //初始化内部的adb
   static _initInnerAdb() async {
     File versionFile = File(await FileUtils.getBasePath() +
-        PlatformUtils.getSeparator() +
+        PlatformUtils.getPathSeparator() +
         "VERSION");
     String versionStr = await FileUtils.readFile(versionFile);
 
@@ -156,7 +157,7 @@ class InitUtils {
       assetsAdbPath = "assets/linux/tools.zip";
     }
     Directory directoryAdb = Directory('${await FileUtils.getBasePath()}' +
-        PlatformUtils.getSeparator() +
+        PlatformUtils.getPathSeparator() +
         Constants.TOOLS_DIRECTORY_NAME);
     var path = directoryAdb.path + ".zip";
     if (!await directoryAdb.exists() || versionStr != Constants.APP_VERSION) {
