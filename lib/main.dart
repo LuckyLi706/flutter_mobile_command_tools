@@ -9,14 +9,15 @@ import 'package:flutter_mobile_command_tools/utils/style_utils.dart';
 import 'package:flutter_mobile_command_tools/widgets/android_panel.dart';
 import 'package:flutter_mobile_command_tools/theme.dart';
 import 'package:flutter_mobile_command_tools/utils/init_utils.dart';
-import 'package:flutter_mobile_command_tools/widgets/dialog/android_disconnect_device_dialog.dart';
-import 'package:flutter_mobile_command_tools/widgets/dialog/android_sim_script_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:system_theme/system_theme.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart' as flutter_acrylic;
 
+import 'enum/click_type.dart';
+import 'enum/panel_type.dart';
 import 'global.dart';
+import 'mixin/main_mixin.dart';
 
 /// Checks if the current environment is a desktop environment.
 bool get isDesktop {
@@ -133,18 +134,16 @@ class Main extends StatefulWidget {
   }
 }
 
-class _MyAppState extends State<Main> {
-  var selectId = 0;
-
+class _MyAppState extends State<Main> with MainMixin {
   List<NavigationPaneItem> items = [
     PaneItem(
       icon: const Icon(flutter_material.Icons.android),
-      title: const Text('Android'),
+      title: Text(PanelType.Android.value),
       body: AndroidPanel(),
     ),
     PaneItem(
       icon: const Icon(flutter_material.Icons.local_pharmacy_outlined),
-      title: const Text('Harmony'),
+      title: Text(PanelType.Harmony.value),
       body: Column(),
     )
   ];
@@ -152,7 +151,7 @@ class _MyAppState extends State<Main> {
   List<NavigationPaneItem> footerItems = [
     PaneItem(
       icon: const Icon(flutter_material.Icons.settings),
-      title: const Text('设置'),
+      title: Text(PanelType.Setting.value),
       body: Column(),
     ),
   ];
@@ -162,10 +161,10 @@ class _MyAppState extends State<Main> {
     return NavigationView(
       key: Global.scaffoldKey,
       pane: NavigationPane(
-          selected: selectId,
+          selected: Global.panelType.index,
           footerItems: this.footerItems,
           onChanged: (index) {
-            selectId = index;
+            Global.panelType = PanelType.values[index];
             setState(() {});
           },
           header: null,
@@ -181,27 +180,27 @@ class _MyAppState extends State<Main> {
               MenuBarItem(title: '连接', items: [
                 MenuFlyoutItem(
                     text: Text(
-                      '刷新设备',
+                      ClickType.REFRESH_DEVICE.value,
                       style: getCommonTitleStyle(),
                     ),
                     onPressed: () {
-                      AndroidCommandUtils.sendConnectDeviceOrder();
+                      onClick(ClickType.REFRESH_DEVICE);
                     }),
                 MenuFlyoutItem(
                     text: Text(
-                      '无线连接',
+                      ClickType.WIRELESS_CONNECT.value,
                       style: getCommonTitleStyle(),
                     ),
-                    onPressed: () {}),
+                    onPressed: () {
+                      onClick(ClickType.WIRELESS_CONNECT);
+                    }),
                 MenuFlyoutItem(
                     text: Text(
-                      '断开连接',
+                      ClickType.DISCONNECT_DEVICE.value,
                       style: getCommonTitleStyle(),
                     ),
                     onPressed: () async {
-                      bool? isConfirm =
-                          await DialogUtils.showConfirmOrCancelDialog<bool>(
-                              AndroidDisconnectDeviceDialog());
+                      onClick(ClickType.DISCONNECT_DEVICE);
                     }),
               ]),
               MenuBarItem(title: '应用交互', items: [
@@ -271,14 +270,11 @@ class _MyAppState extends State<Main> {
               MenuBarItem(title: '模拟指令', items: [
                 MenuFlyoutItem(
                     text: Text(
-                      '新建脚本',
+                      ClickType.NEW_SIM_SCRIPT.value,
                       style: getCommonTitleStyle(),
                     ),
                     onPressed: () async {
-                      DialogUtils.showCommonDialog<String>(
-                          AndroidSimScriptDialog(),
-                          title: "新建模拟脚本",
-                          confirmText: "保存");
+                      onClick(ClickType.NEW_SIM_SCRIPT);
                     }),
               ]),
               MenuBarItem(title: '拉取和推送', items: [

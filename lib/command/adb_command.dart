@@ -4,7 +4,7 @@ import 'package:flutter_mobile_command_tools/base/base_command.dart';
 import 'package:flutter_mobile_command_tools/constants.dart';
 import 'package:flutter_mobile_command_tools/enum/adb_command_type.dart';
 import 'package:flutter_mobile_command_tools/model/command_result_model.dart';
-import 'package:flutter_mobile_command_tools/utils/LogUtils.dart';
+import 'package:flutter_mobile_command_tools/utils/log_utils.dart';
 import 'package:flutter_mobile_command_tools/utils/platform_utils.dart';
 
 class AdbCommand extends BaseCommand {

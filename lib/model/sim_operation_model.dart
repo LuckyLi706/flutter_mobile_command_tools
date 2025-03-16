@@ -5,15 +5,6 @@ class SimOperationModel {
   /// 所有指令
   List<SimOperation> simOperationList = [];
 
-  /// 每条指令间隔,以逗号分割，表示随机范围，默认1000
-  String duration = '1000';
-
-  /// 是否循环执行
-  bool isRepeat = false;
-
-  /// 是否间隔时间随机
-  bool isRandom = false;
-
   /// 是否为单条指令，默认一个文件包含多条指令时候，将会执行文件中的所有指令
   bool isSingle = false;
 }
@@ -31,9 +22,15 @@ class SimOperation {
   /// 滑动第二个点的y坐标
   int y2 = 0;
 
+  /// 滑动类型
+  SwipeType swipeType = SwipeType.SWIPE_CUSTOM;
+
   /// 模拟指令类型
-  SimOperationType simOperationType = SimOperationType.NONE;
+  SimOperationType simOperationType = SimOperationType.SWIPE;
 
   /// text、adb、other文本
   String text = "";
+
+  /// 指令别名
+  String aliasName = "";
 }

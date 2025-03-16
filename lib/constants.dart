@@ -10,7 +10,8 @@ class Constants {
   static const String APP_VERSION = "4.0";
 
   static const String TOOLS_DIRECTORY_NAME = "tools"; //tools directory name
-  static const String CONFIG_DIRECTORY_NAME = "config"; //tools directory name
+  static const String CONFIG_DIRECTORY_NAME = "config"; //config directory name
+  static const String SCRIPT_DIRECTORY_NAME = "script"; //script directory name
 
   static bool isRoot = false; //是否开启root
   static bool isInnerAdb = false; //是否使用内部的adb

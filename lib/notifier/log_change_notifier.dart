@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_mobile_command_tools/utils/platform_utils.dart';
 
 class LogChangeNotifier extends ChangeNotifier {
   ScrollController scrollController = ScrollController();
@@ -8,7 +9,7 @@ class LogChangeNotifier extends ChangeNotifier {
 
   void addLog(dynamic log) {
     if (log is String) {
-      _logList.add(log);
+      _logList.add(log.replaceAll(PlatformUtils.getLineBreak(), ''));
     } else if (log is List) {
       _logList.add(log.join(" "));
     } else {

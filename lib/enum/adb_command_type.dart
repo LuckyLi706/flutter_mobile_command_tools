@@ -37,7 +37,19 @@ enum AdbCommandType {
   ADB_WIRELESS_CONNECT,
 
   /// 断开连接
-  ADB_WIRELESS_DISCONNECT
+  ADB_WIRELESS_DISCONNECT,
+
+  /// 模拟指令滑动
+  ADB_SIM_OPERATION_SWIPE,
+
+  /// 模拟指令点击
+  ADB_SIM_OPERATION_TAP,
+
+  /// 模拟指令输入文本
+  ADB_SIM_OPERATION_TEXT,
+
+  /// 模拟指令事件
+  ADB_SIM_OPERATION_EVENT,
 }
 
 extension AdbCommandTypeValue on AdbCommandType {
@@ -82,6 +94,18 @@ extension AdbCommandTypeValue on AdbCommandType {
         break;
       case AdbCommandType.ADB_WIRELESS_DISCONNECT:
         _value = 'disconnect';
+        break;
+      case AdbCommandType.ADB_SIM_OPERATION_SWIPE:
+        _value = 'shell input swipe';
+        break;
+      case AdbCommandType.ADB_SIM_OPERATION_TAP:
+        _value = 'shell input tap';
+        break;
+      case AdbCommandType.ADB_SIM_OPERATION_TEXT:
+        _value = 'shell input text';
+        break;
+      case AdbCommandType.ADB_SIM_OPERATION_EVENT:
+        _value = 'shell input keyevent';
         break;
       default:
     }

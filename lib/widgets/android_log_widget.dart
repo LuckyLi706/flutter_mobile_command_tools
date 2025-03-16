@@ -19,7 +19,7 @@ class AndroidLogWidget extends StatelessWidget {
       autofocus: false,
       // 长按输入的文本, 设置是否显示剪切，复制，粘贴按钮, 默认是显示的
       enableInteractiveSelection: true,
-      style: TextStyle(fontFamily: "simple", fontSize: 16),
+      style: TextStyle(fontFamily: "simple", fontSize: 16, height: 2),
       padding: EdgeInsets.all(10),
       decoration: WidgetStateProperty.resolveWith<BoxDecoration>((state) {
         return BoxDecoration(

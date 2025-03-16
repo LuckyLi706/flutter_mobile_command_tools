@@ -123,7 +123,7 @@ class InitUtils {
     String signer = await FileUtils.readFile(Constants.signerPath);
     if (signer.isEmpty) {
       signer = await rootBundle.loadString('assets/apksigner.json');
-      FileUtils.writeFile(signer, Constants.signerPath);
+      FileUtils.writeFile(signer, Constants.signerPath.path);
     }
 
     Constants.jksPath =
@@ -165,7 +165,7 @@ class InitUtils {
       await FileUtils.writeBytesFile(buffer, File(path));
       FileUtils.unZipFiles(directoryAdb.path, path);
     }
-    FileUtils.writeFile(Constants.APP_VERSION, versionFile);
+    FileUtils.writeFile(Constants.APP_VERSION, versionFile.path);
   }
 
   static void _initMutualAppFile() async {
@@ -180,7 +180,7 @@ class InitUtils {
         content = content + element + PlatformUtils.getLineBreak();
       });
       FileUtils.writeFile(
-          content, File(await FileUtils.getMutualAppPath("BroadcastReceiver")));
+          content,await FileUtils.getMutualAppPath("BroadcastReceiver"));
     }
   }
 

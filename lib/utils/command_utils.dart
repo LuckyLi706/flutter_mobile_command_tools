@@ -26,4 +26,32 @@ class AndroidCommandUtils {
       }
     });
   }
+
+  /// 发送无线连接设备的指令
+  static sendWirelessConnectDeviceOrder(String deviceName) {
+    _adbCommand
+        .runCommand<String>(
+            AdbCommandType.ADB_WIRELESS_CONNECT.value + " ${deviceName}")
+        .then((value) {
+      if (value != null) {
+        if (value.isSuccess) {
+          // Provider.of<AndroidPanelNotifier>(Global.navigatorKey.currentContext!,
+          //         listen: false)
+          //     .deviceList = value.data!;
+        }
+      }
+    });
+  }
+
+  /// 发送断开设备的指令
+  static sendDisConnectDeviceOrder(String? deviceName) {
+    _adbCommand
+        .runCommand<String>(AdbCommandType.ADB_WIRELESS_DISCONNECT.value +
+            " ${deviceName == null ? '' : deviceName}")
+        .then((value) {
+      if (value != null) {
+        if (value.isSuccess) {}
+      }
+    });
+  }
 }
