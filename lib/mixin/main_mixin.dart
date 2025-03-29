@@ -16,7 +16,7 @@ import '../utils/dialog_utils.dart';
  * @Created by jacky
  * @Description 主页的功能逻辑
  */
-mixin MainMixin  {
+mixin MainMixin {
   onClick(ClickType clickType, {dynamic params}) {
     switch (clickType) {
       case ClickType.REFRESH_DEVICE:
@@ -46,6 +46,9 @@ mixin MainMixin  {
             fileNameType: FileNameType.WIRELESS_CONNECT,
             confirmText: '连接')
         .then((result) {
+      if (result == null) {
+        return;
+      }
       AndroidCommandUtils.sendWirelessConnectDeviceOrder(result);
     });
   }

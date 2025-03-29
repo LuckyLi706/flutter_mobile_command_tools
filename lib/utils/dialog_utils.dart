@@ -121,9 +121,6 @@ class DialogUtils {
                           value.connectDevice = deviceName ?? '';
                         },
                         onFieldSubmitted: (String text) {
-                          if (!contentList.contains(text)) {
-                            contentList.add(text);
-                          }
                           value.connectDevice = text;
                           return text;
                         },
@@ -145,6 +142,7 @@ class DialogUtils {
                             showToast(message: '当前记录已存在', title: '');
                             return;
                           }
+                          contentList.add(androidInputNotifier.connectDevice);
                           FileUtils.writeFile(
                               contentList.join(PlatformUtils.getLineBreak()),
                               filePath);
